@@ -1,3 +1,11 @@
-//const myWorker = new Worker('worker.js');
-//const buffer = new SharedArrayBuffer(16);
-//myWorker.postMessage(buffer);
+console.log("Content Script initialized.");
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log(sender.tab ?
+                "from a content script:" + sender.tab.url :
+                "from the extension");
+    if (request.greeting === "hello")
+      sendResponse({farewell: "goodbye"});
+  }
+);

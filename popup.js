@@ -17,10 +17,10 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     
     switch (urlInfo.pageType) {
       case 'followingOnTwitter':
-        recordBanner.innerText = 'Privately record who @' + urlInfo.owner + ' follows:';
+        recordBanner.innerText = 'Privately record who @' + urlInfo.owner + ' is following:';
         break;
       case 'followersOnTwitter':
-        recordBanner.innerText = 'Privately record who follows @' + urlInfo.owner + ':';
+        recordBanner.innerText = 'Privately record followers of @' + urlInfo.owner + ':';
         break;
       default:
         break;
@@ -39,10 +39,17 @@ btnAgreeToTerms.addEventListener('click', async () => {
 const btnManualScroll = document.getElementById('btnManualScroll');
 const btnAutoScroll = document.getElementById('btnAutoScroll');
 btnManualScroll.addEventListener('click', async () => {
-  alert('manually');
+  
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  if (tab && tab.id) {
+    var response = await chrome.tabs.sendMessage(tab.id, {greeting: "hello"});
+    console.log(response);
+    chrome.action.setBadgeText({text: 'REC'});
+  }
+  
 });
 btnAutoScroll.addEventListener('click', async () => {
-  alert('automatically');
+  chrome.action.setBadgeText({text: 'AUTO'});
 });
 
 const activateApp = function() {
@@ -65,7 +72,7 @@ const parseUrl = function(url) {
 
   var pageType;
   
-  if (url.replace("mobile.", "").startsWith('https://twitter.com/')) {
+  if (url && url.replace("mobile.", "").startsWith('https://twitter.com/')) {
     if (url.endsWith('/following')) {
       pageType = 'followingOnTwitter';
     }
