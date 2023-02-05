@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Social Assistant for Positive Sum Networks",
+  "version": "1.0.0",
+  "description": "Privately preserve your social experiences. Optionally share to foster Positive Sum Networks.",
+  "icons": {
+    "16": "images/icon-16.png",
+    "32": "images/icon-32.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
+  "author": "whosumsupport@positivesum.net",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon-16.png",
+      "32": "images/icon-32.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "js": ["content.js"],
+      "matches": [
+        "https://twitter.com/*",
+        "https://mobile.twitter.com/*"
+      ]
+    }
+  ],
+  "permissions": [
+    "activeTab", "storage", "unlimitedStorage"
+  ],
+    "cross_origin_embedder_policy": {
+    "value": "require-corp"
+  },
+  "cross_origin_opener_policy": {
+    "value": "same-origin"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  }
+}
