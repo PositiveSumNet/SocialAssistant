@@ -14,14 +14,16 @@
       <button class="btn-primary" id="btnAgreeToTerms">I Agree</button>
     </div>
     <div id="appSection" style="display:none;">
-      <h5 id="recordTwitterBanner">Privately Record Twitter Follow List</h5>
-      <div id="runnablePageMsg" style="display:none;">
-        <button class="btn-primary" id="btnManualScroll">As I scroll manually</button>
-        <button class="btn-primary" id="btnAutoScroll">With auto-scroll</button>
-      </div>
-      <div id="invalidPageMsg" style="display:none;">
-        <p style="color:#ff0000">Navigate to the 'followers' or 'following' list of a Twitter account to continue</p>
-        <p><a href="https://twitter.com/positivesumnet/following" target="_blank">Click here for an example page</a></p>
+      <div id="twitterSection">
+        <h5 id="recordTwitterBanner">Privately Record Twitter Follow List</h5>
+        <div id="runnablePageMsg" style="display:none;">
+          <button class="btn-primary" id="btnRecTwitterManualScroll">As I scroll manually</button>
+          <button class="btn-primary" id="btnRecTwitterAutoScroll">With auto-scroll</button>
+        </div>
+        <div id="invalidPageMsg" style="display:none;">
+          <p style="color:#ff0000">Navigate to the 'followers' or 'following' list of a Twitter account to continue</p>
+          <p><a href="https://twitter.com/positivesumnet/following" target="_blank">Click here for an example page</a></p>
+        </div>
       </div>
     </div>
     <br/>
@@ -32,6 +34,7 @@
     </div>
     <br/>
     <p><img src="/images/possum800.png" style="width:375px; height:250px;"></p>
+    <script type="text/javascript" src="pageutils.js"></script>
     <script type="text/javascript" src="popup.js"></script>
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />

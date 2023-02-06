@@ -13,14 +13,14 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   
   if (urlInfo && urlInfo.pageType) {
     document.getElementById('runnablePageMsg').style.display = 'block';
-    let recordBanner = document.getElementById('recordTwitterBanner');
+    let recordTwitterBanner = document.getElementById('recordTwitterBanner');
     
     switch (urlInfo.pageType) {
       case 'followingOnTwitter':
-        recordBanner.innerText = 'Privately record who @' + urlInfo.owner + ' is following:';
+        recordTwitterBanner.innerText = 'Privately record who @' + urlInfo.owner + ' is following:';
         break;
       case 'followersOnTwitter':
-        recordBanner.innerText = 'Privately record followers of @' + urlInfo.owner + ':';
+        recordTwitterBanner.innerText = 'Privately record followers of @' + urlInfo.owner + ':';
         break;
       default:
         break;
@@ -36,20 +36,14 @@ btnAgreeToTerms.addEventListener('click', async () => {
   chrome.storage.sync.set({ agreedToTerms: 'true' }).then(() => activateApp());
 });
 
-const btnManualScroll = document.getElementById('btnManualScroll');
-const btnAutoScroll = document.getElementById('btnAutoScroll');
-btnManualScroll.addEventListener('click', async () => {
-  
-  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-  if (tab && tab.id) {
-    var response = await chrome.tabs.sendMessage(tab.id, {greeting: "hello"});
-    console.log(response);
-    chrome.action.setBadgeText({text: 'REC'});
-  }
-  
+const btnRecTwitterManualScroll = document.getElementById('btnRecTwitterManualScroll');
+btnRecTwitterManualScroll.addEventListener('click', () => {
+  kickoffRecording(false);
 });
-btnAutoScroll.addEventListener('click', async () => {
-  chrome.action.setBadgeText({text: 'AUTO'});
+
+const btnRecTwitterAutoScroll = document.getElementById('btnRecTwitterAutoScroll');
+btnRecTwitterAutoScroll.addEventListener('click', () => {
+  kickoffRecording(true);
 });
 
 const activateApp = function() {
@@ -57,41 +51,30 @@ const activateApp = function() {
   appSection.style.display = 'block';
 }
 
-const isTwitterFollowPage = function(tab) {
+const kickoffRecording = async function(auto) {
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
-  if (tab.url.replace("mobile.", "").startsWith('https://twitter.com/')) {
-    if (tab.url.endsWith('/following') || tab.url.endsWith('/followers')) {
-      return true;
-    }
-  }
-  
-  return false;
-}
+  if (tab && tab.id) {
 
-const parseUrl = function(url) {
-
-  var pageType;
-  
-  if (url && url.replace("mobile.", "").startsWith('https://twitter.com/')) {
-    if (url.endsWith('/following')) {
-      pageType = 'followingOnTwitter';
-    }
-    else if (url.endsWith('/followers')) { 
-      pageType = 'followersOnTwitter';
-    }
-  }
-  
-  if (pageType == 'followingOnTwitter' || pageType == 'followersOnTwitter') {
-    const urlParts = url.split('/');
-    const owner = urlParts[urlParts.length - 2];
+    const urlInfo = parseUrl(tab.url);
     
-    return {
-      pageType: pageType,
-      owner: owner
-    };
-  }
-  else {
-    return null;
+    if (urlInfo && urlInfo.pageType && urlInfo.owner) {
+      var response = await chrome.tabs.sendMessage(
+        tab.id, 
+        {
+          pageType: urlInfo.pageType,
+          owner: urlInfo.owner,
+          auto: auto
+        });
+      
+      if (response && response.success == true) {
+        setBadge(auto);
+      }
+    }
   }
 }
 
+const setBadge = function(auto) {
+  const text = auto ? 'AUTO' : 'REC';
+  chrome.action.setBadgeText({text: text});
+}

@@ -21,7 +21,7 @@
   },
   "content_scripts": [
     {
-      "js": ["content.js"],
+      "js": ["pageutils.js", "content.js"],
       "matches": [
         "https://twitter.com/*",
         "https://mobile.twitter.com/*"
