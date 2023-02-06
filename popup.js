@@ -55,26 +55,19 @@ const kickoffRecording = async function(auto) {
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
   if (tab && tab.id) {
-
-    const urlInfo = parseUrl(tab.url);
     
-    if (urlInfo && urlInfo.pageType && urlInfo.owner) {
-      var response = await chrome.tabs.sendMessage(
-        tab.id, 
-        {
-          pageType: urlInfo.pageType,
-          owner: urlInfo.owner,
-          auto: auto
-        });
-      
-      if (response && response.success == true) {
-        setBadge(auto);
-      }
-    }
+    setBadge(auto);
+    
+    let response = await chrome.tabs.sendMessage(
+      tab.id, 
+      {
+        actionType: 'recordPage',
+        auto: auto
+      });
   }
 }
 
 const setBadge = function(auto) {
-  const text = auto ? 'AUTO' : 'REC';
+  const text = auto == true ? 'AUTO' : 'REC';
   chrome.action.setBadgeText({text: text});
 }

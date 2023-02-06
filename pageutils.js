@@ -1,14 +1,3 @@
-const isTwitterFollowPage = function(tab) {
-
-  if (tab.url.replace("mobile.", "").startsWith('https://twitter.com/')) {
-    if (tab.url.endsWith('/following') || tab.url.endsWith('/followers')) {
-      return true;
-    }
-  }
-  
-  return false;
-}
-
 const parseUrl = function(url) {
 
   var pageType;
