@@ -2,12 +2,75 @@ console.log("Content Script initialized.");
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    console.log(request);
-    main();
+    
+    switch (request.actionType) {
+      case 'recordPage':
+        
+        var parsedUrl = parseUrl(window.location.href);
+        
+        if (parsedUrl) {
+          
+          if (parsedUrl.site == 'twitter') {
+            recordTwitterPage(parsedUrl);
+          }
+          
+          if (request.auto) {
+            // auto-scroll on timer
+          }
+        }
+        break;
+      case 'stopRecording':
+        // stopRecording();
+        // stopScrolling();
+        break;
+      default:
+        break;
+    }
+    
+    //console.log(request);
+    //main2();
     success = true;
     sendResponse({auto: request.auto, success: success});
   }
 );
+
+const recordTwitterPage = function(parsedUrl) {
+  
+  const mainColumn = getTwitterMainColumn();
+  
+  if (!mainColumn) {
+    return;
+  }
+  
+  const cumUrlSet = new Set();
+  processTwitterFollows(mainColumn, cumUrlSet);
+  
+  const observer = new MutationObserver((mutationsList, observer) => {
+      for (const mutation of mutationsList) {
+          if (mutation.type === 'childList') {
+              const nodes = mutation.addedNodes;
+              nodes.forEach(node => {
+                processTwitterFollows(node, cumUrlSet);
+              });
+          }
+      }
+  });
+
+  observer.observe(mainColumn, { 
+      attributes: false, 
+      childList: true, 
+      subtree: true }
+  );
+}
+
+const processTwitterFollows = function(parentElm, cumUrlSet) {
+  let records = getTwitterFollowsPage(parentElm, cumUrlSet);
+  
+  for (let i=0; i < records.length; i++) {
+    let record = records[i];
+    console.log(record);
+  }
+}
 
 const randomRest = async function(minRestMs, maxRestMs) {
   let restMs = Math.random() * (maxRestMs - minRestMs) + minRestMs;
@@ -68,7 +131,7 @@ const getTwitterFollowsPage = function(mainColumn, cumUrlSet) {
   
   const ppl = [];
   
-  for(let i=0; i < all.length; i++) {
+  for (let i=0; i < all.length; i++) {
     const item = all[i];
     
     if (item.u && urlSet.has(item.u) && item.d && !item.d.startsWith('@')) {
@@ -80,7 +143,10 @@ const getTwitterFollowsPage = function(mainColumn, cumUrlSet) {
     }
   }
   
-  console.table(ppl);
+  if (ppl.length > 0) {
+    console.table(ppl);
+  }
+  
   return ppl;
 }
 

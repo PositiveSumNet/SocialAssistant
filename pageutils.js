@@ -1,13 +1,16 @@
 const parseUrl = function(url) {
 
   var pageType;
+  var site;
   
   if (url && url.replace("mobile.", "").startsWith('https://twitter.com/')) {
     if (url.endsWith('/following')) {
       pageType = 'followingOnTwitter';
+      site = 'twitter';
     }
     else if (url.endsWith('/followers')) { 
       pageType = 'followersOnTwitter';
+      site = 'twitter';
     }
   }
   
@@ -17,6 +20,7 @@ const parseUrl = function(url) {
     
     return {
       pageType: pageType,
+      site: site,
       owner: owner
     };
   }
