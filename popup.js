@@ -79,8 +79,6 @@ const kickoffRecording = async function(record, auto) {
 
   if (tab && tab.id) {
     
-    // setBadge(auto);
-    
     // store knowledge that this page is being recorded
     let actionType = '';
     if (record == true) {

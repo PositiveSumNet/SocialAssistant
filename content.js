@@ -51,7 +51,6 @@ var _savables = [];
 var _savableHandleSet = new Set(); // to avoid storing dupes
 var _savedHandleSet = new Set();
 var _lastObserved = null;
-var _savedCtrl = 0;
 var _preScrollSavableCount = 0;
 var _autoScroll = false;
 var _parsedUrl;
@@ -104,12 +103,13 @@ const setSaveTimer = function() {
           let item = response.saved[i];
           if (!_savedHandleSet.has(item.h)) {
             _savedHandleSet.add(item.h);
+            //console.log(item);
           }
         }
         
         chrome.runtime.sendMessage({
           actionType: 'setBadge',
-          badgeText: _savedHandleSet.size.toString()});
+          badgeText: badgeNum(_savedHandleSet.size)});
       }
     });
   }

@@ -28,3 +28,14 @@ const parseUrl = function(url) {
     return null;
   }
 }
+
+// up to 4 characters
+const badgeNum = function(num) {
+  if (num > 9999) {
+    let k = num/1000;
+    return k.toString() + 'k';
+  }
+  else {
+    return num.toString();
+  }
+}
