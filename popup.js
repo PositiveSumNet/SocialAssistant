@@ -25,6 +25,21 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
       default:
         break;
     }
+    
+    // reflect button visibility based on whether recording
+    chrome.storage.local.get(['recording'], function(result) {
+      if (result.recording == tab.url) {
+        document.getElementById('btnRecTwitterManualScroll').style.display = 'none';
+        document.getElementById('btnRecTwitterAutoScroll').style.display = 'none';
+        document.getElementById('btnRecStop').style.display = 'block';
+      }
+      else {
+        document.getElementById('btnRecTwitterManualScroll').style.display = 'block';
+        document.getElementById('btnRecTwitterAutoScroll').style.display = 'block';
+        document.getElementById('btnRecStop').style.display = 'none';
+      }
+    });
+    
   }
   else {
     document.getElementById('invalidPageMsg').style.display = 'block';
@@ -38,12 +53,20 @@ btnAgreeToTerms.addEventListener('click', async () => {
 
 const btnRecTwitterManualScroll = document.getElementById('btnRecTwitterManualScroll');
 btnRecTwitterManualScroll.addEventListener('click', () => {
-  kickoffRecording(false);
+  kickoffRecording(true, false);
+  window.close();
 });
 
 const btnRecTwitterAutoScroll = document.getElementById('btnRecTwitterAutoScroll');
 btnRecTwitterAutoScroll.addEventListener('click', () => {
-  kickoffRecording(true);
+  kickoffRecording(true, true);
+  window.close();
+});
+
+const btnRecStop = document.getElementById('btnRecStop');
+btnRecStop.addEventListener('click', () => {
+  kickoffRecording(false, false);
+  window.close();
 });
 
 const activateApp = function() {
@@ -51,23 +74,29 @@ const activateApp = function() {
   appSection.style.display = 'block';
 }
 
-const kickoffRecording = async function(auto) {
+const kickoffRecording = async function(record, auto) {
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
 
   if (tab && tab.id) {
     
-    setBadge(auto);
+    // setBadge(auto);
+    
+    // store knowledge that this page is being recorded
+    let actionType = '';
+    if (record == true) {
+      chrome.storage.local.set({ recording: tab.url });
+      actionType = 'startRecording';
+    }
+    else {
+      chrome.storage.local.remove('recording');
+      actionType = 'stopRecording';
+    }
     
     let response = await chrome.tabs.sendMessage(
       tab.id, 
       {
-        actionType: 'recordPage',
+        actionType: actionType,
         auto: auto
       });
   }
-}
-
-const setBadge = function(auto) {
-  const text = auto == true ? 'AUTO' : 'REC';
-  chrome.action.setBadgeText({text: text});
 }

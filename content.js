@@ -1,40 +1,83 @@
+/*
+LISTEN for eligible elements via MutationObserver 
+  If already listening, ignore the request message
+  on observe
+    add to _savableSet
+    set _lastObserved = now
+  until stop msg received
+TIMER to see if _savableSet warrants saving
+  5 seconds
+  That's long enough that it warrants saving if it has any values
+  if so, tell the background app to save
+  requeue the timer (until stopped)
+LISTEN for background app to tell us what it successfully saved
+  remove each from _savableSet 
+  _savedCtr++;
+  updateBadgeCtr(_savedCtr);
+TIMER to see if should scroll (if auto)
+  original logic:
+    every 0.5 to 1.5 seconds...
+    get followers
+    if none, tiny scroll and try again
+    if none again, we're done
+  new logic:
+  every 0.5 seconds (min interval)
+  calc desiredRest using a random to get a value of 0.5 to 1.5 seconds
+    that's the baseline range
+  see if desiredRest has elapsed vs _lastObserved (or if _lastObserved is null)
+    if so...
+      let savableCount = _savableSet.length;
+      if savableCount == _preScrollSavableCount;
+        emptyRun = true;  // it means that our prior scroll came up empty
+        _emptyRunCtr++;
+      if _emptyRunCtr > 2... declare us done; else
+      _preScrollSavableCount = savableCount;
+      scroll
+        if emptyRun, tiny scroll, else regular size
+  requeue the timer
+POPUP should know state of whether recording, whether scrolling; offer 'stop' cmd
+*/
+
+// clear prior run's state
+chrome.storage.local.remove('recording');
+
+var _emptyRunCtr = 0;
+var _scrollIsPending = false;
+var _savables = [];
+var _savableHandleSet = new Set(); // to avoid storing dupes
+var _lastObserved = null;
+var _savedCtrl = 0;
+var _preScrollSavableCount = 0;
+var _autoScroll = false;
+var _parsedUrl;
+var _observer;
+
 console.log("Content Script initialized.");
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    
     switch (request.actionType) {
-      case 'recordPage':
+      case 'startRecording':
+        _parsedUrl = parseUrl(window.location.href);
         
-        var parsedUrl = parseUrl(window.location.href);
-        
-        if (parsedUrl) {
-          
-          if (parsedUrl.site == 'twitter') {
-            recordTwitterPage(parsedUrl);
-          }
-          
-          if (request.auto) {
-            // auto-scroll on timer
-          }
+        if (!_observer && _parsedUrl && _parsedUrl.site == 'twitter') {
+          recordTwitter();
         }
+        
         break;
       case 'stopRecording':
-        // stopRecording();
-        // stopScrolling();
+        _observer = undefined;
+        _autoScroll = false;
         break;
       default:
         break;
     }
     
-    //console.log(request);
-    //main2();
-    success = true;
-    sendResponse({auto: request.auto, success: success});
+    sendResponse({auto: request.auto, success: true});
   }
 );
 
-const recordTwitterPage = function(parsedUrl) {
+const recordTwitter = function() {
   
   const mainColumn = getTwitterMainColumn();
   
@@ -42,68 +85,26 @@ const recordTwitterPage = function(parsedUrl) {
     return;
   }
   
-  const cumUrlSet = new Set();
-  processTwitterFollows(mainColumn, cumUrlSet);
-  
-  const observer = new MutationObserver((mutationsList, observer) => {
-      for (const mutation of mutationsList) {
-          if (mutation.type === 'childList') {
-              const nodes = mutation.addedNodes;
-              nodes.forEach(node => {
-                processTwitterFollows(node, cumUrlSet);
-              });
-          }
+  // stackoverflow.com/questions/57468727/when-to-disconnect-mutationobserver-in-chrome-web-extension
+  _observer = new MutationObserver((mutationsList, observer) => {
+    for (let mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        let nodes = mutation.addedNodes;
+        for (let i = 0; i < nodes.length; i++) {
+          let node = nodes[i];
+          processTwitterFollowsOnPage(node);
+        }
       }
+    }
   });
 
-  observer.observe(mainColumn, { 
+  _observer.observe(mainColumn, { 
       attributes: false, 
       childList: true, 
       subtree: true }
   );
-}
 
-const processTwitterFollows = function(parentElm, cumUrlSet) {
-  let records = getTwitterFollowsPage(parentElm, cumUrlSet);
-  
-  for (let i=0; i < records.length; i++) {
-    let record = records[i];
-    console.log(record);
-  }
-}
-
-const randomRest = async function(minRestMs, maxRestMs) {
-  let restMs = Math.random() * (maxRestMs - minRestMs) + minRestMs;
-  await new Promise(r => setTimeout(r, restMs));
-}
-
-const saveTextFile = function(txt, filename) {
-  const a = document.createElement('a');
-  const file = new Blob( [txt], {type: 'text/plain'} );
-  
-  a.href = URL.createObjectURL(file);
-  a.download = filename;
-  a.click();
-
-	URL.revokeObjectURL(a.href);
-  a.remove();
-}
-
-const getPageType = function() {
-  const winUrl = window.location.href;
-  
-  var pageType;
-  
-  if (winUrl.replace("mobile.", "").startsWith('https://twitter.com/')) {
-    if (winUrl.endsWith('/following')) {
-      pageType = 'followingOnTwitter';
-    }
-    else if (winUrl.endsWith('/followers')) { 
-      pageType = 'followersOnTwitter';
-    }
-  }
-  
-  return pageType;
+  processTwitterFollowsOnPage(mainColumn);
 }
 
 const getTwitterMainColumn = function() {
@@ -117,135 +118,68 @@ const getTwitterMainColumn = function() {
   }
 }
 
-const getTwitterFollowsPage = function(mainColumn, cumUrlSet) {
-
-  const all = Array.from(mainColumn.getElementsByTagName('a')).map(function(a) {
+const processTwitterFollowsOnPage = function(parentElm) {
+  
+  // all links
+  const all = Array.from(parentElm.getElementsByTagName('a')).map(function(a) {
     return { u: a.getAttribute('href'), d: a.innerText };
   });
 
+  // those that are handles
   const handles = all.filter(function(a) {
     return a.u.startsWith('/') && a.d.startsWith('@');
   });
   
+  // a hash of the urls
   const urlSet = new Set(handles.map(function(h) { return h.u }));
   
   const ppl = [];
   
-  for (let i=0; i < all.length; i++) {
-    const item = all[i];
+  // loop through all anchors and spot those that are valid handles
+  for (let i = 0; i < all.length; i++) {
+    let item = all[i];
     
     if (item.u && urlSet.has(item.u) && item.d && !item.d.startsWith('@')) {
-      if (!cumUrlSet.has(item.u)) {
-        const per = { h: '@' + item.u.substring(1), d: item.d };
-        ppl.push(per);
-        cumUrlSet.add(item.u);
-      }
+      let per = { h: '@' + item.u.substring(1), d: item.d };
+      ppl.push(per);
     }
   }
   
   if (ppl.length > 0) {
-    console.table(ppl);
+    for (let i = 0; i < ppl.length; i++) {
+      let item = ppl[i];
+      if (!_savableHandleSet.has(item.h)) {
+        _savables.push(item);
+        _savableHandleSet.add(item.h);
+      }
+    }
   }
-  
-  return ppl;
 }
 
-// returns true if more remain
-const saveTwitterFollowsBatch = async function (owner, pageType, mainColumn, minRest, maxRest, maxPages, plainTextOutput) {
-  const cumUrlSet = new Set();
-  const allFollows = [];
-  let hasMore = true;
+const waitAndScroll = function(cntThisRun) {
+  let minRest = 500;  // milliseconds
+  let maxRest = 1500;
+  let scrollBy = 0.8;
   
-  for(let i=0; i < maxPages; i++) {
-    let pageFollows = getTwitterFollowsPage(mainColumn, cumUrlSet);
-
-    if (pageFollows.length == 0) {
-      console.log('checking for false end');
-      // try a tiny scroll then resting again before declaring us done
-      await randomRest(minRest, maxRest);
-      window.scrollBy(0, screen.availHeight * 0.2);
-      await randomRest(minRest * 2, maxRest * 2);
-      pageFollows = getTwitterFollowsPage(mainColumn, cumUrlSet);
-
-      if (pageFollows.length == 0) {
-        hasMore = false;
-        break;
-      }
-    }
-
-    if (pageFollows.length > 0) {
-      allFollows.push(...pageFollows);
-    }
-
-    window.scrollBy(0, screen.availHeight * 0.8);
-    await randomRest(minRest, maxRest);
-  }
-  
-  if (allFollows.length == 0) {
-    return false;
-  }
-  
-  const fileName = pageType + '-' + owner + '.txt';
-  const result = { owner: owner, type: pageType, records: allFollows };
-  
-  if (plainTextOutput) {
-    // human-readable
-    let txt = owner + ' ' + pageType;
-    for(let i=0; i < result.records.length; i++) {
-      let record = result.records[i];
-      txt = txt + '\n' + record.h;
-      if (record.d) {
-        txt = txt + ' = ' + record.d;
-      }
-    }
-    console.log(txt);
-    saveTextFile(txt, fileName);
+  if (cntThisRun == 0) {
+    _emptyRunCtr++;
   }
   else {
-    // json
-    const json = JSON.stringify(result, null, 2);
-    console.log(json);
-    saveTextFile(json, fileName);
+    _emptyRunCtr = 0;
   }
-
-  window.scrollBy(0, screen.availHeight * 0.8);
-  await randomRest(minRest, maxRest);
   
-  return hasMore;
-}
-
-const recordTwitterFollows = async function(pageType, minRest, maxRest, maxPagesPerBatch, plainTextOutput) {
-  const winUrlParts = window.location.href.split('/');
-  const owner = winUrlParts[winUrlParts.length - 2];
-  
-  const mainColumn = getTwitterMainColumn();
-  if (!mainColumn) { return; }
-  
-  console.clear();
-  console.log(owner);
-  console.log(pageType);
-  
-  let hasMore = true;
-  
-  do {
-    hasMore = await saveTwitterFollowsBatch(owner, pageType, mainColumn, minRest, maxRest, maxPagesPerBatch, plainTextOutput);
-  } while (hasMore == true);
-}
-
-const main = async function() {
-  const pageType = getPageType();
-  
-  // expecting about 10 per page, so maxPagesPerBatch of 20 would fetch about 200 before saving one file
-  const minRest = 500;  // milliseconds
-  const maxRest = 1500;
-  const maxPagesPerBatch = 20;
-  const plainTextOutput = true;
-  
-  switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
-      recordTwitterFollows(pageType, minRest, maxRest, maxPagesPerBatch, plainTextOutput);
-      break;
-    default:
+  // backing off the more sure we are that we're done
+  if (_emptyRunCtr > 0) {
+    minRest = minRest * (_emptyRunCtr - 1);
+    maxRest = maxRest * (_emptyRunCtr - 1);
+    scrollBy = 0.2; // tiny scroll
   }
-};
+  
+  let restMs = Math.random() * (maxRest - minRest) + minRest;
+  
+  _scrollIsPending = true;
+  setTimeout(() => {
+    window.scrollBy(0, screen.availHeight * scrollBy);
+    _scrollIsPending = false;
+  }, restMs)  
+}
