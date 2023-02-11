@@ -1,21 +1,26 @@
 chrome.runtime.onMessage.addListener( function(request, sender, sendResponse)
 {
-  if (request.actionType === 'save')
+  switch (request.actionType)
   {
-    switch (request.pageType) {
-      case 'followingOnTwitter':
-        console.log(request.owner + ' is following...');
-        console.table(request.payload);
-        break;
-      case 'followersOnTwitter':
-        console.log(request.owner + ' is followed by...');
-        console.table(request.payload);
-        break;
-      default:
-        return;
-    }
-    
-    sendResponse({saved: request.payload, success: true});
+    case 'save':
+      switch (request.pageType) {
+        case 'followingOnTwitter':
+          console.log(request.owner + ' is following...');
+          console.table(request.payload);
+          break;
+        case 'followersOnTwitter':
+          console.log(request.owner + ' is followed by...');
+          console.table(request.payload);
+          break;
+        default:
+          return;
+      }
+      
+      sendResponse({saved: request.payload, success: true});
+      break;
+    case 'setBadge':
+      chrome.action.setBadgeText({text: request.badgeText});
+      break;
   }
   
   return true;

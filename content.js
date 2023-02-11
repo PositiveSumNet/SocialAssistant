@@ -41,6 +41,10 @@ POPUP should know state of whether recording, whether scrolling; offer 'stop' cm
 // clear prior run's state
 chrome.storage.local.remove('recording');
 
+// clear badge
+chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
+
+// init variables
 var _emptyRunCtr = 0;
 var _scrollIsPending = false;
 var _savables = [];
@@ -70,6 +74,7 @@ chrome.runtime.onMessage.addListener(
       case 'stopRecording':
         _observer = undefined;
         _autoScroll = false;
+        chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
         break;
       default:
         break;
@@ -101,7 +106,10 @@ const setSaveTimer = function() {
             _savedHandleSet.add(item.h);
           }
         }
-        // console.table(_savedHandleSet);
+        
+        chrome.runtime.sendMessage({
+          actionType: 'setBadge',
+          badgeText: _savedHandleSet.size.toString()});
       }
     });
   }
