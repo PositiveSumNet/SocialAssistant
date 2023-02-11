@@ -51,10 +51,24 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-const stopRecording = function(badgeText) {
+const init = function() {
+  _savables = [];
+  _savableHandleSet = new Set(); // to avoid storing dupes
+  _savedHandleSet = new Set();
+  _parsedUrl = undefined;
   _observer = undefined;
+  _lastDiscoveryTime = null;
+  _lastScrollTime = null;
+  _emptyScrollCount = 0;
+  _preScrollCount = 0;
   _autoScroll = false;
+  _scrollIsPending = false;
+}
+
+const stopRecording = function(badgeText) {
+  init();
   chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: badgeText});
+  chrome.storage.local.remove('recording');
 }
 
 const setSaveTimer = function() {
@@ -87,6 +101,10 @@ const setSaveTimer = function() {
           badgeText: badgeNum(_savedHandleSet.size)});
       }
     });
+    
+    // clear
+    _savables = [];
+    _savableHandleSet = new Set();
   }
   
   // every 5 seconds, see if time to save
