@@ -1,43 +1,3 @@
-/*
-LISTEN for eligible elements via MutationObserver 
-  If already listening, ignore the request message
-  on observe
-    add to _savableSet
-    set _lastObserved = now
-  until stop msg received
-TIMER to see if _savableSet warrants saving
-  5 seconds
-  That's long enough that it warrants saving if it has any values
-  if so, tell the background app to save
-  requeue the timer (until stopped)
-LISTEN for background app to tell us what it successfully saved
-  remove each from _savableSet 
-  _savedCtr++;
-  updateBadgeCtr(_savedCtr);
-TIMER to see if should scroll (if auto)
-  original logic:
-    every 0.5 to 1.5 seconds...
-    get followers
-    if none, tiny scroll and try again
-    if none again, we're done
-  new logic:
-  every 0.5 seconds (min interval)
-  calc desiredRest using a random to get a value of 0.5 to 1.5 seconds
-    that's the baseline range
-  see if desiredRest has elapsed vs _lastObserved (or if _lastObserved is null)
-    if so...
-      let savableCount = _savableSet.length;
-      if savableCount == _preScrollSavableCount;
-        emptyRun = true;  // it means that our prior scroll came up empty
-        _emptyRunCtr++;
-      if _emptyRunCtr > 2... declare us done; else
-      _preScrollSavableCount = savableCount;
-      scroll
-        if emptyRun, tiny scroll, else regular size
-  requeue the timer
-POPUP should know state of whether recording, whether scrolling; offer 'stop' cmd
-*/
-
 // clear prior run's state
 chrome.storage.local.remove('recording');
 
@@ -45,16 +5,19 @@ chrome.storage.local.remove('recording');
 chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
 
 // init variables
-var _emptyRunCtr = 0;
-var _scrollIsPending = false;
+// for recording
 var _savables = [];
 var _savableHandleSet = new Set(); // to avoid storing dupes
 var _savedHandleSet = new Set();
-var _lastObserved = null;
-var _preScrollSavableCount = 0;
-var _autoScroll = false;
 var _parsedUrl;
 var _observer;
+// for scrolling
+var _lastDiscoveryTime = null;
+var _lastScrollTime = null;
+var _emptyScrollCount = 0;
+var _preScrollCount = 0;
+var _autoScroll = false;
+var _scrollIsPending = false;
 
 console.log("Content Script initialized.");
 
@@ -64,16 +27,21 @@ chrome.runtime.onMessage.addListener(
       case 'startRecording':
         _parsedUrl = parseUrl(window.location.href);
         
-        if (!_observer && _parsedUrl && _parsedUrl.site == 'twitter') {
+        if (!_observer && _parsedUrl && _parsedUrl.site === 'twitter') {
+          // begin recording
           recordTwitter();
+          // periodically check for collected items to save
           setSaveTimer();
+        }
+        
+        if (request.auto === true && _autoScroll === false) {
+          _autoScroll = true;
+          scrollAsNeeded();
         }
         
         break;
       case 'stopRecording':
-        _observer = undefined;
-        _autoScroll = false;
-        chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
+        stopRecording('');
         break;
       default:
         break;
@@ -83,13 +51,19 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
+const stopRecording = function(badgeText) {
+  _observer = undefined;
+  _autoScroll = false;
+  chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: badgeText});
+}
+
 const setSaveTimer = function() {
   if (!_observer) {
     return;
   }
   
   if (_parsedUrl && _savables.length > 0) {
-    // save
+    // tell background js to save
     chrome.runtime.sendMessage(
     {
       actionType: 'save',
@@ -98,7 +72,7 @@ const setSaveTimer = function() {
       payload: _savables
     }, 
     function(response) {
-      if (response && response.success == true && response.saved && response.saved.length > 0) {
+      if (response && response.success === true && response.saved && response.saved.length > 0) {
         for (let i = 0; i < response.saved.length; i++) {
           let item = response.saved[i];
           if (!_savedHandleSet.has(item.h)) {
@@ -107,6 +81,7 @@ const setSaveTimer = function() {
           }
         }
         
+        // tell background js to update badge
         chrome.runtime.sendMessage({
           actionType: 'setBadge',
           badgeText: badgeNum(_savedHandleSet.size)});
@@ -136,7 +111,6 @@ const recordTwitter = function() {
         for (let i = 0; i < nodes.length; i++) {
           let node = nodes[i];
           processTwitterFollowsOnPage(node);
-          _lastObserved = Date.now();
         }
       }
     }
@@ -154,7 +128,7 @@ const recordTwitter = function() {
 const getTwitterMainColumn = function() {
   const elms = document.querySelectorAll('div[data-testid="primaryColumn"]');
   
-  if (elms && elms.length == 1) {
+  if (elms && elms.length === 1) {
     return elms[0];
   }
   else {
@@ -193,37 +167,78 @@ const processTwitterFollowsOnPage = function(parentElm) {
     for (let i = 0; i < ppl.length; i++) {
       let item = ppl[i];
       if (!_savableHandleSet.has(item.h) && !_savedHandleSet.has(item.h)) {
+        // add newly found handles to what we want to save
         _savables.push(item);
         _savableHandleSet.add(item.h);
+        _lastDiscoveryTime = Date.now();
       }
     }
   }
 }
 
-const waitAndScroll = function(cntThisRun) {
+const scrollAsNeeded = function() {
+  
+  if (_autoScroll != true || !_observer) {
+    return;
+  }
+  
+  let scrollable = true;
+  
+   if (_scrollIsPending === true) {
+     scrollable = false;
+   }
+  
   let minRest = 500;  // milliseconds
   let maxRest = 1500;
   let scrollBy = 0.8;
   
-  if (cntThisRun == 0) {
-    _emptyRunCtr++;
-  }
-  else {
-    _emptyRunCtr = 0;
+  if (scrollable === true && _lastDiscoveryTime == null) {
+    // if we haven't found any records, scrolling isn't expected to help
+    scrollable = false;
   }
   
-  // backing off the more sure we are that we're done
-  if (_emptyRunCtr > 0) {
-    minRest = minRest * (_emptyRunCtr - 1);
-    maxRest = maxRest * (_emptyRunCtr - 1);
-    scrollBy = 0.2; // tiny scroll
-  }
-  
+  // random rest period
   let restMs = Math.random() * (maxRest - minRest) + minRest;
   
-  _scrollIsPending = true;
-  setTimeout(() => {
+  if (scrollable === true && Date.now() < _lastDiscoveryTime + restMs) {
+    // last found item was recent; maybe it was part of a set, so wait
+    scrollable = false;
+  }
+  
+  if (scrollable === true && _lastScrollTime != null && Date.now() < _lastScrollTime + minRest) {
+    // last scroll was recent; let's give it time to take effect
+    scrollable = false;
+  }
+  
+  if (scrollable === true) {
+    // did we come up empty between prior run and now?
+    let count = _savableHandleSet.size + _savedHandleSet.size;
+    let emptyScroll = count <= _preScrollCount;
+    
+    if (emptyScroll === true) {
+      _emptyScrollCount++;
+      scrollBy = 0.2; // we'll micro-scroll
+    }
+    else {
+      _emptyScrollCount = 0;
+    }
+    
+    if (_emptyScrollCount > 3) {
+      // declare this done!
+      stopRecording('DONE');
+      return;
+    }
+    
+    // record current count
+    _preScrollCount = count;
+    // finally, scroll
+    _scrollIsPending = true;
     window.scrollBy(0, screen.availHeight * scrollBy);
     _scrollIsPending = false;
-  }, restMs);
+  }
+  
+  // queue it up again
+  setTimeout(() => {
+    scrollAsNeeded();
+  }, 500);
 }

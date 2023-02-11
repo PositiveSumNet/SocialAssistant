@@ -81,7 +81,7 @@ const kickoffRecording = async function(record, auto) {
     
     // store knowledge that this page is being recorded
     let actionType = '';
-    if (record == true) {
+    if (record === true) {
       chrome.storage.local.set({ recording: tab.url });
       actionType = 'startRecording';
     }
