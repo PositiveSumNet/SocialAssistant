@@ -242,8 +242,7 @@ const scrollAsNeeded = function() {
     }
     
     if (_emptyScrollCount > 3) {
-      // declare this done!
-      stopRecording('DONE');
+      // stop scrolling (avoid re-queueing)
       return;
     }
     
