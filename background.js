@@ -1,7 +1,22 @@
-//chrome.runtime.onMessage.addListener( function(request, sender, sendResponse)
-//{
-//  if (request.action === 'recordFollowers' )
-//  {
-//    console.log(request.auto);
-//  }
-//});
+chrome.runtime.onMessage.addListener( function(request, sender, sendResponse)
+{
+  if (request.actionType === 'save')
+  {
+    switch (request.pageType) {
+      case 'followingOnTwitter':
+        console.log(request.owner + ' is following...');
+        console.table(request.payload);
+        break;
+      case 'followersOnTwitter':
+        console.log(request.owner + ' is followed by...');
+        console.table(request.payload);
+        break;
+      default:
+        return;
+    }
+    
+    sendResponse({saved: request.payload, success: true});
+  }
+  
+  return true;
+});

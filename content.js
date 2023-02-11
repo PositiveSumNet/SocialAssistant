@@ -45,6 +45,7 @@ var _emptyRunCtr = 0;
 var _scrollIsPending = false;
 var _savables = [];
 var _savableHandleSet = new Set(); // to avoid storing dupes
+var _savedHandleSet = new Set();
 var _lastObserved = null;
 var _savedCtrl = 0;
 var _preScrollSavableCount = 0;
@@ -62,6 +63,7 @@ chrome.runtime.onMessage.addListener(
         
         if (!_observer && _parsedUrl && _parsedUrl.site == 'twitter') {
           recordTwitter();
+          setSaveTimer();
         }
         
         break;
@@ -76,6 +78,39 @@ chrome.runtime.onMessage.addListener(
     sendResponse({auto: request.auto, success: true});
   }
 );
+
+const setSaveTimer = function() {
+  if (!_observer) {
+    return;
+  }
+  
+  if (_parsedUrl && _savables.length > 0) {
+    // save
+    chrome.runtime.sendMessage(
+    {
+      actionType: 'save',
+      pageType: _parsedUrl.pageType,
+      owner: _parsedUrl.owner,
+      payload: _savables
+    }, 
+    function(response) {
+      if (response && response.success == true && response.saved && response.saved.length > 0) {
+        for (let i = 0; i < response.saved.length; i++) {
+          let item = response.saved[i];
+          if (!_savedHandleSet.has(item.h)) {
+            _savedHandleSet.add(item.h);
+          }
+        }
+        // console.table(_savedHandleSet);
+      }
+    });
+  }
+  
+  // every 5 seconds, see if time to save
+  setTimeout(() => {
+    setSaveTimer();
+  }, 5000);
+}
 
 const recordTwitter = function() {
   
@@ -93,6 +128,7 @@ const recordTwitter = function() {
         for (let i = 0; i < nodes.length; i++) {
           let node = nodes[i];
           processTwitterFollowsOnPage(node);
+          _lastObserved = Date.now();
         }
       }
     }
@@ -148,7 +184,7 @@ const processTwitterFollowsOnPage = function(parentElm) {
   if (ppl.length > 0) {
     for (let i = 0; i < ppl.length; i++) {
       let item = ppl[i];
-      if (!_savableHandleSet.has(item.h)) {
+      if (!_savableHandleSet.has(item.h) && !_savedHandleSet.has(item.h)) {
         _savables.push(item);
         _savableHandleSet.add(item.h);
       }
@@ -181,5 +217,5 @@ const waitAndScroll = function(cntThisRun) {
   setTimeout(() => {
     window.scrollBy(0, screen.availHeight * scrollBy);
     _scrollIsPending = false;
-  }, restMs)  
+  }, restMs);
 }
