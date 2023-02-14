@@ -4,7 +4,7 @@ chrome.storage.local.remove('recording');
 // clear badge
 chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
 
-// init variables
+// reinit variables
 // for recording
 var _savables = [];
 var _savableHandleSet = new Set(); // to avoid storing dupes
@@ -19,7 +19,7 @@ var _preScrollCount = 0;
 var _autoScroll = false;
 var _scrollIsPending = false;
 
-console.log("Content Script initialized.");
+//console.log("Content Script initialized.");
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
@@ -51,7 +51,7 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-const init = function() {
+const reinit = function() {
   _savables = [];
   _savableHandleSet = new Set(); // to avoid storing dupes
   _savedHandleSet = new Set();
@@ -66,7 +66,7 @@ const init = function() {
 }
 
 const stopRecording = function(badgeText) {
-  init();
+  reinit();
   chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: badgeText});
   chrome.storage.local.remove('recording');
 }
