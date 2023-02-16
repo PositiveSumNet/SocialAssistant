@@ -5,12 +5,8 @@ chrome.runtime.onMessage.addListener( function(request, sender, sendResponse)
     case 'save':
       switch (request.pageType) {
         case 'followingOnTwitter':
-          console.log(request.owner + ' is following...');
-          console.table(request.payload);
-          break;
         case 'followersOnTwitter':
-          console.log(request.owner + ' is followed by...');
-          console.table(request.payload);
+          saveToTempStorage(request);
           break;
         default:
           return;
@@ -21,7 +17,16 @@ chrome.runtime.onMessage.addListener( function(request, sender, sendResponse)
     case 'setBadge':
       chrome.action.setBadgeText({text: request.badgeText});
       break;
+    default:
+      return;
   }
   
   return true;
 });
+
+// caches what we'll want to persist to the sqlitedb when we get the chance
+const saveToTempStorage = function(request) {
+  // the 'fordb-' prefix is how we find all such pending batches
+  const key = 'fordb-' + Date.now().toString();
+  chrome.storage.local.set({ key: request });
+}

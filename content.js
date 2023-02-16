@@ -36,7 +36,8 @@ chrome.runtime.onMessage.addListener(
         
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
-          scrollAsNeeded();
+          let avoidScrollIfHidden = (_parsedUrl.site === 'twitter');
+          scrollAsNeeded(avoidScrollIfHidden);
         }
         
         break;
@@ -194,17 +195,23 @@ const processTwitterFollowsOnPage = function(parentElm) {
   }
 }
 
-const scrollAsNeeded = function() {
+const scrollAsNeeded = function(avoidScrollIfHidden) {
   
   if (_autoScroll != true || !_observer) {
     return;
   }
   
+  let isHidden = document.hidden;
+
   let scrollable = true;
   
-   if (_scrollIsPending === true) {
-     scrollable = false;
-   }
+  if (isHidden === true && avoidScrollIfHidden === true) {
+    scrollable = false;
+  }
+  
+  if (_scrollIsPending === true) {
+    scrollable = false;
+  }
   
   let minRest = 500;  // milliseconds
   let maxRest = 1500;
@@ -234,15 +241,20 @@ const scrollAsNeeded = function() {
     let emptyScroll = count <= _preScrollCount;
     
     if (emptyScroll === true) {
-      _emptyScrollCount++;
+      
+      if (isHidden == true) {
+        // if page isn't visible it doesn't suggest there's no data (just user switched away)
+        _emptyScrollCount++;
+      }
+      
       scrollBy = 0.2; // we'll micro-scroll
     }
     else {
       _emptyScrollCount = 0;
     }
     
-    if (_emptyScrollCount > 3) {
-      // stop scrolling (avoid re-queueing)
+    if (_emptyScrollCount > 3 && isHidden == false) {
+      // stop scrolling (avoid re-queueing) because it looks like we're done
       return;
     }
     

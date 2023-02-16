@@ -17,10 +17,10 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     
     switch (urlInfo.pageType) {
       case 'followingOnTwitter':
-        recordTwitterBanner.innerText = 'Privately record who @' + urlInfo.owner + ' is following:';
+        recordTwitterBanner.innerText = 'Cache who @' + urlInfo.owner + ' is following:';
         break;
       case 'followersOnTwitter':
-        recordTwitterBanner.innerText = 'Privately record followers of @' + urlInfo.owner + ':';
+        recordTwitterBanner.innerText = 'Cache followers of @' + urlInfo.owner + ':';
         break;
       default:
         break;
@@ -64,10 +64,21 @@ btnRecTwitterAutoScroll.addEventListener('click', () => {
 });
 
 const btnRecStop = document.getElementById('btnRecStop');
-btnRecStop.addEventListener('click', () => {
+btnRecStop.addEventListener('click', async () => {
   kickoffRecording(false, false);
+  reviewDb();
   window.close();
 });
+
+const btnReviewDb = document.getElementById('btnReviewDb');
+btnReviewDb.addEventListener('click', async () => {
+  reviewDb();
+  window.close();
+});
+
+const reviewDb = function() {
+  chrome.tabs.create({url: 'index.html'});
+}
 
 const activateApp = function() {
   termsSection.style.display = 'none';
