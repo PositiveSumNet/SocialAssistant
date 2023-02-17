@@ -17,10 +17,10 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     
     switch (urlInfo.pageType) {
       case 'followingOnTwitter':
-        recordTwitterBanner.innerText = 'Cache who @' + urlInfo.owner + ' is following:';
+        recordTwitterBanner.innerText = 'Cache who @' + urlInfo.owner + ' is following';
         break;
       case 'followersOnTwitter':
-        recordTwitterBanner.innerText = 'Cache followers of @' + urlInfo.owner + ':';
+        recordTwitterBanner.innerText = 'Cache followers of @' + urlInfo.owner;
         break;
       default:
         break;

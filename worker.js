@@ -1,5 +1,7 @@
 console.log('Running demo from Worker thread.');
 
+var _sqlite3;
+
 const logHtml = function (cssClass, ...args) {
   postMessage({
     type: 'log',
@@ -11,13 +13,13 @@ const log = (...args) => logHtml('', ...args);
 const warn = (...args) => logHtml('warning', ...args);
 const error = (...args) => logHtml('error', ...args);
 
-const start = function (sqlite3) {
-  const capi = sqlite3.capi; /*C-style API*/
-  const oo = sqlite3.oo1; /*high-level OO API*/
+const start = function () {
+  const capi = _sqlite3.capi; /*C-style API*/
+  const oo = _sqlite3.oo1; /*high-level OO API*/
   log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
   let db;
-  if (sqlite3.opfs) {
-    db = new sqlite3.opfs.OpfsDb('/mydb.sqlite3');
+  if (_sqlite3.opfs) {
+    db = new _sqlite3.opfs.OpfsDb('/mydb.sqlite3');
     log('The OPFS is available.');
   } else {
     db = new oo.DB('/mydb.sqlite3', 'ct');
@@ -49,6 +51,7 @@ const start = function (sqlite3) {
   }
 };
 
+// on startup
 log('Loading and initializing sqlite3 module...');
 
 let sqlite3Js = 'sqlite3.js';
@@ -66,8 +69,31 @@ self
   .then(function (sqlite3) {
     log('Done initializing. Running demo...');
     try {
-      start(sqlite3);
+      _sqlite3 = sqlite3;
+      // demo initialization code
+      start();
+      // tell index.js that worker is ready to receive on-startup data
+      postMessage({ type: 'workerReady' });
     } catch (e) {
       error('Exception:', e.message);
     }
   });
+
+// receive message from index.js
+onmessage = (evt) => {
+  if (evt.data) {
+    switch(evt.data.actionType) {
+      case 'save':
+        xferCacheToDb(evt.data);
+        break;
+      default:
+        break;
+    }
+  }
+};
+
+// data is the request originally cached by background.js
+const xferCacheToDb = function(data) {
+  log(data.pageType);
+  log(data.owner);
+}

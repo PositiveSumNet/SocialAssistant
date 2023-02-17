@@ -28,5 +28,5 @@ chrome.runtime.onMessage.addListener( function(request, sender, sendResponse)
 const saveToTempStorage = function(request) {
   // the 'fordb-' prefix is how we find all such pending batches
   const key = 'fordb-' + Date.now().toString();
-  chrome.storage.local.set({ key: request });
+  chrome.storage.local.set({ [key]: request });
 }

@@ -4,25 +4,17 @@
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
-    <title>Hello, sqlite3</title>
-    <style>
-      .warning,
-      .error {
-        color: red;
-      }
-      .error {
-        background-color: yellow;
-      }
-      body {
-        display: flex;
-        flex-direction: column;
-        font-family: monospace;
-        white-space: break-spaces;
-      }
-    </style>
-    <script src="index.js"></script>
+    <title>Whosum Social Assistant</title>
   </head>
   <body>
-    <h1>Hello, sqlite3</h1>
+    <h1>Locally Cached Social Database</h1>
+    <div id="transferringMsg">
+      <div>Copying recent recordings to local cache...</div>
+      <div id="transferPercent"></div>
+    </div>
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+    <script src="index.js"></script>
   </body>
 </html>
