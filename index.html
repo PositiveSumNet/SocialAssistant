@@ -1,20 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+    <meta charset='utf-8' />
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <link rel='shortcut icon' href='data:image/x-icon;,' type='image/x-icon' />
     <title>Whosum Social Assistant</title>
   </head>
   <body>
     <h1>Locally Cached Social Database</h1>
-    <div id="transferringMsg">
+    <div id='transferringMsg'>
       <div>Copying recent recordings to local cache...</div>
-      <div id="transferPercent"></div>
+      <div id='transferPercent'></div>
     </div>
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/app.css" rel="stylesheet" />
-    <link href="lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
-    <script src="index.js"></script>
+    <footer class='fixed-bottom'>
+      <span>
+        <a href='https://whosum.com/privacy' target='_blank'>Privacy</a> |
+        <a href='https://whosum.com/terms' target='_blank'>Terms</a> |
+        <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a> |
+        <span>SQLite DB Version <span id='sqliteVersionLib'></span></span><span> (OPFS: <span id='sqliteOpfsOk'></span>)</span>
+      </span>
+    </footer>
+    <link href='css/bootstrap/bootstrap.min.css' rel='stylesheet' />
+    <link href='css/app.css' rel='stylesheet' />
+    <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' />
+    <script src='index.js'></script>
   </body>
 </html>

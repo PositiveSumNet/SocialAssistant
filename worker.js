@@ -1,53 +1,59 @@
 console.log('Running demo from Worker thread.');
 
 var _sqlite3;
+var _db;
 
+// legacy logging
 const logHtml = function (cssClass, ...args) {
-  postMessage({
-    type: 'log',
-    payload: { cssClass, args },
-  });
+  postMessage({ type: 'log', payload: { cssClass, args } });
 };
 
 const log = (...args) => logHtml('', ...args);
 const warn = (...args) => logHtml('warning', ...args);
 const error = (...args) => logHtml('error', ...args);
 
+// specific logging
+const reportVersion = function(versionInfo) {
+  postMessage({ type: 'logSqliteVersion', payload: versionInfo });
+}
+
+// initialization
 const start = function () {
   const capi = _sqlite3.capi; /*C-style API*/
   const oo = _sqlite3.oo1; /*high-level OO API*/
-  log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
-  let db;
+  // log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
+  
+  let opfsOk;
   if (_sqlite3.opfs) {
-    db = new _sqlite3.opfs.OpfsDb('/mydb.sqlite3');
-    log('The OPFS is available.');
+    _db = new _sqlite3.opfs.OpfsDb('/mydb.sqlite3');
+    opfsOk = true;
   } else {
-    db = new oo.DB('/mydb.sqlite3', 'ct');
-    log('The OPFS is not available.');
+    _db = new oo.DB('/mydb.sqlite3', 'ct');
+    opfsOk = false;
   }
-  log('transient db =', db.filename);
+  reportVersion( {libVersion: capi.sqlite3_libversion(), sourceId: capi.sqlite3_sourceid(), opfsOk: opfsOk } );
+  // log('transient db =', db.filename);
 
   try {
-    log('Create a table...');
-    db.exec('CREATE TABLE IF NOT EXISTS t(a,b)');
-    log('Insert some data using exec()...');
-    let i;
-    for (i = 20; i <= 25; ++i) {
-      db.exec({
-        sql: 'insert into t(a,b) values (?,?)',
-        bind: [i, i * 2],
-      });
-    }
-    log("Query data with exec() using rowMode 'array'...");
-    db.exec({
-      sql: 'select a from t order by a limit 3',
+    _db.exec("CREATE TABLE IF NOT EXISTS Migration(Id int IDENTITY(1,1) PRIMARY KEY, AppName varchar(128) NOT NULL, Version int, UNIQUE(AppName));");
+    // RDF schema: graph | subject | predicate | object (where predicate and entity type are implied)
+    _db.exec("CREATE TABLE IF NOT EXISTS FollowersOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, Subject varchar(128) NOT NULL, oFollower varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(Subject, oFollower, NamedGraph));");   // s has follower o on Twitter per source 'g'
+    _db.exec("CREATE TABLE IF NOT EXISTS FollowingOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, Subject varchar(128) NOT NULL, oFollowing varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(Subject, oFollowing, NamedGraph));");  // s is following o on Twitter per source 'g'
+    
+    // migration version
+    _db.exec("INSERT INTO Migration(AppName) SELECT 'SocialAssistant' WHERE NOT EXISTS ( SELECT Id FROM Migration );");
+    _db.exec("UPDATE Migration SET Version = 4 WHERE AppName = 'SocialAssistant';");
+    
+    _db.exec({
+      sql: 'SELECT * FROM Migration',
       rowMode: 'array', // 'array' (default), 'object', or 'stmt'
       callback: function (row) {
-        log('row ', ++this.counter, '=', row);
+        log('Migration ', ++this.counter, '=', row);
       }.bind({ counter: 0 }),
     });
-  } finally {
-    db.close();
+  } 
+  finally {
+    _db.close();
   }
 };
 
