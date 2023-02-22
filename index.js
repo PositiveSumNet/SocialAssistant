@@ -13,6 +13,10 @@ const logSqliteVersion = function(versionInfo) {
   //document.getElementById('sqliteSourceId').innerHTML = versionInfo.sourceId;
 }
 
+const logDbScriptVersion = function(versionInfo) {
+  document.getElementById('dbScriptNumber').innerHTML = versionInfo.version.toString();
+}
+
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   for (const [key, val] of Object.entries(all)) {
@@ -32,6 +36,10 @@ worker.onmessage = function ({ data }) {
       break;
     case 'logSqliteVersion':
       logSqliteVersion(data.payload);
+      break;
+    case 'logDbScriptVersion':
+      logDbScriptVersion(data.payload);
+      break;
     case 'workerReady':
       ensureCopiedToDb();
       break;

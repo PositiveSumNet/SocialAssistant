@@ -2,6 +2,9 @@ console.log('Running demo from Worker thread.');
 
 var _sqlite3;
 var _db;
+const _codeVersion = 2;
+
+// LOGGING *****************************************
 
 // legacy logging
 const logHtml = function (cssClass, ...args) {
@@ -13,12 +16,73 @@ const warn = (...args) => logHtml('warning', ...args);
 const error = (...args) => logHtml('error', ...args);
 
 // specific logging
-const reportVersion = function(versionInfo) {
+const reportAppVersion = function(versionInfo) {
   postMessage({ type: 'logSqliteVersion', payload: versionInfo });
 }
 
+const reportDbScriptVersion = function() {
+  _db.exec({
+    sql: "SELECT * FROM Migration WHERE AppName = 'SocialAssistant';",
+    rowMode: 'object',
+    callback: function (row) {
+      postMessage({ type: 'logDbScriptVersion', payload: {version: row.Version} });
+    }
+  });
+}
+
+// INITIALIZATION *****************************************
+
+// migration
+const migrateDbAsNeeded = function() {
+  let dbVersion = 0;
+  
+  // migration prereqs
+  _db.exec("CREATE TABLE IF NOT EXISTS Migration(Id int IDENTITY(1,1) PRIMARY KEY, AppName varchar(128) NOT NULL, Version int, UNIQUE(AppName));");
+  _db.exec("INSERT INTO Migration(AppName, Version) SELECT 'SocialAssistant', 0 WHERE NOT EXISTS ( SELECT Id FROM Migration );");
+  _db.exec("UPDATE Migration SET Version = 1 WHERE AppName = 'SocialAssistant';");
+  
+  // do migration
+  for (let i = 0; i < _codeVersion; i++) {
+    _db.exec({
+      sql: "SELECT * FROM Migration WHERE AppName = 'SocialAssistant';",
+      rowMode: 'object',
+      callback: function (row) {
+        dbVersion = row.Version;
+        
+        if (dbVersion && dbVersion > 0 && dbVersion < _codeVersion) {
+          migrateDb(dbVersion);
+        }
+      }
+    });
+  }
+  
+  // report status
+  reportDbScriptVersion();
+}
+
+// pass in current dbVersion
+const migrateDb = function(dbVersion) {
+  switch(dbVersion) {
+    case 1:
+      // 1 => 2
+      // RDF schema: graph | subject | predicate | object (where predicate and entity type are implied)
+      _db.exec("CREATE TABLE IF NOT EXISTS FollowerOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, sHandle varchar(128) NOT NULL, oFollowerHandle varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(sHandle, oFollowerHandle, NamedGraph));");   // s has follower o on Twitter per source 'g'
+      _db.exec("CREATE INDEX IX_FollowerOnTwitter_os ON FollowerOnTwitter(oFollowerHandle, sHandle);");
+      
+      _db.exec("CREATE TABLE IF NOT EXISTS FollowingOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, sHandle varchar(128) NOT NULL, oFollowingHandle varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(sHandle, oFollowingHandle, NamedGraph));");  // s is following o on Twitter per source 'g'
+      _db.exec("CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oFollowingHandle, sHandle);");
+      
+      // migration version
+      _db.exec("UPDATE Migration SET Version = 2 WHERE AppName = 'SocialAssistant';");
+      break;
+      
+    default:
+      break;
+  }
+}
+
 // initialization
-const start = function () {
+const start = function() {
   const capi = _sqlite3.capi; /*C-style API*/
   const oo = _sqlite3.oo1; /*high-level OO API*/
   // log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
@@ -31,26 +95,10 @@ const start = function () {
     _db = new oo.DB('/mydb.sqlite3', 'ct');
     opfsOk = false;
   }
-  reportVersion( {libVersion: capi.sqlite3_libversion(), sourceId: capi.sqlite3_sourceid(), opfsOk: opfsOk } );
-  // log('transient db =', db.filename);
+  reportAppVersion( {libVersion: capi.sqlite3_libversion(), sourceId: capi.sqlite3_sourceid(), opfsOk: opfsOk } );
 
   try {
-    _db.exec("CREATE TABLE IF NOT EXISTS Migration(Id int IDENTITY(1,1) PRIMARY KEY, AppName varchar(128) NOT NULL, Version int, UNIQUE(AppName));");
-    // RDF schema: graph | subject | predicate | object (where predicate and entity type are implied)
-    _db.exec("CREATE TABLE IF NOT EXISTS FollowersOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, Subject varchar(128) NOT NULL, oFollower varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(Subject, oFollower, NamedGraph));");   // s has follower o on Twitter per source 'g'
-    _db.exec("CREATE TABLE IF NOT EXISTS FollowingOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, Subject varchar(128) NOT NULL, oFollowing varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(Subject, oFollowing, NamedGraph));");  // s is following o on Twitter per source 'g'
-    
-    // migration version
-    _db.exec("INSERT INTO Migration(AppName) SELECT 'SocialAssistant' WHERE NOT EXISTS ( SELECT Id FROM Migration );");
-    _db.exec("UPDATE Migration SET Version = 4 WHERE AppName = 'SocialAssistant';");
-    
-    _db.exec({
-      sql: 'SELECT * FROM Migration',
-      rowMode: 'array', // 'array' (default), 'object', or 'stmt'
-      callback: function (row) {
-        log('Migration ', ++this.counter, '=', row);
-      }.bind({ counter: 0 }),
-    });
+    migrateDbAsNeeded();
   } 
   finally {
     _db.close();
@@ -85,6 +133,8 @@ self
     }
   });
 
+// RECEIVE MESSAGES *****************************************
+
 // receive message from index.js
 onmessage = (evt) => {
   if (evt.data) {
@@ -102,4 +152,5 @@ onmessage = (evt) => {
 const xferCacheToDb = function(data) {
   log(data.pageType);
   log(data.owner);
+  console.log(data);
 }
