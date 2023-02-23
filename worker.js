@@ -2,7 +2,7 @@ console.log('Running demo from Worker thread.');
 
 var _sqlite3;
 var _db;
-const _codeVersion = 2;
+const _codeVersion = 3;
 
 // LOGGING *****************************************
 
@@ -37,9 +37,13 @@ const migrateDbAsNeeded = function() {
   let dbVersion = 0;
   
   // migration prereqs
-  _db.exec("CREATE TABLE IF NOT EXISTS Migration(Id int IDENTITY(1,1) PRIMARY KEY, AppName varchar(128) NOT NULL, Version int, UNIQUE(AppName));");
-  _db.exec("INSERT INTO Migration(AppName, Version) SELECT 'SocialAssistant', 0 WHERE NOT EXISTS ( SELECT Id FROM Migration );");
-  _db.exec("UPDATE Migration SET Version = 1 WHERE AppName = 'SocialAssistant';");
+  // sqlite.org/autoinc.html
+  let initSql = `CREATE TABLE IF NOT EXISTS Migration(AppName varchar(128) NOT NULL, Version int, UNIQUE(AppName));
+    INSERT INTO Migration(AppName, Version) SELECT 'SocialAssistant', 0 WHERE NOT EXISTS ( SELECT ROWID FROM Migration );
+    UPDATE Migration SET Version = 1 WHERE AppName = 'SocialAssistant' AND Version = 0;
+    `;
+  
+  _db.exec(initSql);
   
   // do migration
   for (let i = 0; i < _codeVersion; i++) {
@@ -66,16 +70,51 @@ const migrateDb = function(dbVersion) {
     case 1:
       // 1 => 2
       // RDF schema: graph | subject | predicate | object (where predicate and entity type are implied)
-      _db.exec("CREATE TABLE IF NOT EXISTS FollowerOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, sHandle varchar(128) NOT NULL, oFollowerHandle varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(sHandle, oFollowerHandle, NamedGraph));");   // s has follower o on Twitter per source 'g'
-      _db.exec("CREATE INDEX IX_FollowerOnTwitter_os ON FollowerOnTwitter(oFollowerHandle, sHandle);");
-      
-      _db.exec("CREATE TABLE IF NOT EXISTS FollowingOnTwitter(Id int IDENTITY(1,1) PRIMARY KEY, sHandle varchar(128) NOT NULL, oFollowingHandle varchar(128) NOT NULL, NamedGraph varchar(128) NOT NULL, UNIQUE(sHandle, oFollowingHandle, NamedGraph));");  // s is following o on Twitter per source 'g'
-      _db.exec("CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oFollowingHandle, sHandle);");
-      
-      // migration version
-      _db.exec("UPDATE Migration SET Version = 2 WHERE AppName = 'SocialAssistant';");
+      let sql2 = `
+        /* s has follower o on Twitter per source "g" */ 
+        CREATE TABLE IF NOT EXISTS FollowerOnTwitter(
+        sHandle varchar(128) NOT NULL,
+        oFollowerHandle varchar(128) NOT NULL,
+        NamedGraph varchar(128) NOT NULL,
+        UNIQUE(sHandle, oFollowerHandle, NamedGraph));
+        
+        CREATE INDEX IX_FollowerOnTwitter_os ON FollowerOnTwitter(oFollowerHandle, sHandle);
+        
+        
+        /* s is following o on Twitter per source "g" */
+        CREATE TABLE IF NOT EXISTS FollowingOnTwitter(
+        sHandle varchar(128) NOT NULL,
+        oFollowingHandle varchar(128) NOT NULL,
+        NamedGraph varchar(128) NOT NULL,
+        UNIQUE(sHandle, oFollowingHandle, NamedGraph));
+        
+        CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oFollowingHandle, sHandle);
+        
+        
+        /* migration version */
+        UPDATE Migration SET Version = 2 WHERE AppName = 'SocialAssistant';
+        `;
+        
+      _db.exec(sql2);
       break;
-      
+    case 2:
+      // 2 => 3
+      let sql3 = `
+        CREATE TABLE IF NOT EXISTS TwitterDisplayName(
+        sHandle varchar(128) NOT NULL,
+        oDisplayName varchar(128) NOT NULL,
+        NamedGraph varchar(128) NOT NULL,
+        UNIQUE(sHandle, oDisplayName, NamedGraph));
+        
+        CREATE INDEX IX_TwitterDisplayName_os ON TwitterDisplayName(oDisplayName, sHandle);
+        
+        
+        /* migration version */
+        UPDATE Migration SET Version = 3 WHERE AppName = 'SocialAssistant';
+        `;
+
+      _db.exec(sql3);
+      break;
     default:
       break;
   }
