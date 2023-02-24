@@ -7,7 +7,7 @@
 console.log('Running demo from Worker thread.');
 
 var _sqlite3;
-const _codeVersion = 4;
+const _codeVersion = 2;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
 // LOGGING *****************************************
@@ -77,12 +77,39 @@ const migrateDb = function(db, dbVersion) {
       // 1 => 2
       // RDF schema: graph | subject | predicate | object (where predicate and entity type are implied)
       let sql2 = `
+        /* An import table for Rdf data that can be cleared out based on old ImportTime and processed by batch Guid */
+        /* A 1-to-1 import table has one object per subject (example: display name)); note the uniqueness */
+        CREATE TABLE IF NOT EXISTS RdfImport1to1(
+        BatchUid uniqueidentifier,
+        ImportTime datetime,
+        RdfSubject TEXT NOT NULL,
+        RdfObject TEXT,
+        NamedGraph TEXT NOT NULL,
+        UNIQUE(BatchUid, RdfSubject, NamedGraph));
+        
+        CREATE INDEX IX_RdfImport1to1_BatchUid ON RdfImport1to1(BatchUid);
+        CREATE INDEX IX_RdfImport1to1_ImportTime ON RdfImport1to1(ImportTime);
+
+
+        /* A 1-to-n import table has 'n' objects per subject (example: followers); note the uniqueness */
+        CREATE TABLE IF NOT EXISTS RdfImport1ton(
+        BatchUid uniqueidentifier,
+        ImportTime datetime,
+        RdfSubject TEXT NOT NULL,
+        RdfObject TEXT,
+        NamedGraph TEXT NOT NULL,
+        UNIQUE(BatchUid, RdfSubject, RdfObject, NamedGraph));
+        
+        CREATE INDEX IX_RdfImport1ton_BatchUid ON RdfImport1ton(BatchUid);
+        CREATE INDEX IX_RdfImport1ton_ImportTime ON RdfImport1ton(ImportTime);
+
+
         /* s has follower o on Twitter per source "g" */ 
         CREATE TABLE IF NOT EXISTS FollowerOnTwitter(
         sHandle TEXT NOT NULL,
         oFollowerHandle TEXT NOT NULL,
         NamedGraph TEXT NOT NULL,
-        UNIQUE(sHandle, NamedGraph));
+        UNIQUE(sHandle, oFollowerHandle, NamedGraph));
         
         CREATE INDEX IX_FollowerOnTwitter_os ON FollowerOnTwitter(oFollowerHandle, sHandle);
         
@@ -92,20 +119,12 @@ const migrateDb = function(db, dbVersion) {
         sHandle TEXT NOT NULL,
         oFollowingHandle TEXT NOT NULL,
         NamedGraph TEXT NOT NULL,
-        UNIQUE(sHandle, NamedGraph));
+        UNIQUE(sHandle, oFollowingHandle, NamedGraph));
         
         CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oFollowingHandle, sHandle);
         
         
-        /* migration version */
-        UPDATE Migration SET Version = 2 WHERE AppName = 'SocialAssistant';
-        `;
-        
-      db.exec(sql2);
-      break;
-    case 2:
-      // 2 => 3
-      let sql3 = `
+        /* s has o as its display name on Twitter per source "g" */
         CREATE TABLE IF NOT EXISTS TwitterDisplayName(
         sHandle TEXT NOT NULL,
         oDisplayName TEXT,
@@ -114,34 +133,12 @@ const migrateDb = function(db, dbVersion) {
         
         CREATE INDEX IX_TwitterDisplayName_os ON TwitterDisplayName(oDisplayName, sHandle);
         
-        
-        /* migration version */
-        UPDATE Migration SET Version = 3 WHERE AppName = 'SocialAssistant';
-        `;
 
-      db.exec(sql3);
-      break;
-    case 3:
-      // 3 => 4
-      let sql4 = `
-        /* An import table for Rdf data that can be cleared out based on old ImportTime and processed by batch Guid */
-        CREATE TABLE IF NOT EXISTS RdfImport(
-        BatchUid uniqueidentifier,
-        ImportTime datetime,
-        RdfSubject TEXT NOT NULL,
-        RdfObject TEXT,
-        NamedGraph TEXT NOT NULL,
-        UNIQUE(BatchUid, RdfSubject, NamedGraph));
-        
-        CREATE INDEX IX_RdfImport_BatchUid ON RdfImport(BatchUid);
-        CREATE INDEX IX_RdfImport_ImportTime ON RdfImport(ImportTime);
-        
-        
         /* migration version */
-        UPDATE Migration SET Version = 4 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 2 WHERE AppName = 'SocialAssistant';
         `;
-      
-      db.exec(sql4);
+        
+      db.exec(sql2);
       break;
     default:
       break;
@@ -178,11 +175,13 @@ const start = function() {
   
   try {
     // can uncomment while debugging to reset the db
-    //db.exec("drop table if exists Migration;");
-    //db.exec("drop table if exists RdfImport;");
-    //db.exec("drop table if exists TwitterDisplayName;");
-    //db.exec("drop table if exists FollowingOnTwitter;");
-    //db.exec("drop table if exists FollowerOnTwitter;");
+    db.exec("drop table if exists Migration;");
+    db.exec("drop table if exists RdfImport;");
+    db.exec("drop table if exists RdfImport1to1;");
+    db.exec("drop table if exists RdfImport1ton;");
+    db.exec("drop table if exists TwitterDisplayName;");
+    db.exec("drop table if exists FollowingOnTwitter;");
+    db.exec("drop table if exists FollowerOnTwitter;");
     
     migrateDbAsNeeded(db);
     // we could also clear out stale abandoned import table data on startup (by ImportTime), 
@@ -281,12 +280,12 @@ const saveFollows = function(db, data, tblFollow, tblDisplay, oColName, graph) {
   // dump values into import table
   // note: use of import table streamlines upsert scenarios and de-duping
   const followImportSql = `
-  INSERT INTO RdfImport ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
+  INSERT INTO RdfImport1ton ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
   VALUES ( '${followUid}', datetime('now'), '${data.val.owner}', ?, '${_meGraph}' );
   `;
   
   const handleDisplayImportSql = `
-  INSERT INTO RdfImport ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
+  INSERT INTO RdfImport1to1 ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
   VALUES ( '${handleDisplayUid}', datetime('now'), ?, ?, '${_meGraph}' );
   `;
   
@@ -321,20 +320,20 @@ const saveFollows = function(db, data, tblFollow, tblDisplay, oColName, graph) {
   const upsertFollowSql = `
   REPLACE INTO ${tblFollow} ( sHandle, ${oColName}, NamedGraph )
   SELECT RdfSubject, RdfObject, NamedGraph
-  FROM RdfImport
-  WHERE BatchUid = ${followUid};
+  FROM RdfImport1ton
+  WHERE BatchUid = '${followUid}';
   `;
   
   // now upsert the display names
   const upsertDisplaySql = `
   REPLACE INTO ${tblDisplay} ( sHandle, oDisplayName, NamedGraph )
   SELECT RdfSubject, RdfObject, NamedGraph
-  FROM RdfImport
-  WHERE BatchUid = ${handleDisplayUid};
+  FROM RdfImport1to1
+  WHERE BatchUid = '${handleDisplayUid}';
   `;
   
-  //db.exec(upsertFollowSql);
-  //db.exec(upsertDisplaySql);
+  db.exec(upsertFollowSql);
+  db.exec(upsertDisplaySql);
   
   // tell caller it can clear these
   // using data.key
