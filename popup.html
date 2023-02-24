@@ -16,18 +16,18 @@
     <div id="appSection" style="display:none;">
       <div id="twitterSection">
         <h5 id="recordTwitterBanner">Cache Twitter Follow List</h5>
-        <div id="runnablePageMsg" style="display:none;">
-          <button class="btn-primary m-2" id="btnRecTwitterManualScroll">As I scroll manually</button>
-          <button class="btn-primary m-2" id="btnRecTwitterAutoScroll">With auto-scroll</button>
-          <button class="btn-primary m-2" id="btnRecStop" style="display:none;">Stop recording</button>
+        <div id="runnableTwitterPageMsg" style="display:none;">
+          <button class="btn-primary m-2 ifRecording hideIfRecording" id="btnRecTwitterManualScroll">As I scroll manually</button>
+          <button class="btn-primary m-2 ifRecording hideIfRecording" id="btnRecTwitterAutoScroll">With auto-scroll</button>
+          <button class="btn-primary m-2 ifRecording hideIfNotRecording" id="btnRecTwitterStop" style="display:none;">Stop recording</button>
         </div>
-        <div id="invalidPageMsg" style="display:none;">
+        <div id="invalidTwitterPageMsg" style="display:none;">
           <p style="color:#ff0000">Navigate to the 'followers' or 'following' list of a Twitter account to continue</p>
           <p><a href="https://twitter.com/positivesumnet/following" target="_blank">Click here for an example page</a></p>
         </div>
       </div>
       <br/>
-      <div>
+      <div id="reviewDbSection" class="ifRecording hideIfRecording">
         <h5>Review Social Database</h5>
         <div>
           <button class="btn-primary m-2" id="btnReviewDb">Review Database</button>

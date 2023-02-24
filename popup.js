@@ -12,7 +12,7 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   const urlInfo = parseUrl(tab.url);
   
   if (urlInfo && urlInfo.pageType) {
-    document.getElementById('runnablePageMsg').style.display = 'block';
+    document.getElementById('runnableTwitterPageMsg').style.display = 'block';
     let recordTwitterBanner = document.getElementById('recordTwitterBanner');
     
     switch (urlInfo.pageType) {
@@ -28,21 +28,26 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     
     // reflect button visibility based on whether recording
     chrome.storage.local.get(['recording'], function(result) {
-      if (result.recording == tab.url) {
-        document.getElementById('btnRecTwitterManualScroll').style.display = 'none';
-        document.getElementById('btnRecTwitterAutoScroll').style.display = 'none';
-        document.getElementById('btnRecStop').style.display = 'block';
-      }
-      else {
-        document.getElementById('btnRecTwitterManualScroll').style.display = 'block';
-        document.getElementById('btnRecTwitterAutoScroll').style.display = 'block';
-        document.getElementById('btnRecStop').style.display = 'none';
+      let isRecording = (result.recording == tab.url);
+      let ifRecordings = document.getElementsByClassName('ifRecording');
+      for (let i = 0; i < ifRecordings.length; i++) {
+        let elm = ifRecordings[i];
+        let displayStyle = 'block';
+        
+        if (isRecording === true && elm.classList.contains('hideIfRecording')) {
+          displayStyle = 'none';
+        }
+        else if (isRecording === false && elm.classList.contains('hideIfNotRecording')) {
+          displayStyle = 'none';
+        }
+        
+        elm.style.display = displayStyle;
       }
     });
     
   }
   else {
-    document.getElementById('invalidPageMsg').style.display = 'block';
+    document.getElementById('invalidTwitterPageMsg').style.display = 'block';
   }
 });
 
@@ -63,8 +68,8 @@ btnRecTwitterAutoScroll.addEventListener('click', () => {
   window.close();
 });
 
-const btnRecStop = document.getElementById('btnRecStop');
-btnRecStop.addEventListener('click', async () => {
+const btnRecTwitterStop = document.getElementById('btnRecTwitterStop');
+btnRecTwitterStop.addEventListener('click', async () => {
   kickoffRecording(false, false);
   reviewDb();
   window.close();

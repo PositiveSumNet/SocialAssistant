@@ -238,12 +238,14 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
   if (scrollable === true) {
     // did we come up empty between prior run and now?
     let count = _savableHandleSet.size + _savedHandleSet.size;
+    
     let emptyScroll = count <= _preScrollCount;
     
     if (emptyScroll === true) {
       
-      if (isHidden == true) {
+      if (isHidden === false) {
         // if page isn't visible it doesn't suggest there's no data (just user switched away)
+        // so only boost emptyScrollCount if we're not hidden
         _emptyScrollCount++;
       }
       
@@ -255,6 +257,7 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
     
     if (_emptyScrollCount > 3 && isHidden == false) {
       // stop scrolling (avoid re-queueing) because it looks like we're done
+      chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: 'DONE'});
       return;
     }
     
