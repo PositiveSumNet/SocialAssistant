@@ -21,7 +21,8 @@ const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   for (const [key, val] of Object.entries(all)) {
     if (key.startsWith('fordb-')) {
-      worker.postMessage(val);
+      worker.postMessage({ key: key, val: val });
+      return; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
     }
   }
 }
