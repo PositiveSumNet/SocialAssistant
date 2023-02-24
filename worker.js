@@ -4,8 +4,6 @@
 // sqlite.org/lang_expr.html#varparam
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
-console.log('Running demo from Worker thread.');
-
 var _sqlite3;
 const _codeVersion = 2;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
@@ -335,14 +333,6 @@ const saveFollows = function(db, data, tblFollow, tblDisplay, oColName, graph) {
   db.exec(upsertFollowSql);
   db.exec(upsertDisplaySql);
   
-  // tell caller it can clear these
-  // using data.key
-  
-//  INSERT INTO ${tblName} ( sHandle, ${oColName}, NamedGraph )
-//  VALUES ( ${data.owner}, ?, ${_meGraph} );
-
-  //log(sql);
-  
-  // upsert from import to rdf tables (and clear out import records)
-  
+  // tell caller it can clear that cache key and send over the next one
+  postMessage({ type: 'copiedToDb', cacheKey: data.key });
 }

@@ -17,6 +17,13 @@ const logDbScriptVersion = function(versionInfo) {
   document.getElementById('dbScriptNumber').innerHTML = versionInfo.version.toString();
 }
 
+const onCopiedToDb = async function(cacheKey) {
+  // we can clear out the cache key
+  await chrome.storage.local.remove(cacheKey);
+  // and queue up the next one
+  await ensureCopiedToDb();
+}
+
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   for (const [key, val] of Object.entries(all)) {
@@ -43,6 +50,9 @@ worker.onmessage = function ({ data }) {
       break;
     case 'workerReady':
       ensureCopiedToDb();
+      break;
+    case 'copiedToDb':
+      onCopiedToDb(data.cacheKey);
       break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
