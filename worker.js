@@ -173,13 +173,12 @@ const start = function() {
   
   try {
     // can uncomment while debugging to reset the db
-    db.exec("drop table if exists Migration;");
-    db.exec("drop table if exists RdfImport;");
-    db.exec("drop table if exists RdfImport1to1;");
-    db.exec("drop table if exists RdfImport1ton;");
-    db.exec("drop table if exists TwitterDisplayName;");
-    db.exec("drop table if exists FollowingOnTwitter;");
-    db.exec("drop table if exists FollowerOnTwitter;");
+    // db.exec("drop table if exists Migration;");
+    // db.exec("drop table if exists RdfImport1to1;");
+    // db.exec("drop table if exists RdfImport1ton;");
+    // db.exec("drop table if exists TwitterDisplayName;");
+    // db.exec("drop table if exists FollowingOnTwitter;");
+    // db.exec("drop table if exists FollowerOnTwitter;");
     
     migrateDbAsNeeded(db);
     // we could also clear out stale abandoned import table data on startup (by ImportTime), 
@@ -221,16 +220,63 @@ self
 
 // receive message from index.js
 onmessage = (evt) => {
-  if (evt.data && evt.data.val) {
-    switch(evt.data.val.actionType) {
-      case 'save':
-        xferCacheToDb(evt.data);
-        break;
-      default:
-        break;
-    }
+  console.log(evt);
+  let actionType = getActionType(evt);
+  console.log(actionType);
+  switch(actionType) {
+    case 'save':
+      xferCacheToDb(evt.data);
+      break;
+    case 'networkSearch':
+      networkSearch(evt.data);
+      break;
+    default:
+      break;
   }
 };
+
+const networkSearch = function(search) {
+  // could add a NamedGraph filter
+  let tblFollow = getFollowTable(search.pageType);
+  let oColName = getFollowColumn(search.pageType);
+  let tblDisplay = getDisplayNameTable(search.pageType);
+  
+  // TODO: apply filters, limits, order by, search terms
+  
+  // possible that multiple graphs (sources) provided a display name, so need an aggregate
+  const sql = `
+  SELECT DISTINCT f.${oColName} AS Handle, MAX(d.oDisplayName) AS DisplayName
+  FROM ${tblFollow} f
+  LEFT JOIN ${tblDisplay} d ON d.sHandle = f.${oColName} AND d.NamedGraph = f.NamedGraph
+  GROUP BY f.${oColName}
+  `
+  
+  let db = getDb();
+  try {
+    db.exec({
+      sql: sql, 
+      rowMode: 'object', 
+      callback: function (row) {
+          log(row.Handle + ' | ' + row.DisplayName);
+        }
+      });
+  } 
+  finally {
+    db.close();
+  }
+}
+
+const getActionType = function(evt) {
+  if (evt.data && evt.data.actionType) {
+    return evt.data.actionType;
+  }
+  else if (evt.data && evt.data.val && evt.data.val.actionType) {
+    return evt.data.val.actionType;
+  }
+  else {
+    return undefined;
+  }
+}
 
 // per index.js ensureCopiedToDb, data.key is the storage key of the data we're transferring, and
 // data.val is the request originally cached by background.js (made by setSaveTimer in content.js)
@@ -239,27 +285,21 @@ const xferCacheToDb = function(data) {
   let tblDisplay = '';
   let oColName = '';
   let action = '';
+  let pageType = data.val.pageType;
   
-  switch (data.val.pageType) {
+  switch (pageType) {
     case 'followingOnTwitter':
-      tblFollow = 'FollowingOnTwitter';
-      tblDisplay = 'TwitterDisplayName';
-      oColName = 'oFollowingHandle';
-      action = 'saveFollows';
-      break;
     case 'followersOnTwitter':
-      tblFollow = 'FollowerOnTwitter';
-      tblDisplay = 'TwitterDisplayName';
-      oColName = 'oFollowerHandle';
+      tblFollow = getFollowTable(pageType);
+      oColName = getFollowColumn(pageType);
+      tblDisplay = getDisplayNameTable(pageType);
       action = 'saveFollows';
       break;
     default:
       return;
   }
   
-  
   let db = getDb();
-  
   try {
     if (action == 'saveFollows') {
       saveFollows(db, data, tblFollow, tblDisplay, oColName, _meGraph);
@@ -267,6 +307,38 @@ const xferCacheToDb = function(data) {
   } 
   finally {
     db.close();
+  }
+}
+
+const getFollowColumn = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+      return 'oFollowingHandle';
+    case 'followersOnTwitter':
+      return 'oFollowerHandle';
+    default:
+      return null;
+  }
+}
+
+const getFollowTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+      return 'FollowingOnTwitter';
+    case 'followersOnTwitter':
+      return 'FollowerOnTwitter';
+    default:
+      return null;
+  }
+}
+
+const getDisplayNameTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterDisplayName';
+    default:
+      return null;
   }
 }
 

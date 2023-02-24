@@ -20,18 +20,38 @@ const logDbScriptVersion = function(versionInfo) {
 const onCopiedToDb = async function(cacheKey) {
   // we can clear out the cache key
   await chrome.storage.local.remove(cacheKey);
+  
   // and queue up the next one
-  await ensureCopiedToDb();
+  const transferDone = await ensureCopiedToDb();
+  
+  if (transferDone === true) {
+    runSelectTest();
+  }
+}
+
+const runSelectTest = function() {
+  logHtml('', 'Running SELECT test'); // TEMPORARY
+  worker.postMessage({ 
+    actionType: 'networkSearch', 
+    networkOwner: '*', 
+    searchText: '*', 
+    pageType: 'followersOnTwitter' });
 }
 
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   for (const [key, val] of Object.entries(all)) {
     if (key.startsWith('fordb-')) {
+      logHtml('', 'transferring to db:' + key);
       worker.postMessage({ key: key, val: val });
-      return; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
+      logHtml('', 'transferred to db:' + key);
+      return false; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
     }
   }
+  
+  // if we got to here, we're fully copied
+  logHtml('', 'Fully transferred to DB');   // TEMPORARY
+  return true;
 }
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
