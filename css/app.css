@@ -80,10 +80,15 @@ body {
 }
 
 .bg-subheader {
-  padding-top: 1rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-bottom: 0.5rem;
+  padding: 1rem;
   background-color: #216CB1;
   color: #ffffff;
+}
+
+.bg-header a {
+  color: #ffffff;
+}
+
+.bg-header a:hover {
+  color: #5991C5;
 }
