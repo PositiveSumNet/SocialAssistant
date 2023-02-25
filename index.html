@@ -10,41 +10,15 @@
     <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' />
   </head>
   <body>
-    <div id="app">
-      <div class="page">
-        <div class="sidebar">
-          <div class="top-row ps-3 navbar navbar-dark">
-            <div class="container-fluid">
-              <a class="navbar-brand" style="font-family:Ink Free" href="">+Σ Whosum</a>
-              <button title="Navigation menu" class="navbar-toggler">
-                <span class="navbar-toggler-icon"></span>
-              </button>
-            </div>
-          </div>
-          <div class="not-collapse">
-            <nav class="flex-column">
-              <div class="nav-item px-3">
-                <a href="#" class="nav-link active">Home</a>
-              </div>
-            </nav>
-            <nav class="flex-column">
-              <div class="nav-item px-3">
-                <a href="#" class="nav-link active">Database</a>
-              </div>
-            </nav>
-          </div>
-        </div>
-        <main>
-          <h1 style="font-family:Ink Free">Whosum</h1>
-          <h4 style="font-family:Ink Free">Locally Cached Social Database</h4>
-          <div id='transferringMsg'>Copying recent recordings to local database...</div>
-          <div id="dbui">
-            
-          </div>
-        </main>
+    <div>
+      <h1 class="bg-header inkfree">+Σ Whosum</h1>
+      <h5 class="bg-subheader inkfree">Locally Cached Social Database</h5>
+      <div id="dbui" class="p-3">
+        <div id='transferringMsg' style="display:none;">Copying recent recordings to local database...</div>
+        
       </div>
     </div>
-    <footer class='fixed-bottom'>
+    <div class="fixed-bottom p-3">
       <span>
         <span>SQLite DB Version: <span id='sqliteVersionLib'></span></span>, 
         <span>OPFS: <span id='sqliteOpfsOk'></span></span>, 

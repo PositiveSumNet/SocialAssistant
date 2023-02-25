@@ -41,7 +41,12 @@ const runSelectTest = function() {
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
-  document.getElementById('transferringMsg').innerHTML = 'Copying ' + entries.length + ' pages of data to local database...';
+  const xferring = document.getElementById('transferringMsg');
+  xferring.innerHTML = 'Copying ' + entries.length + ' pages of data to local database...';
+  
+  if (entries.length > 0) {
+    xferring.style.display = 'block';
+  }
   
   for (const [key, val] of entries) {
     if (key.startsWith('fordb-')) {
@@ -51,7 +56,7 @@ const ensureCopiedToDb = async function() {
   }
   
   // if we got to here, we're fully copied
-  document.getElementById('transferringMsg').style.display = 'none';
+  xferring.style.display = 'none';
   // logHtml('', 'Fully transferred to DB');
   return true;
 }
