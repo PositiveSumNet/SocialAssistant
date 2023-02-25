@@ -40,17 +40,19 @@ const runSelectTest = function() {
 
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
-  for (const [key, val] of Object.entries(all)) {
+  const entries = Object.entries(all);
+  document.getElementById('transferringMsg').innerHTML = 'Copying ' + entries.length + ' pages of data to local database...';
+  
+  for (const [key, val] of entries) {
     if (key.startsWith('fordb-')) {
-      logHtml('', 'transferring to db:' + key);
       worker.postMessage({ key: key, val: val });
-      logHtml('', 'transferred to db:' + key);
       return false; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
     }
   }
   
   // if we got to here, we're fully copied
-  logHtml('', 'Fully transferred to DB');   // TEMPORARY
+  document.getElementById('transferringMsg').style.display = 'none';
+  // logHtml('', 'Fully transferred to DB');
   return true;
 }
 

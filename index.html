@@ -5,12 +5,44 @@
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
     <link rel='shortcut icon' href='data:image/x-icon;,' type='image/x-icon' />
     <title>Whosum Social Assistant</title>
+    <link href='css/bootstrap/bootstrap.min.css' rel='stylesheet' />
+    <link href='css/app.css' rel='stylesheet' />
+    <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' />
   </head>
   <body>
-    <h1>Locally Cached Social Database</h1>
-    <div id='transferringMsg'>
-      <div>Copying recent recordings to local cache...</div>
-      <div id='transferPercent'></div>
+    <div id="app">
+      <div class="page">
+        <div class="sidebar">
+          <div class="top-row ps-3 navbar navbar-dark">
+            <div class="container-fluid">
+              <a class="navbar-brand" style="font-family:Ink Free" href="">+Σ Whosum</a>
+              <button title="Navigation menu" class="navbar-toggler">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+            </div>
+          </div>
+          <div class="not-collapse">
+            <nav class="flex-column">
+              <div class="nav-item px-3">
+                <a href="#" class="nav-link active">Home</a>
+              </div>
+            </nav>
+            <nav class="flex-column">
+              <div class="nav-item px-3">
+                <a href="#" class="nav-link active">Database</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+        <main>
+          <h1 style="font-family:Ink Free">Whosum</h1>
+          <h4 style="font-family:Ink Free">Locally Cached Social Database</h4>
+          <div id='transferringMsg'>Copying recent recordings to local database...</div>
+          <div id="dbui">
+            
+          </div>
+        </main>
+      </div>
     </div>
     <footer class='fixed-bottom'>
       <span>
@@ -22,9 +54,6 @@
         <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a>
       </span>
     </footer>
-    <link href='css/bootstrap/bootstrap.min.css' rel='stylesheet' />
-    <link href='css/app.css' rel='stylesheet' />
-    <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' />
     <script src='index.js'></script>
   </body>
 </html>

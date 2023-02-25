@@ -78,7 +78,7 @@ const setSaveTimer = function() {
   }
   
   if (_parsedUrl && _savables.length > 0) {
-    // tell background js to save
+    // tell background js to save to local storage cache
     chrome.runtime.sendMessage(
     {
       actionType: 'save',
@@ -92,7 +92,6 @@ const setSaveTimer = function() {
           let item = response.saved[i];
           if (!_savedHandleSet.has(item.h)) {
             _savedHandleSet.add(item.h);
-            //console.log(item);
           }
         }
         

@@ -2,6 +2,9 @@
 <html style="width:375px; height:600px;">
   <head>
     <title>Whosum Social Assistant</title>
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
   </head>
   <body class="p-4">
     <h1 style="font-family:Ink Free">Whosum Social Assistant</h1>
@@ -11,26 +14,32 @@
       <p>I agree that every citizen of a democracy should be able to cast their vote and have their legal vote counted - without intimidation, violence, or threats of violence.</p>
       <p>I agree that it is imperative to safeguard the health of our environment and preserve a livable Earth for our children and grand-children.</p>
       <p>I understand and agree that THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
-      <button class="btn-primary" id="btnAgreeToTerms">I Agree</button>
+      <button class="btn btn-primary" id="btnAgreeToTerms">I Agree</button>
     </div>
     <div id="appSection" style="display:none;">
       <div id="twitterSection">
         <h5 id="recordTwitterBanner">Cache Twitter Follow List</h5>
         <div id="runnableTwitterPageMsg" style="display:none;">
-          <button class="btn-primary m-2 ifRecording hideIfRecording" id="btnRecTwitterManualScroll">As I scroll manually</button>
-          <button class="btn-primary m-2 ifRecording hideIfRecording" id="btnRecTwitterAutoScroll">With auto-scroll</button>
-          <button class="btn-primary m-2 ifRecording hideIfNotRecording" id="btnRecTwitterStop" style="display:none;">Stop recording</button>
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary ifRecording hideIfRecording" id="btnRecTwitterManualScroll">As I scroll manually</button>
+            <button class="btn btn-primary ifRecording hideIfRecording" id="btnRecTwitterAutoScroll">With auto-scroll</button>
+            <button class="btn btn-primary ifRecording hideIfNotRecording" id="btnRecTwitterStop">Stop recording</button>
+          </div>
         </div>
         <div id="invalidTwitterPageMsg" style="display:none;">
           <p style="color:#ff0000">Navigate to the 'followers' or 'following' list of a Twitter account to continue</p>
-          <p><a href="https://twitter.com/positivesumnet/following" target="_blank">Click here for an example page</a></p>
+          <div class="d-grid gap-2">
+            <a class="btn btn-primary" href="https://twitter.com/positivesumnet/following" target="_blank">View an example page</a>
+          </div>
         </div>
       </div>
       <br/>
       <div id="reviewDbSection" class="ifRecording hideIfRecording">
         <h5>Review Social Database</h5>
         <div>
-          <button class="btn-primary m-2" id="btnReviewDb">Review Database</button>
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary" id="btnReviewDb">Review Database</button>
+          </div>
         </div>
       </div>
     </div>
@@ -41,11 +50,8 @@
       <a href="https://github.com/positivesumnet/socialassistant" target="_blank">Code</a>
     </div>
     <br/>
-    <p><img src="/images/possum800.png" style="width:375px; height:250px;"></p>
+    <div class="text-center"><img src="/images/possum800.png" style="width:255px; height:170px;"></div>
     <script type="text/javascript" src="pageutils.js"></script>
     <script type="text/javascript" src="popup.js"></script>
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/app.css" rel="stylesheet" />
-    <link href="lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
   </body>
 </html>

@@ -190,7 +190,7 @@ const start = function() {
 };
 
 // on startup
-log('Loading and initializing sqlite3 module...');
+// log('Loading and initializing sqlite3 module...');
 
 let sqlite3Js = 'sqlite3.js';
 const urlParams = new URL(self.location.href).searchParams;
@@ -205,7 +205,7 @@ self
     printErr: error,
   })
   .then(function (sqlite3) {
-    log('Done initializing. Running demo...');
+    // log('Done initializing. Running demo...');
     try {
       _sqlite3 = sqlite3;
       start();
@@ -220,9 +220,7 @@ self
 
 // receive message from index.js
 onmessage = (evt) => {
-  console.log(evt);
   let actionType = getActionType(evt);
-  console.log(actionType);
   switch(actionType) {
     case 'save':
       xferCacheToDb(evt.data);
