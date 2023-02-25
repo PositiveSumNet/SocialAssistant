@@ -158,7 +158,7 @@ const processTwitterFollowsOnPage = function(parentElm) {
   
   // all links
   const all = Array.from(parentElm.getElementsByTagName('a')).map(function(a) {
-    return { u: a.getAttribute('href'), d: a.innerText };
+    return { u: a.getAttribute('href'), d: a.innerText, a: a };
   });
 
   // those that are handles
@@ -170,14 +170,31 @@ const processTwitterFollowsOnPage = function(parentElm) {
   const urlSet = new Set(handles.map(function(h) { return h.u }));
   
   const ppl = [];
+  const photos = [];
   
   // loop through all anchors and spot those that are valid handles
   for (let i = 0; i < all.length; i++) {
     let item = all[i];
     
-    if (item.u && urlSet.has(item.u) && item.d && !item.d.startsWith('@')) {
-      let per = { h: '@' + item.u.substring(1), d: item.d };
-      ppl.push(per);
+    if (item.u && urlSet.has(item.u)) {
+      let h = '@' + item.u.substring(1);
+      if (item.d && item.d.length > 1) {
+        if (!item.d.startsWith('@')) {
+          // it had display text (not the @handle)
+          // this is the display name title anchor, usable as the handle/display pair
+          let per = { h: h, d: item.d };
+          ppl.push(per);
+        }
+      }
+      else {
+        // no inner text... is it the image thumbnail?
+        let photoImg = getTwitterProfileImg(item.a);
+
+        if (photoImg) {
+          let photo = { h: h, img: photoImg.src };
+          photos.push(photo);
+        }
+      }
     }
   }
   
@@ -186,12 +203,30 @@ const processTwitterFollowsOnPage = function(parentElm) {
       let item = ppl[i];
       if (!_savableHandleSet.has(item.h) && !_savedHandleSet.has(item.h)) {
         // add newly found handles to what we want to save
+        // first grab its photo url
+        let photo = photos.find(function(p) {
+          return p.h === item.h;
+        });
+        
+        if (photo) {
+          item.img = photo.img;
+        }
+        
+        console.log(item);
+        
         _savables.push(item);
         _savableHandleSet.add(item.h);
         _lastDiscoveryTime = Date.now();
       }
     }
   }
+}
+
+// passing in anchor element for a given user; seek img thumbnail child
+const getTwitterProfileImg = function(a) {
+  return Array.from(a.getElementsByTagName('img')).find(function(img) {
+    return img.getAttribute('src').startsWith('https://pbs.twimg.com/profile_images/')
+  });
 }
 
 const scrollAsNeeded = function(avoidScrollIfHidden) {

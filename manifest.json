@@ -24,7 +24,11 @@
       "js": ["pageutils.js", "content.js"],
       "matches": [
         "https://twitter.com/*",
-        "https://mobile.twitter.com/*"
+        "https://mobile.twitter.com/*",
+        "http://twimg.com/*",
+        "https://twimg.com/*",
+        "http://*.twimg.com/*",
+        "https://*.twimg.com/*"
       ]
     }
   ],
