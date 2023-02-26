@@ -5,7 +5,7 @@
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
 var _sqlite3;
-const _codeVersion = 2;
+const _codeVersion = 3;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
 // LOGGING *****************************************
@@ -85,8 +85,8 @@ const migrateDb = function(db, dbVersion) {
         NamedGraph TEXT NOT NULL,
         UNIQUE(BatchUid, RdfSubject, NamedGraph));
         
-        CREATE INDEX IX_RdfImport1to1_BatchUid ON RdfImport1to1(BatchUid);
-        CREATE INDEX IX_RdfImport1to1_ImportTime ON RdfImport1to1(ImportTime);
+        CREATE INDEX IF NOT EXISTS IX_RdfImport1to1_BatchUid ON RdfImport1to1(BatchUid);
+        CREATE INDEX IF NOT EXISTS IX_RdfImport1to1_ImportTime ON RdfImport1to1(ImportTime);
 
 
         /* A 1-to-n import table has 'n' objects per subject (example: followers); note the uniqueness */
@@ -98,38 +98,38 @@ const migrateDb = function(db, dbVersion) {
         NamedGraph TEXT NOT NULL,
         UNIQUE(BatchUid, RdfSubject, RdfObject, NamedGraph));
         
-        CREATE INDEX IX_RdfImport1ton_BatchUid ON RdfImport1ton(BatchUid);
-        CREATE INDEX IX_RdfImport1ton_ImportTime ON RdfImport1ton(ImportTime);
+        CREATE INDEX IF NOT EXISTS IX_RdfImport1ton_BatchUid ON RdfImport1ton(BatchUid);
+        CREATE INDEX IF NOT EXISTS IX_RdfImport1ton_ImportTime ON RdfImport1ton(ImportTime);
 
 
         /* s has follower o on Twitter per source "g" */ 
         CREATE TABLE IF NOT EXISTS FollowerOnTwitter(
         sHandle TEXT NOT NULL,
-        oFollowerHandle TEXT NOT NULL,
+        oValue TEXT NOT NULL,
         NamedGraph TEXT NOT NULL,
-        UNIQUE(sHandle, oFollowerHandle, NamedGraph));
+        UNIQUE(sHandle, oValue, NamedGraph));
         
-        CREATE INDEX IX_FollowerOnTwitter_os ON FollowerOnTwitter(oFollowerHandle, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_FollowerOnTwitter_os ON FollowerOnTwitter(oValue, sHandle);
         
         
         /* s is following o on Twitter per source "g" */
         CREATE TABLE IF NOT EXISTS FollowingOnTwitter(
         sHandle TEXT NOT NULL,
-        oFollowingHandle TEXT NOT NULL,
+        oValue TEXT NOT NULL,
         NamedGraph TEXT NOT NULL,
-        UNIQUE(sHandle, oFollowingHandle, NamedGraph));
+        UNIQUE(sHandle, oValue, NamedGraph));
         
-        CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oFollowingHandle, sHandle);
+        CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oValue, sHandle);
         
         
         /* s has o as its display name on Twitter per source "g" */
         CREATE TABLE IF NOT EXISTS TwitterDisplayName(
         sHandle TEXT NOT NULL,
-        oDisplayName TEXT,
+        oValue TEXT,
         NamedGraph TEXT NOT NULL,
         UNIQUE(sHandle, NamedGraph));
         
-        CREATE INDEX IX_TwitterDisplayName_os ON TwitterDisplayName(oDisplayName, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterDisplayName_os ON TwitterDisplayName(oValue, sHandle);
         
 
         /* migration version */
@@ -137,6 +137,35 @@ const migrateDb = function(db, dbVersion) {
         `;
         
       db.exec(sql2);
+      break;
+    case 2:
+      // 2 => 3
+      let sql3 = `
+        /* s has cdn image url o on Twitter per source "g" */
+        CREATE TABLE IF NOT EXISTS TwitterImgCdnUrl(
+        sHandle TEXT NOT NULL,
+        oValue TEXT,
+        NamedGraph TEXT NOT NULL,
+        UNIQUE(sHandle, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterImgCdnUrl_os ON TwitterImgCdnUrl(oValue, sHandle);
+        
+
+        /* s has image data url (*stored here as base 64*) o on Twitter per source "g" */
+        CREATE TABLE IF NOT EXISTS TwitterImg64Url(
+        sHandle TEXT NOT NULL,
+        oValue TEXT,
+        NamedGraph TEXT NOT NULL,
+        UNIQUE(sHandle, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterImg64Url_os ON TwitterImg64Url(oValue, sHandle);
+        
+
+        /* migration version */
+        UPDATE Migration SET Version = 3 WHERE AppName = 'SocialAssistant';
+      `;
+      
+      db.exec(sql3);
       break;
     default:
       break;
@@ -179,6 +208,8 @@ const start = function() {
     // db.exec("drop table if exists TwitterDisplayName;");
     // db.exec("drop table if exists FollowingOnTwitter;");
     // db.exec("drop table if exists FollowerOnTwitter;");
+    // db.exec("drop table if exists TwitterImgCdnUrl;");
+    // db.exec("drop table if exists TwitterImg64Url;");
     
     migrateDbAsNeeded(db);
     // we could also clear out stale abandoned import table data on startup (by ImportTime), 
@@ -236,17 +267,16 @@ onmessage = (evt) => {
 const networkSearch = function(search) {
   // could add a NamedGraph filter
   let tblFollow = getFollowTable(search.pageType);
-  let oColName = getFollowColumn(search.pageType);
   let tblDisplay = getDisplayNameTable(search.pageType);
   
   // TODO: apply filters, limits, order by, search terms
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
-  SELECT DISTINCT f.${oColName} AS Handle, MAX(d.oDisplayName) AS DisplayName
+  SELECT DISTINCT f.oValue AS Handle, MAX(d.oValue) AS DisplayName
   FROM ${tblFollow} f
-  LEFT JOIN ${tblDisplay} d ON d.sHandle = f.${oColName} AND d.NamedGraph = f.NamedGraph
-  GROUP BY f.${oColName}
+  LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
+  GROUP BY f.oValue
   `
   
   let db = getDb();
@@ -279,43 +309,15 @@ const getActionType = function(evt) {
 // per index.js ensureCopiedToDb, data.key is the storage key of the data we're transferring, and
 // data.val is the request originally cached by background.js (made by setSaveTimer in content.js)
 const xferCacheToDb = function(data) {
-  let tblFollow = '';
-  let tblDisplay = '';
-  let oColName = '';
-  let action = '';
-  let pageType = data.val.pageType;
-  
-  switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
-      tblFollow = getFollowTable(pageType);
-      oColName = getFollowColumn(pageType);
-      tblDisplay = getDisplayNameTable(pageType);
-      action = 'saveFollows';
-      break;
-    default:
-      return;
-  }
-  
+  let meta = getSaveMetadata(data.val.pageType);
   let db = getDb();
   try {
-    if (action == 'saveFollows') {
-      saveFollows(db, data, tblFollow, tblDisplay, oColName, _meGraph);
+    if (meta.action == 'saveFollows') {
+      saveFollows(db, data, meta, _meGraph);
     }
   } 
   finally {
     db.close();
-  }
-}
-
-const getFollowColumn = function(pageType) {
-  switch (pageType) {
-    case 'followingOnTwitter':
-      return 'oFollowingHandle';
-    case 'followersOnTwitter':
-      return 'oFollowerHandle';
-    default:
-      return null;
   }
 }
 
@@ -340,27 +342,78 @@ const getDisplayNameTable = function(pageType) {
   }
 }
 
-const saveFollows = function(db, data, tblFollow, tblDisplay, oColName, graph) {
+const getSaveMetadata = function(pageType) {
+  let action = '';
+  let tblImgCdnUrl = '';
+  let tblImg64Url = '';
+  const tblFollow = getFollowTable(pageType);
+  let tblDisplayName = getDisplayNameTable(pageType);
+  
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      action = 'saveFollows';
+      tblImgCdnUrl = 'TwitterImgCdnUrl';
+      tblImg64Url = 'TwitterImg64Url';
+      break;
+    default:
+      return null;
+  }
+  
+  return {
+    action: action,
+    tblFollow: tblFollow,
+    tblDisplayName: tblDisplayName,
+    tblImgCdnUrl: tblImgCdnUrl,
+    tblImg64Url: tblImg64Url
+  };
+}
+
+const writeImportSql = function(uid, s, o, g) {
+  return `
+  INSERT INTO RdfImport1ton ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
+  VALUES ( '${uid}', datetime('now'), ${s}, ${o}, ${g} );
+  `;
+}
+
+const writeUpsertSql = function(uid, tbl, oneToOne, s = 'sHandle', o = 'oValue') {
+  const importTable = oneToOne === true ? 'RdfImport1to1' : 'RdfImport1ton';
+  
+  return `
+  REPLACE INTO ${tbl} ( ${s}, ${o}, NamedGraph )
+  SELECT RdfSubject, RdfObject, NamedGraph
+  FROM ${importTable}
+  WHERE BatchUid = '${uid}';
+  `;
+}
+
+const saveFollows = function(db, data, meta, graph) {
   // guids for this batch
   const followUid = crypto.randomUUID();
   const handleDisplayUid = crypto.randomUUID();
+  const imgCdnUid = crypto.randomUUID();
+  const img64Uid = crypto.randomUUID();
   
   // dump values into import table
   // note: use of import table streamlines upsert scenarios and de-duping
-  const followImportSql = `
-  INSERT INTO RdfImport1ton ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
-  VALUES ( '${followUid}', datetime('now'), '${data.val.owner}', ?, '${_meGraph}' );
-  `;
   
-  const handleDisplayImportSql = `
-  INSERT INTO RdfImport1to1 ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
-  VALUES ( '${handleDisplayUid}', datetime('now'), ?, ?, '${_meGraph}' );
-  `;
+  // By holding to the convention oValue for the object value column
+  // and sHandle for the subject column, we get by specifying less metadata
+
+  // follower/following
+  const gParm = `'${graph}'`;
+  const followImportSql = writeImportSql(followUid, `'${data.val.owner}'`, `?`, gParm);
+  const handleDisplayImportSql = writeImportSql(handleDisplayUid, `?`, `?`, gParm);
+  const imgCdnImportSql = writeImportSql(imgCdnUid, `?`, `?`, gParm);
+  const img64ImportSql = writeImportSql(img64Uid, `?`, `?`, gParm);
   
   // bind: sql.js.org/documentation/Statement.html#%255B%2522free%2522%255D
   // sqlite.org/wasm/doc/tip/api-oo1.md       <== especially relevant
+  
   const followImportStep = db.prepare(followImportSql);
   const handleDisplayImportStep = db.prepare(handleDisplayImportSql);
+  const imgCdnImportStep = db.prepare(imgCdnImportSql);
+  const img64ImportStep = db.prepare(img64ImportSql);
   
   try {
     for (let i = 0; i < data.val.payload.length; i++) {
@@ -374,6 +427,18 @@ const saveFollows = function(db, data, tblFollow, tblDisplay, oColName, graph) {
         handleDisplayImportStep.step();
         handleDisplayImportStep.reset();
       }
+      
+      if (follow.imgCdnUrl) {
+        imgCdnImportStep.bind([follow.h, follow.imgCdnUrl]);
+        imgCdnImportStep.step();
+        imgCdnImportStep.reset();
+      }
+      
+      if (follow.img64Url) {
+        img64ImportStep.bind([follow.h, follow.img64Url]);
+        img64ImportStep.step();
+        img64ImportStep.reset();
+      }
     }
   }
   finally {
@@ -381,27 +446,21 @@ const saveFollows = function(db, data, tblFollow, tblDisplay, oColName, graph) {
     // sql.js.org/#/?id=api-documentation
     followImportStep.finalize();
     handleDisplayImportStep.finalize();
+    imgCdnImportStep.finalize();
+    img64ImportStep.finalize();
   }
   
   // process temp into final
-  // (import table is already distinct, so distinct keyword isn't needed)
-  const upsertFollowSql = `
-  REPLACE INTO ${tblFollow} ( sHandle, ${oColName}, NamedGraph )
-  SELECT RdfSubject, RdfObject, NamedGraph
-  FROM RdfImport1ton
-  WHERE BatchUid = '${followUid}';
-  `;
+  const upsertFollowSql = writeUpsertSql(followUid, meta.tblFollow, false,);
+  const upsertDisplaySql = writeUpsertSql(handleDisplayUid, meta.tblDisplayName, true);
+  const upsertImgCdnSql = writeUpsertSql(imgCdnUid, meta.tblImgCdnUrl, true);
+  const upsertImg64Sql = writeUpsertSql(img64Uid, meta.tblImg64Url, true);
   
-  // now upsert the display names
-  const upsertDisplaySql = `
-  REPLACE INTO ${tblDisplay} ( sHandle, oDisplayName, NamedGraph )
-  SELECT RdfSubject, RdfObject, NamedGraph
-  FROM RdfImport1to1
-  WHERE BatchUid = '${handleDisplayUid}';
-  `;
-  
+  // now upsert the imgCdnUrls
   db.exec(upsertFollowSql);
   db.exec(upsertDisplaySql);
+  db.exec(upsertImgCdnSql);
+  db.exec(upsertImg64Sql);
   
   // tell caller it can clear that cache key and send over the next one
   postMessage({ type: 'copiedToDb', cacheKey: data.key });

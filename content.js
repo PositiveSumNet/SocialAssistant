@@ -18,6 +18,7 @@ var _emptyScrollCount = 0;
 var _preScrollCount = 0;
 var _autoScroll = false;
 var _scrollIsPending = false;
+var _countWhenScrollDoneSet;
 
 //console.log("Content Script initialized.");
 
@@ -62,6 +63,7 @@ const reinit = function() {
   _lastScrollTime = null;
   _emptyScrollCount = 0;
   _preScrollCount = 0;
+  _countWhenScrollDoneSet = undefined;
   _autoScroll = false;
   _scrollIsPending = false;
 }
@@ -95,10 +97,12 @@ const setSaveTimer = function() {
           }
         }
         
-        // tell background js to update badge
-        chrome.runtime.sendMessage({
-          actionType: 'setBadge',
-          badgeText: badgeNum(_savedHandleSet.size)});
+        if (_countWhenScrollDoneSet != _savableHandleSet.size + _savedHandleSet.size) {
+          // tell background js to update badge (the condition is so that we don't set to a number when 'DONE' was in place)
+          chrome.runtime.sendMessage({
+            actionType: 'setBadge',
+            badgeText: badgeNum(_savedHandleSet.size)});
+        }
       }
     });
     
@@ -150,7 +154,7 @@ const getTwitterMainColumn = function() {
     return elms[0];
   }
   else {
-    console.log('Cannot find twitter main column; page structure may have changed.');
+    console.error('Cannot find twitter main column; page structure may have changed.');
   }
 }
 
@@ -209,10 +213,8 @@ const processTwitterFollowsOnPage = function(parentElm) {
         });
         
         if (photo) {
-          item.img = photo.img;
+          item.imgCdnUrl = photo.img;
         }
-        
-        console.log(item);
         
         _savables.push(item);
         _savableHandleSet.add(item.h);
@@ -288,9 +290,10 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
     else {
       _emptyScrollCount = 0;
     }
-    
+      
     if (_emptyScrollCount > 3 && isHidden == false) {
       // stop scrolling (avoid re-queueing) because it looks like we're done
+      _countWhenScrollDoneSet = count;
       chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: 'DONE'});
       return;
     }

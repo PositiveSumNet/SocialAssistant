@@ -6,10 +6,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         switch (request.pageType) {
           case 'followingOnTwitter':
           case 'followersOnTwitter':
+            await injectImageBase64s(request);
             saveToTempStorage(request);
-            // TEMP TEST CODE RE THUMBNAILS
-            let uri = await getImageBase64("https://pbs.twimg.com/profile_images/1467370965122306049/mrQQz5CA_x96.jpg");
-            console.log(uri);
             break;
           default:
             return;
@@ -27,10 +25,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
+// TODO: Parallel tasks like one of these
+// bytelimes.com/batch-async-tasks-with-async-generators/
+// stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
+const injectImageBase64s = async function(request) {
+  for (let i = 0; i < request.payload.length; i++) {
+    let item = request.payload[i];
+    if (item.imgCdnUrl) {
+      item.img64Url = await getImageBase64(item.imgCdnUrl);
+    }
+  }
+}
+
 // caches what we'll want to persist to the sqlitedb when we get the chance
 const saveToTempStorage = function(request) {
   // the 'fordb-' prefix is how we find all such pending batches
   const key = 'fordb-' + Date.now().toString();
+  
+  for (let i = 0; i < request.payload.length; i++) {
+    let item = request.payload[i];
+  }
+  
   chrome.storage.local.set({ [key]: request });
 }
 
