@@ -25,12 +25,11 @@ const onCopiedToDb = async function(cacheKey) {
   const transferDone = await ensureCopiedToDb();
   
   if (transferDone === true) {
-    runSelectTest();
+    // can do any other "fully initialized" work here
   }
 }
 
 const runSelectTest = function() {
-  logHtml('', 'Running SELECT test'); // TEMPORARY
   worker.postMessage({ 
     actionType: 'networkSearch', 
     networkOwner: '*', 
@@ -57,7 +56,10 @@ const ensureCopiedToDb = async function() {
   
   // if we got to here, we're fully copied
   xferring.style.display = 'none';
+  
   // logHtml('', 'Fully transferred to DB');
+  runSelectTest();
+  
   return true;
 }
 
