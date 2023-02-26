@@ -83,6 +83,8 @@ worker.onmessage = function ({ data }) {
     case 'copiedToDb':
       onCopiedToDb(data.cacheKey);
       break;
+//    case 'renderFollow':
+  //    renderFollow(data);
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;

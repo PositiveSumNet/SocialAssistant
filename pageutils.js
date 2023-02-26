@@ -39,3 +39,16 @@ const badgeNum = function(num) {
     return num.toString();
   }
 }
+
+const sameText = function(a, b, insensitive = true) {
+  if (a === b) {
+    return true;
+  }
+  
+  if (insensitive && a && b) {
+    return a.toLowerCase() === b.toLowerCase();
+  }
+  else {
+    return false;
+  }
+}

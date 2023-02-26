@@ -271,14 +271,18 @@ const networkSearch = function(search) {
   // could add a NamedGraph filter
   let tblFollow = getFollowTable(search.pageType);
   let tblDisplay = getDisplayNameTable(search.pageType);
+  let tblImgCdnUrl = getImgCdnUrlTable(search.pageType);
+  let tblImg64Url = getImg64UrlTable(search.pageType);
   
   // TODO: apply filters, limits, order by, search terms
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
-  SELECT DISTINCT f.oValue AS Handle, MAX(d.oValue) AS DisplayName
+  SELECT DISTINCT f.oValue AS Handle, MAX(d.oValue) AS DisplayName, MAX(imgcdn.oValue) AS ImgCdnUrl, MAX(img64.oValue) AS Img64Url
   FROM ${tblFollow} f
   LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
+  LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
+  LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
   GROUP BY f.oValue
   `
   
@@ -288,7 +292,7 @@ const networkSearch = function(search) {
       sql: sql, 
       rowMode: 'object', 
       callback: function (row) {
-          log(row.Handle + ' | ' + row.DisplayName);
+          log(row.Handle + ' | ' + row.DisplayName + ' | ' + row.ImgCdnUrl + ' | ' + row.Img64Url);
         }
       });
   } 
@@ -345,19 +349,36 @@ const getDisplayNameTable = function(pageType) {
   }
 }
 
+const getImgCdnUrlTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterImgCdnUrl';
+    default:
+      return null;
+  }
+}
+
+const getImg64UrlTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterImg64Url';
+    default:
+      return null;
+  }
+}
 const getSaveMetadata = function(pageType) {
-  let action = '';
-  let tblImgCdnUrl = '';
-  let tblImg64Url = '';
   const tblFollow = getFollowTable(pageType);
   let tblDisplayName = getDisplayNameTable(pageType);
+  let tblImgCdnUrl = getImgCdnUrlTable(pageType);
+  let tblImg64Url = getImg64UrlTable(pageType);
   
+  let action = '';
   switch (pageType) {
     case 'followingOnTwitter':
     case 'followersOnTwitter':
       action = 'saveFollows';
-      tblImgCdnUrl = 'TwitterImgCdnUrl';
-      tblImg64Url = 'TwitterImg64Url';
       break;
     default:
       return null;
