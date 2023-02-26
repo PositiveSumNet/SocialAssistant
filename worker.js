@@ -201,15 +201,18 @@ const start = function() {
   let db = getDb(true);
   
   try {
-    // can uncomment while debugging to reset the db
-    // db.exec("drop table if exists Migration;");
-    // db.exec("drop table if exists RdfImport1to1;");
-    // db.exec("drop table if exists RdfImport1ton;");
-    // db.exec("drop table if exists TwitterDisplayName;");
-    // db.exec("drop table if exists FollowingOnTwitter;");
-    // db.exec("drop table if exists FollowerOnTwitter;");
-    // db.exec("drop table if exists TwitterImgCdnUrl;");
-    // db.exec("drop table if exists TwitterImg64Url;");
+    // can set to true while debugging to reset the db
+    const startOver = true;
+    if (startOver === false) {
+      db.exec("drop table if exists Migration;");
+      db.exec("drop table if exists RdfImport1to1;");
+      db.exec("drop table if exists RdfImport1ton;");
+      db.exec("drop table if exists TwitterDisplayName;");
+      db.exec("drop table if exists FollowingOnTwitter;");
+      db.exec("drop table if exists FollowerOnTwitter;");
+      db.exec("drop table if exists TwitterImgCdnUrl;");
+      db.exec("drop table if exists TwitterImg64Url;");
+    }
     
     migrateDbAsNeeded(db);
     // we could also clear out stale abandoned import table data on startup (by ImportTime), 
@@ -369,22 +372,94 @@ const getSaveMetadata = function(pageType) {
   };
 }
 
-const writeImportSql = function(uid, s, o, g) {
-  return `
-  INSERT INTO RdfImport1ton ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
-  VALUES ( '${uid}', datetime('now'), ${s}, ${o}, ${g} );
-  `;
+// we want a parameterized query with the speed of the "VALUES (...), (...), (...)" syntax
+// sqlite allows hard limit of 999 parms
+const execBulkImport = function(db, oneToOne, uid, s, o, g, sogs) {
+  if (!sogs || sogs.length == 0) {
+    // nothing to do
+    return;
+  }
+  
+  // see how many ? parms per insert
+  let qPer = 0;
+  let bindS = false;
+  let bindO = false;
+  let bindG = false;
+  if (s === '?') { 
+    qPer++;
+    bindS = true;
+  }
+  if (o === '?') { 
+    qPer++;
+    bindO = true;
+  }
+  if (g === '?') { 
+    qPer++;
+    bindG = true;
+  }
+  
+  const maxParm = 999;
+  const maxInsertsPerStep = 2000;  // bulk import of tons of values at once not worth it
+  // suppose 1000 items with 2 parms... 3 batches
+  // see how many batches we'll require
+  const numBatches = qPer === 0 ? Math.ceil(sogs.length / maxInserts) : Math.ceil((sogs.length * qPer) / maxParm);
+  const perBatch = qPer === 0 ? maxInsertsPerStep : Math.floor(sogs.length / numBatches);
+  let skip = 0;
+  
+  const importTable = getImportTable(oneToOne);
+  
+  const baseSql = `
+  INSERT INTO ${importTable} ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
+  VALUES `;
+  
+  for (let i = 0; i < numBatches; i++) {
+    // let's process the next batch
+    let batchSogs = sogs.slice(skip, skip + perBatch);
+    let sql = baseSql;
+    let bind = [];
+    let didOne = false;
+    
+    for (let j = 0; j < batchSogs.length; j++) {
+      let sog = batchSogs[j];
+      let comma = didOne === true ? ', ' : '';
+      
+      sql = `${sql}${comma}( '${uid}', datetime('now'), ${s}, ${o}, ${g} )`;
+      
+      // build up the bound parms
+      if (bindS === true) {
+        bind.push(sog.s);
+      }
+      if (bindO === true) {
+        bind.push(sog.o);
+      }
+      if (bindG === true) {
+        bind.push(sog.g);
+      }
+      
+      didOne = true;
+    }
+    
+    sql = `${sql};`
+    // execute the batch
+    db.exec({sql: sql, bind: bind});
+  }
 }
 
-const writeUpsertSql = function(uid, tbl, oneToOne, s = 'sHandle', o = 'oValue') {
-  const importTable = oneToOne === true ? 'RdfImport1to1' : 'RdfImport1ton';
+const getImportTable = function(oneToOne) {
+  return oneToOne === true ? 'RdfImport1to1' : 'RdfImport1ton';
+}
+
+const execUpsert = function(db, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue') {
+  const importTable = getImportTable(oneToOne);
   
-  return `
+  const sql = `
   REPLACE INTO ${tbl} ( ${s}, ${o}, NamedGraph )
   SELECT RdfSubject, RdfObject, NamedGraph
   FROM ${importTable}
   WHERE BatchUid = '${uid}';
   `;
+  
+  db.exec(sql);
 }
 
 const saveFollows = function(db, data, meta, graph) {
@@ -396,70 +471,37 @@ const saveFollows = function(db, data, meta, graph) {
   
   // dump values into import table
   // note: use of import table streamlines upsert scenarios and de-duping
-  
-  // By holding to the convention oValue for the object value column
-  // and sHandle for the subject column, we get by specifying less metadata
-
-  // follower/following
+  const qMark = `?`;
   const gParm = `'${graph}'`;
-  const followImportSql = writeImportSql(followUid, `'${data.val.owner}'`, `?`, gParm);
-  const handleDisplayImportSql = writeImportSql(handleDisplayUid, `?`, `?`, gParm);
-  const imgCdnImportSql = writeImportSql(imgCdnUid, `?`, `?`, gParm);
-  const img64ImportSql = writeImportSql(img64Uid, `?`, `?`, gParm);
   
-  // bind: sql.js.org/documentation/Statement.html#%255B%2522free%2522%255D
-  // sqlite.org/wasm/doc/tip/api-oo1.md       <== especially relevant
+  // only need to specify the aspects of the sog that are per-item variables
+  const followSogs = data.val.payload.map(function(x) {
+    return {o: x.h};
+  });
   
-  const followImportStep = db.prepare(followImportSql);
-  const handleDisplayImportStep = db.prepare(handleDisplayImportSql);
-  const imgCdnImportStep = db.prepare(imgCdnImportSql);
-  const img64ImportStep = db.prepare(img64ImportSql);
+  const handleDisplaySogs = data.val.payload.map(function(x) {
+    return {s: x.h, o: x.d};
+  });
+
+  const imgCdnSogs = data.val.payload.map(function(x) {
+    return {s: x.h, o: x.imgCdnUrl};
+  });
+
+  const img64Sogs = data.val.payload.map(function(x) {
+    return {s: x.h, o: x.img64Url};
+  });
   
-  try {
-    for (let i = 0; i < data.val.payload.length; i++) {
-      let follow = data.val.payload[i];
-      followImportStep.bind([follow.h]);
-      followImportStep.step();
-      followImportStep.reset();
-      
-      if (follow.d) {
-        handleDisplayImportStep.bind([follow.h, follow.d]);
-        handleDisplayImportStep.step();
-        handleDisplayImportStep.reset();
-      }
-      
-      if (follow.imgCdnUrl) {
-        imgCdnImportStep.bind([follow.h, follow.imgCdnUrl]);
-        imgCdnImportStep.step();
-        imgCdnImportStep.reset();
-      }
-      
-      if (follow.img64Url) {
-        img64ImportStep.bind([follow.h, follow.img64Url]);
-        img64ImportStep.step();
-        img64ImportStep.reset();
-      }
-    }
-  }
-  finally {
-    // free memory
-    // sql.js.org/#/?id=api-documentation
-    followImportStep.finalize();
-    handleDisplayImportStep.finalize();
-    imgCdnImportStep.finalize();
-    img64ImportStep.finalize();
-  }
+  // bulk import
+  execBulkImport(db, false, followUid, `'${data.val.owner}'`, qMark, gParm, followSogs);
+  execBulkImport(db, true, handleDisplayUid, qMark, qMark, gParm, handleDisplaySogs);
+  execBulkImport(db, true, imgCdnUid, qMark, qMark, gParm, imgCdnSogs);
+  execBulkImport(db, true, img64Uid, qMark, qMark, gParm, img64Sogs);
   
   // process temp into final
-  const upsertFollowSql = writeUpsertSql(followUid, meta.tblFollow, false,);
-  const upsertDisplaySql = writeUpsertSql(handleDisplayUid, meta.tblDisplayName, true);
-  const upsertImgCdnSql = writeUpsertSql(imgCdnUid, meta.tblImgCdnUrl, true);
-  const upsertImg64Sql = writeUpsertSql(img64Uid, meta.tblImg64Url, true);
-  
-  db.exec(upsertFollowSql);
-  db.exec(upsertDisplaySql);
-  db.exec(upsertImgCdnSql);
-  db.exec(upsertImg64Sql);
+  execUpsert(db, followUid, meta.tblFollow, false);
+  execUpsert(db, handleDisplayUid, meta.tblDisplayName, true);
+  execUpsert(db, imgCdnUid, meta.tblImgCdnUrl, true);
+  execUpsert(db, img64Uid, meta.tblImg64Url, true);
   
   // tell caller it can clear that cache key and send over the next one
   postMessage({ type: 'copiedToDb', cacheKey: data.key });
