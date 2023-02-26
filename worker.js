@@ -456,7 +456,6 @@ const saveFollows = function(db, data, meta, graph) {
   const upsertImgCdnSql = writeUpsertSql(imgCdnUid, meta.tblImgCdnUrl, true);
   const upsertImg64Sql = writeUpsertSql(img64Uid, meta.tblImg64Url, true);
   
-  // now upsert the imgCdnUrls
   db.exec(upsertFollowSql);
   db.exec(upsertDisplaySql);
   db.exec(upsertImgCdnSql);
