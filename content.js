@@ -6,9 +6,11 @@ chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
 
 // reinit variables
 // for recording
-var _savables = [];
-var _savableHandleSet = new Set(); // to avoid storing dupes
-var _savedHandleSet = new Set();
+var _savableFollows = [];
+var _savableFollowHandleSet = new Set(); // to avoid storing dupes
+var _savedFollowHandleSet = new Set();
+var _photos = [];
+var _photoHandleSet = new Set();
 var _parsedUrl;
 var _observer;
 // for scrolling
@@ -32,7 +34,7 @@ chrome.runtime.onMessage.addListener(
           // begin recording
           recordTwitter();
           // periodically check for collected items to save
-          setSaveTimer();
+          setFollowSaveTimer();
         }
         
         if (request.auto === true && _autoScroll === false) {
@@ -54,9 +56,11 @@ chrome.runtime.onMessage.addListener(
 );
 
 const reinit = function() {
-  _savables = [];
-  _savableHandleSet = new Set(); // to avoid storing dupes
-  _savedHandleSet = new Set();
+  _savableFollows = [];
+  _savableFollowHandleSet = new Set(); // to avoid storing dupes
+  _savedFollowHandleSet = new Set();
+  _photos = [];
+  _photoHandleSet = new Set();
   _parsedUrl = undefined;
   _observer = undefined;
   _lastDiscoveryTime = null;
@@ -74,46 +78,67 @@ const stopRecording = function(badgeText) {
   chrome.storage.local.remove('recording');
 }
 
-const setSaveTimer = function() {
+const ensureFollowPhotosInfused = function() {
+  for (let i = 0; i < _savableFollows.length; i++) {
+    let follow = _savableFollows[i];
+    let followUrl = twitterProfileUrlFromHandle(follow.h).toLowerCase();
+    
+    if (!follow.imgCdnUrl && _photoHandleSet.has(followUrl)) {
+      let photo = _photos.find(function(p) {
+        return sameText(p.href, followUrl);
+      });
+      
+      if (photo) {
+        follow.imgCdnUrl = photo.imgSrc;
+      }
+    }
+  }
+}
+
+const setFollowSaveTimer = function() {
   if (!_observer) {
     return;
   }
   
-  if (_parsedUrl && _savables.length > 0) {
+  if (_parsedUrl && _savableFollows.length > 0) {
+    ensureFollowPhotosInfused();
+    
     // tell background js to save to local storage cache
     chrome.runtime.sendMessage(
     {
       actionType: 'save',
       pageType: _parsedUrl.pageType,
       owner: _parsedUrl.owner,
-      payload: _savables
+      payload: _savableFollows
     }, 
     function(response) {
       if (response && response.success === true && response.saved && response.saved.length > 0) {
         for (let i = 0; i < response.saved.length; i++) {
           let item = response.saved[i];
-          if (!_savedHandleSet.has(item.h.toLowerCase())) {
-            _savedHandleSet.add(item.h.toLowerCase());
+          if (!_savedFollowHandleSet.has(item.h.toLowerCase())) {
+            _savedFollowHandleSet.add(item.h.toLowerCase());
           }
         }
         
-        if (_countWhenScrollDoneSet != _savableHandleSet.size + _savedHandleSet.size) {
+        if (_countWhenScrollDoneSet != _savableFollowHandleSet.size + _savedFollowHandleSet.size) {
           // tell background js to update badge (the condition is so that we don't set to a number when 'DONE' was in place)
           chrome.runtime.sendMessage({
             actionType: 'setBadge',
-            badgeText: badgeNum(_savedHandleSet.size)});
+            badgeText: badgeNum(_savedFollowHandleSet.size)});
         }
       }
     });
     
     // clear
-    _savables = [];
-    _savableHandleSet = new Set();
+    _savableFollows = [];
+    _savableFollowHandleSet = new Set();
+    _photos = [];
+    _photoHandleSet = new Set();
   }
   
   // every 5 seconds, see if time to save
   setTimeout(() => {
-    setSaveTimer();
+    setFollowSaveTimer();
   }, 5000);
 }
 
@@ -132,7 +157,7 @@ const recordTwitter = function() {
         let nodes = mutation.addedNodes;
         for (let i = 0; i < nodes.length; i++) {
           let node = nodes[i];
-          processTwitterFollowsOnPage(node);
+          processTwitterFollowsAndPhotos(node);
         }
       }
     }
@@ -144,7 +169,7 @@ const recordTwitter = function() {
       subtree: true }
   );
 
-  processTwitterFollowsOnPage(mainColumn);
+  processTwitterFollowsAndPhotos(mainColumn);
 }
 
 const getTwitterMainColumn = function() {
@@ -158,11 +183,59 @@ const getTwitterMainColumn = function() {
   }
 }
 
-const processTwitterFollowsOnPage = function(parentElm) {
+const processTwitterFollowsAndPhotos = function(scopeElm) {
+  processTwitterFollowsOnPage(scopeElm);
+  processTwitterPhotosOnPage(scopeElm);
+}
+
+const isTwitterProfilePhoto = function(elm) {
+  const srcPrefix = 'https://pbs.twimg.com/profile_images';
+  const isPhoto = elm && sameText(elm.tagName, 'img') && elm.getAttribute('src').startsWith(srcPrefix);
+  return isPhoto;
+}
+
+const processTwitterPhotosOnPage = function(scopeElm) {
+  let photos = [];
   
+  if (isTwitterProfilePhoto(scopeElm) === true) {
+    const photo = buildLinkedImg(scopeElm);
+    if (photo) {
+      photos.push(photo);
+    }
+  }
+  else {
+    photos = Array.from(scopeElm.getElementsByTagName('img')).filter(function(img) {
+      return isTwitterProfilePhoto(img);
+    }).map(function(img) {
+      return buildLinkedImg(img);
+    }).filter(function(p) {
+      return (p && p.href && p.imgSrc);
+    });
+  }
+  
+  for (let i = 0; i < photos.length; i++) {
+    let photo = photos[i];
+    if (!_photoHandleSet.has(photo.href.toLowerCase())) {
+      _photos.push(photo);
+      _photoHandleSet.add(photo.href.toLowerCase());
+    }
+  }
+}
+
+const twitterHandleFromProfileUrl = function(url) {
+  let trimmed = url.startsWith('/') ? url.substring(1) : url;
+  return  '@' + trimmed;
+}
+
+const twitterProfileUrlFromHandle = function(handle) {
+  let trimmed = handle.startsWith('@') ? handle.substring(1) : handle;
+  return  '/' + trimmed;
+}
+
+const processTwitterFollowsOnPage = function(scopeElm) {
   // all links
-  const all = Array.from(parentElm.getElementsByTagName('a')).map(function(a) {
-    return { u: a.getAttribute('href'), d: a.innerText, a: a };
+  const all = Array.from(scopeElm.getElementsByTagName('a')).map(function(a) {
+    return { u: a.getAttribute('href'), d: a.innerText };
   });
   
   // those that are handles
@@ -174,14 +247,13 @@ const processTwitterFollowsOnPage = function(parentElm) {
   const urlSet = new Set(handles.map(function(h) { return h.u.toLowerCase() }));
   
   const ppl = [];
-  const photos = [];
   
   // loop through all anchors and spot those that are valid handles
   for (let i = 0; i < all.length; i++) {
     let item = all[i];
     
     if (item.u && urlSet.has(item.u.toLowerCase())) {
-      let h = '@' + item.u.substring(1);
+      let h = twitterHandleFromProfileUrl(item.u);
       if (item.d && item.d.length > 1) {
         if (!item.d.startsWith('@')) {
           // it had display text (not the @handle)
@@ -190,13 +262,6 @@ const processTwitterFollowsOnPage = function(parentElm) {
           ppl.push(per);
         }
       }
-      // is it the image thumbnail?
-      let photoImg = getTwitterProfileImg(item.a);
-      
-      if (photoImg) {
-        let photo = { h: h, img: photoImg.src };
-        photos.push(photo);
-      }
     }
   }
   
@@ -204,30 +269,15 @@ const processTwitterFollowsOnPage = function(parentElm) {
     for (let i = 0; i < ppl.length; i++) {
       let item = ppl[i];
       
-      if (!_savableHandleSet.has(item.h.toLowerCase()) && !_savedHandleSet.has(item.h.toLowerCase())) {
+      if (!_savableFollowHandleSet.has(item.h.toLowerCase()) && !_savedFollowHandleSet.has(item.h.toLowerCase())) {
         // add newly found handles to what we want to save
-        // first grab its photo url
-        let photo = photos.find(function(p) {
-          return sameText(p.h, item.h);
-        });
         
-        if (photo) {
-          item.imgCdnUrl = photo.img;
-        }
-        
-        _savables.push(item);
-        _savableHandleSet.add(item.h.toLowerCase());
+        _savableFollows.push(item);
+        _savableFollowHandleSet.add(item.h.toLowerCase());
         _lastDiscoveryTime = Date.now();
       }
     }
   }
-}
-
-// passing in anchor element for a given user; seek img thumbnail child
-const getTwitterProfileImg = function(a) {
-  return Array.from(a.getElementsByTagName('img')).find(function(img) {
-    return img.getAttribute('src').startsWith('https://pbs.twimg.com/profile_images/')
-  });
 }
 
 const scrollAsNeeded = function(avoidScrollIfHidden) {
@@ -272,7 +322,7 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
   
   if (scrollable === true) {
     // did we come up empty between prior run and now?
-    let count = _savableHandleSet.size + _savedHandleSet.size;
+    let count = _savableFollowHandleSet.size + _savedFollowHandleSet.size;
     
     let emptyScroll = count <= _preScrollCount;
     

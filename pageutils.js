@@ -52,3 +52,24 @@ const sameText = function(a, b, insensitive = true) {
     return false;
   }
 }
+
+const buildLinkedImg = function(img) {
+  if (!img) return;
+  const a = findUpTag(img, 'a');
+  if (!a) return;
+  const href = a.getAttribute('href');
+  const imgSrc = img.getAttribute('src');
+  if (!href || !imgSrc) return;
+  return {href: href, imgSrc: imgSrc};
+}
+
+// stackoverflow.com/questions/7332179/how-to-recursively-search-all-parentnodes/7333885#7333885
+function findUpTag(el, tag) {
+  while (el.parentNode) {
+    el = el.parentNode;
+    if (sameText(el.tagName, tag)) {
+      return el;
+    }
+  }
+  return null;
+}
