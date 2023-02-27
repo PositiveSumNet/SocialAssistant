@@ -202,7 +202,7 @@ const start = function() {
   
   try {
     // can set to true while debugging to reset the db
-    const startOver = true;
+    const startOver = false;
     if (startOver === false) {
       db.exec("drop table if exists Migration;");
       db.exec("drop table if exists RdfImport1to1;");
