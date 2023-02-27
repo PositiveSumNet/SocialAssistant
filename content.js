@@ -92,8 +92,8 @@ const setSaveTimer = function() {
       if (response && response.success === true && response.saved && response.saved.length > 0) {
         for (let i = 0; i < response.saved.length; i++) {
           let item = response.saved[i];
-          if (!_savedHandleSet.has(item.h)) {
-            _savedHandleSet.add(item.h);
+          if (!_savedHandleSet.has(item.h.toLowerCase())) {
+            _savedHandleSet.add(item.h.toLowerCase());
           }
         }
         
@@ -164,14 +164,14 @@ const processTwitterFollowsOnPage = function(parentElm) {
   const all = Array.from(parentElm.getElementsByTagName('a')).map(function(a) {
     return { u: a.getAttribute('href'), d: a.innerText, a: a };
   });
-
+  
   // those that are handles
   const handles = all.filter(function(a) {
     return a.u.startsWith('/') && a.d.startsWith('@');
   });
   
   // a hash of the urls
-  const urlSet = new Set(handles.map(function(h) { return h.u }));
+  const urlSet = new Set(handles.map(function(h) { return h.u.toLowerCase() }));
   
   const ppl = [];
   const photos = [];
@@ -180,7 +180,7 @@ const processTwitterFollowsOnPage = function(parentElm) {
   for (let i = 0; i < all.length; i++) {
     let item = all[i];
     
-    if (item.u && urlSet.has(item.u)) {
+    if (item.u && urlSet.has(item.u.toLowerCase())) {
       let h = '@' + item.u.substring(1);
       if (item.d && item.d.length > 1) {
         if (!item.d.startsWith('@')) {
@@ -190,14 +190,12 @@ const processTwitterFollowsOnPage = function(parentElm) {
           ppl.push(per);
         }
       }
-      else {
-        // no inner text... is it the image thumbnail?
-        let photoImg = getTwitterProfileImg(item.a);
-
-        if (photoImg) {
-          let photo = { h: h, img: photoImg.src };
-          photos.push(photo);
-        }
+      // is it the image thumbnail?
+      let photoImg = getTwitterProfileImg(item.a);
+      
+      if (photoImg) {
+        let photo = { h: h, img: photoImg.src };
+        photos.push(photo);
       }
     }
   }
@@ -205,11 +203,12 @@ const processTwitterFollowsOnPage = function(parentElm) {
   if (ppl.length > 0) {
     for (let i = 0; i < ppl.length; i++) {
       let item = ppl[i];
-      if (!_savableHandleSet.has(item.h) && !_savedHandleSet.has(item.h)) {
+      
+      if (!_savableHandleSet.has(item.h.toLowerCase()) && !_savedHandleSet.has(item.h.toLowerCase())) {
         // add newly found handles to what we want to save
         // first grab its photo url
         let photo = photos.find(function(p) {
-          return p.h === item.h;
+          return sameText(p.h, item.h);
         });
         
         if (photo) {
@@ -217,7 +216,7 @@ const processTwitterFollowsOnPage = function(parentElm) {
         }
         
         _savables.push(item);
-        _savableHandleSet.add(item.h);
+        _savableHandleSet.add(item.h.toLowerCase());
         _lastDiscoveryTime = Date.now();
       }
     }
