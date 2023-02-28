@@ -267,45 +267,6 @@ onmessage = (evt) => {
   }
 };
 
-const networkSearch = function(search) {
-  // could add a NamedGraph filter
-  let tblFollow = getFollowTable(search.pageType);
-  let tblDisplay = getDisplayNameTable(search.pageType);
-  let tblImgCdnUrl = getImgCdnUrlTable(search.pageType);
-  let tblImg64Url = getImg64UrlTable(search.pageType);
-  
-  // TODO: apply filters, limits, order by, search terms
-  
-  // possible that multiple graphs (sources) provided a display name, so need an aggregate
-  const sql = `
-  SELECT DISTINCT f.oValue AS Handle, MAX(d.oValue) AS DisplayName, MAX(imgcdn.oValue) AS ImgCdnUrl, MAX(img64.oValue) AS Img64Url
-  FROM ${tblFollow} f
-  LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
-  LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
-  LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
-  GROUP BY f.oValue;
-  `
-  
-  let db = getDb();
-  const rows = [];
-  try {
-    db.exec({
-      sql: sql, 
-      rowMode: 'object', 
-      callback: function (row) {
-          rows.push(row);
-        }
-      });
-  } 
-  finally {
-    db.close();
-  }
-
-  // tell the ui to render these rows
-  
-  console.log(rows);
-}
-
 const getActionType = function(evt) {
   if (evt.data && evt.data.actionType) {
     return evt.data.actionType;
@@ -532,4 +493,43 @@ const saveFollows = function(db, data, meta, graph) {
   
   // tell caller it can clear that cache key and send over the next one
   postMessage({ type: 'copiedToDb', cacheKey: data.key });
+}
+
+const networkSearch = function(search) {
+  // could add a NamedGraph filter
+  let tblFollow = getFollowTable(search.pageType);
+  let tblDisplay = getDisplayNameTable(search.pageType);
+  let tblImgCdnUrl = getImgCdnUrlTable(search.pageType);
+  let tblImg64Url = getImg64UrlTable(search.pageType);
+  
+  // TODO: apply filters, limits, order by, search terms
+  
+  // possible that multiple graphs (sources) provided a display name, so need an aggregate
+  const sql = `
+  SELECT DISTINCT f.oValue AS Handle, MAX(d.oValue) AS DisplayName, MAX(imgcdn.oValue) AS ImgCdnUrl, MAX(img64.oValue) AS Img64Url
+  FROM ${tblFollow} f
+  LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
+  LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
+  LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
+  GROUP BY f.oValue;
+  `
+  
+  let db = getDb();
+  const rows = [];
+  try {
+    db.exec({
+      sql: sql, 
+      rowMode: 'object', 
+      callback: function (row) {
+          rows.push(row);
+        }
+      });
+  } 
+  finally {
+    db.close();
+  }
+
+  // tell the ui to render these rows
+  
+  console.log(rows);
 }
