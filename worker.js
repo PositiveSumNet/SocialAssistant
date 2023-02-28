@@ -202,7 +202,7 @@ const start = function() {
   
   try {
     // can set to true while debugging to reset the db
-    const startOver = false;
+    const startOver = true;
     if (startOver === false) {
       db.exec("drop table if exists Migration;");
       db.exec("drop table if exists RdfImport1to1;");
@@ -283,22 +283,27 @@ const networkSearch = function(search) {
   LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
-  GROUP BY f.oValue
+  GROUP BY f.oValue;
   `
   
   let db = getDb();
+  const rows = [];
   try {
     db.exec({
       sql: sql, 
       rowMode: 'object', 
       callback: function (row) {
-          log(row.Handle + ' | ' + row.DisplayName + ' | ' + row.ImgCdnUrl + ' | ' + row.Img64Url);
+          rows.push(row);
         }
       });
   } 
   finally {
     db.close();
   }
+
+  // tell the ui to render these rows
+  
+  console.log(rows);
 }
 
 const getActionType = function(evt) {
@@ -444,7 +449,8 @@ const execBulkImport = function(db, oneToOne, uid, s, o, g, sogs) {
       let sog = batchSogs[j];
       let comma = didOne === true ? ', ' : '';
       
-      sql = `${sql}${comma}( '${uid}', datetime('now'), ${s}, ${o}, ${g} )`;
+      // we avoid worrying about already-exists (while batching) by appending the iteration number to the guid
+      sql = `${sql}${comma}( '${uid}-${i}-${j}', datetime('now'), ${s}, ${o}, ${g} )`;
       
       // build up the bound parms
       if (bindS === true) {
@@ -477,7 +483,7 @@ const execUpsert = function(db, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue')
   REPLACE INTO ${tbl} ( ${s}, ${o}, NamedGraph )
   SELECT RdfSubject, RdfObject, NamedGraph
   FROM ${importTable}
-  WHERE BatchUid = '${uid}';
+  WHERE BatchUid LIKE '${uid}%';
   `;
   
   db.exec(sql);

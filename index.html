@@ -15,7 +15,46 @@
       <h5 class="bg-subheader inkfree">Locally Cached Social Database</h5>
       <div id="dbui" class="p-3">
         <div id='transferringMsg' style="display:none;">Copying recent recordings to local database...</div>
-        
+        <div id='followList'>
+          <div class='listHeader'>
+            <div class='listPivot'>
+              <input id='followPivotHandle' type='text' placeholder='@handle' />
+            </div>
+            <div id='followDirection'>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="optFollowing">
+                <label class="form-check-label" for="optFollowing">
+                  is following...
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="optFollowers" checked>
+                <label class="form-check-label" for="optFollowers">
+                  has followers...
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class='listMain' id='followListMain'>
+            <ul id='paginated-list' aria-live='polite'>
+              <li>Item 1</li>
+              <li>Item 2</li>
+              <li>Item 3</li>              
+            </ul>
+            <nav class="pagination-container">
+              <button class="pagination-button" id="prev-button" title="Previous page" aria-label="Previous page">
+                &lt;
+              </button>
+              
+              <div id="pagination-numbers">
+              </div>
+              
+              <button class="pagination-button" id="next-button" title="Next page" aria-label="Next page">
+                &gt;
+              </button>
+            </nav>            
+          </div>
+        </div>
       </div>
     </div>
     <div class="fixed-bottom p-3">

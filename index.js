@@ -1,3 +1,5 @@
+// html grid via webdesign.tutsplus.com/tutorials/pagination-with-vanilla-javascript--cms-41896
+
 // default (legacy) logging
 const logHtml = function (cssClass, ...args) {
   const ln = document.createElement('div');
@@ -34,6 +36,7 @@ const runSelectTest = function() {
     actionType: 'networkSearch', 
     networkOwner: '*', 
     searchText: '*', 
+    //pageSize: 10,
     pageType: 'followersOnTwitter' });
 }
 
