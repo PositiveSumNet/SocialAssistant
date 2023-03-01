@@ -24,11 +24,7 @@ const onCopiedToDb = async function(cacheKey) {
   await chrome.storage.local.remove(cacheKey);
   
   // and queue up the next one
-  const transferDone = await ensureCopiedToDb();
-  
-  if (transferDone === true) {
-    // can do any other "fully initialized" work here
-  }
+  await ensureCopiedToDb();
 }
 
 const ensureCopiedToDb = async function() {
@@ -44,25 +40,21 @@ const ensureCopiedToDb = async function() {
   for (const [key, val] of entries) {
     if (key.startsWith('fordb-')) {
       worker.postMessage({ key: key, val: val });
-      return false; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
+      return; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
     }
   }
   
   // if we got to here, we're fully copied
   xferring.style.display = 'none';
   
-  // we're fully copied and it's time to render the 
-  // most relevant list, i.e. the one for the query string parms we were passed
   initialRender();
-  
-  return true;
 }
 
 const initialRender = function() {
   const urlParams = new URLSearchParams(location.search);
   // defaults
-  let owner = '*';
-  let pageType = 'followingOnTwitter';
+  let owner;
+  let pageType;
   
   for (const [key, value] of urlParams) {
     if (key === 'owner') {
@@ -73,6 +65,11 @@ const initialRender = function() {
     }
   }
   
+  if (!pageType) {
+    pageType = getCachedPageType();
+  }
+  
+  initUi(owner, pageType);
   networkSearch(owner, pageType);
 }
 
@@ -105,30 +102,121 @@ worker.onmessage = function ({ data }) {
   }
 };
 
-const networkSearch = function(owner = '*', pageType = 'followingOnTwitter') {
-  worker.postMessage({ 
+const initUi = function(owner, pageType) {
+  // owner
+  if (owner && !owner.startsWith('@')) {
+    owner = '@' + owner;
+  }
+  
+  txtFollowPivotHandle.value = owner;
+  
+  // pageType/direction
+  pageType = pageType || getCachedPageType();
+  
+  switch (pageType) {
+    case 'followersOnTwitter':
+      document.getElementById('optFollowers').checked = true;
+      break;
+    case 'followingOnTwitter':
+      document.getElementById('optFollowing').checked = true;
+      break;
+    default:
+      break;
+  }
+}
+
+const getCachedPageType = function() {
+  return localStorage.getItem('pageType') || 'followingOnTwitter';
+}
+
+const getUiValue = function(id) {
+  switch (id) {
+    case 'txtFollowPivotHandle':
+      return txtFollowPivotHandle.value;
+    case 'optFollowDirection':
+      return document.getElementById('optFollowing').checked ? 'following' : 'followers';
+    case 'txtFollowSearch':
+      return txtFollowSearch.value;
+    default:
+      return undefined;
+  }
+}
+
+const getSite = function() {
+  // the only one supported for now
+  return 'twitter';
+}
+
+const getPageType = function(direction) {
+  direction = direction || getUiValue('optFollowDirection');
+  const site = getSite();
+  switch (site) {
+    case 'twitter':
+      switch (direction) {
+        case 'following':
+          return 'followingOnTwitter';
+        case 'followers':
+          return 'followersOnTwitter';
+        default:
+          return undefined;
+      }
+      break;
+    default:
+      return undefined;
+  }
+}
+
+const cachePageState = function(msg) {
+  if (!msg) { return; }
+  
+  localStorage.setItem('owner', msg.owner);
+  localStorage.setItem('pageType', msg.pageType);
+}
+
+const buildNetworkSearchRequestFromUi = function() {
+  const owner = getUiValue('txtFollowPivotHandle');
+  const pageType = getPageType();
+  const searchText = getUiValue('txtFollowSearch');
+  
+  const msg = { 
     actionType: 'networkSearch', 
     pageType: pageType,
     networkOwner: owner, 
-    searchText: '*', 
+    searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
     skip: 0,
     take: 10  // 50
-    });
+    };
+  
+  return msg;
 }
 
-const getOwnerHandle = function() {
-  const followPivotHandle = document.getElementById('followPivotHandle');
-  let owner = followPivotHandle.value;
+const networkSearch = function() {
+  const msg = buildNetworkSearchRequestFromUi();
+  cachePageState(msg);
+  worker.postMessage(msg);
 }
 
 const renderFollows = function(payload) {
   const request = payload.request;
   const rows = payload.rows;
-  console.log(payload);
+  
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
     logHtml('', row.TotalCount);
     logHtml('', row.Handle);
   }
 }
+
+const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
+const ulFollowPivotPicker = document.getElementById('ulFollowPivotPicker');
+const followSearch = document.getElementById('txtFollowSearch');
+
+/*
+txtFollowPivotHandle.oninput = function () {
+  worker.postMessage({
+    actionType: 'pickFollowOwner'
+    
+  });
+};
+*/

@@ -18,25 +18,27 @@
         <div id='followList'>
           <div class='listHeader'>
             <div class='listPivot'>
-              <label for='followPivotHandle'>Account </label>
-              <input id='followPivotHandle' type='text' placeholder='@handle' />
+              <label for='txtFollowPivotHandle'>Account </label>
+              <input id='txtFollowPivotHandle' type='text' placeholder='@handle' />
+              <ul id='ulFollowPivotPicker'>
+              </ul>
             </div>
             <div id='followDirection'>
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" id="optFollowing">
+                <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing" checked>
                 <label class="form-check-label" for="optFollowing">
                   is following...
                 </label>
               </div>
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" id="optFollowers" checked>
+                <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
                 <label class="form-check-label" for="optFollowers">
                   has followers...
                 </label>
               </div>
             </div>
             <div>
-              <input id='followSearch' type='text' placeholder='search...' />
+              <input id='txtFollowSearch' type='text' placeholder='search...' />
             </div>
           </div>
           <div class='listMain' id='followListMain'>
