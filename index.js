@@ -72,7 +72,7 @@ const initialRender = function() {
       pageType = value;
     }
   }
-
+  
   networkSearch(owner, pageType);
 }
 
@@ -105,7 +105,6 @@ worker.onmessage = function ({ data }) {
   }
 };
 
-// FOR NOW INPUTS ARE HARD-WIRED
 const networkSearch = function(owner = '*', pageType = 'followingOnTwitter') {
   worker.postMessage({ 
     actionType: 'networkSearch', 
@@ -116,6 +115,11 @@ const networkSearch = function(owner = '*', pageType = 'followingOnTwitter') {
     skip: 0,
     take: 10  // 50
     });
+}
+
+const getOwnerHandle = function() {
+  const followPivotHandle = document.getElementById('followPivotHandle');
+  let owner = followPivotHandle.value;
 }
 
 const renderFollows = function(payload) {
