@@ -202,8 +202,8 @@ const start = function() {
   
   try {
     // can set to true while debugging to reset the db
-    const startOver = true;
-    if (startOver === false) {
+    const startOver = false;
+    if (startOver === true) {
       db.exec("drop table if exists Migration;");
       db.exec("drop table if exists RdfImport1to1;");
       db.exec("drop table if exists RdfImport1ton;");
@@ -294,6 +294,8 @@ const xferCacheToDb = function(data) {
   }
 }
 
+// IDENTITY TABLES *****************************************
+
 const getFollowTable = function(pageType) {
   switch (pageType) {
     case 'followingOnTwitter':
@@ -357,6 +359,20 @@ const getSaveMetadata = function(pageType) {
     tblImgCdnUrl: tblImgCdnUrl,
     tblImg64Url: tblImg64Url
   };
+}
+
+// SAVING TO DB *****************************************
+
+const clearBulkImport = function(db, oneToOne, uid) {
+  const importTable = getImportTable(oneToOne);
+  
+  const sql = `
+  DELETE 
+  FROM ${importTable}
+  WHERE BatchUid LIKE '${uid}%';
+  `;
+  
+  db.exec(sql);
 }
 
 // we want a parameterized query with the speed of the "VALUES (...), (...), (...)" syntax
@@ -491,34 +507,62 @@ const saveFollows = function(db, data, meta, graph) {
   execUpsert(db, imgCdnUid, meta.tblImgCdnUrl, true);
   execUpsert(db, img64Uid, meta.tblImg64Url, true);
   
+  // clear out import tables
+  clearBulkImport(db, followUid, meta.tblFollow, false);
+  clearBulkImport(db, handleDisplayUid, meta.tblDisplayName, true);
+  clearBulkImport(db, imgCdnUid, meta.tblImgCdnUrl, true);
+  clearBulkImport(db, img64Uid, meta.tblImg64Url, true);
+  
   // tell caller it can clear that cache key and send over the next one
   postMessage({ type: 'copiedToDb', cacheKey: data.key });
 }
 
-const networkSearch = function(search) {
+// request: networkOwner, searchText, skip, take
+const networkSearch = function(request) {
   // could add a NamedGraph filter
-  let tblFollow = getFollowTable(search.pageType);
-  let tblDisplay = getDisplayNameTable(search.pageType);
-  let tblImgCdnUrl = getImgCdnUrlTable(search.pageType);
-  let tblImg64Url = getImg64UrlTable(search.pageType);
+  const pageType = request.pageType;
+  const tblFollow = getFollowTable(pageType);
+  const tblDisplay = getDisplayNameTable(pageType);
+  const tblImgCdnUrl = getImgCdnUrlTable(pageType);
+  const tblImg64Url = getImg64UrlTable(pageType);
   
-  // TODO: apply filters, limits, order by, search terms
+  const skip = request.skip || 0;
+  const take = request.take || 50;
+  
+  const orderBy = (request.orderBy && request.orderBy === 'DisplayName') ? 'd.oValue' : 'f.oValue';
+  
+  const bind = [];
+  let conjunction = 'WHERE';
+  let ownerCondition = '';
+  if (request.networkOwner && request.networkOwner != '*') {
+    ownerCondition = `${conjunction} f.sHandle = ?`;
+    bind.push(request.networkOwner);
+    conjunction = 'AND';
+  }
+  
+  const searchCols = ['f.oValue', 'd.oValue'];
+  const searchClause = writeSearchClause(searchCols, request.searchText, conjunction);
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
-  SELECT DISTINCT f.oValue AS Handle, MAX(d.oValue) AS DisplayName, MAX(imgcdn.oValue) AS ImgCdnUrl, MAX(img64.oValue) AS Img64Url
+  SELECT DISTINCT f.oValue AS Handle, d.oValue AS DisplayName, imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
+      COUNT() OVER() AS TotalCount
   FROM ${tblFollow} f
   LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
-  GROUP BY f.oValue;
+  ${ownerCondition}
+  ${searchClause}
+  ORDER BY ${orderBy}
+  LIMIT ${take} OFFSET ${skip};
   `
   
-  let db = getDb();
+  const db = getDb();
   const rows = [];
   try {
     db.exec({
       sql: sql, 
+      bind: bind,
       rowMode: 'object', 
       callback: function (row) {
           rows.push(row);
@@ -530,6 +574,55 @@ const networkSearch = function(search) {
   }
 
   // tell the ui to render these rows
+  postMessage({ 
+    type: 'renderFollows',
+    payload: { 
+      request: request, 
+      rows: rows
+    }
+  });
+}
+
+// conjunction is WHERE or AND
+const writeSearchClause = function(textCols, searchText, conjunction) {
+  if (!searchText || searchText === '*') {
+    return '';
+  }
   
-  console.log(rows);
+  const terms = searchText.split(' ');
+  if (terms.length === 0) {
+    return '';
+  }
+  
+  // we'll check for a match of each keyword, appearing in at least one col
+  let sql = '';
+  let didOne = false;
+  for (let i = 0; i < terms.length; i++) {
+    let term = terms[i];
+    let plus = (didOne === true) ? ' +' : '';
+    
+    sql = `${sql}${plus} 
+    CASE `;
+    
+    for (let c = 0; c < textCols.length; c++) {
+      let col = textCols[c];
+      
+      sql = `${sql}
+      WHEN ${col} LIKE '%${term}%' THEN 1`;
+    }
+    
+    sql = `${sql}
+      ELSE 0 
+    END`;
+    
+    didOne = true;
+  }
+  
+  // wrap in an outer case statement
+  sql = `${conjunction} CASE WHEN 
+  ${sql} = ${terms.length} THEN 1
+    ELSE 0
+  END = 1`;
+  
+  return sql;
 }

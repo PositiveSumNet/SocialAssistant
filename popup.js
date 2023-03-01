@@ -77,12 +77,18 @@ btnRecTwitterStop.addEventListener('click', async () => {
 
 const btnReviewDb = document.getElementById('btnReviewDb');
 btnReviewDb.addEventListener('click', async () => {
-  reviewDb();
+  await reviewDb();
   window.close();
 });
 
-const reviewDb = function() {
-  chrome.tabs.create({url: 'index.html'});
+const reviewDb = async function() {
+  let queryString = '';
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  const urlInfo = parseUrl(tab.url);
+  if (urlInfo) {
+    queryString = `?pageType=${urlInfo.pageType}&owner=${urlInfo.owner}`;
+  }
+  chrome.tabs.create({url: `index.html${queryString}`});
 }
 
 const activateApp = function() {

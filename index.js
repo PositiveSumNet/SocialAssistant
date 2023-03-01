@@ -31,15 +31,6 @@ const onCopiedToDb = async function(cacheKey) {
   }
 }
 
-const runSelectTest = function() {
-  worker.postMessage({ 
-    actionType: 'networkSearch', 
-    networkOwner: '*', 
-    searchText: '*', 
-    //pageSize: 10,
-    pageType: 'followersOnTwitter' });
-}
-
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
@@ -60,10 +51,29 @@ const ensureCopiedToDb = async function() {
   // if we got to here, we're fully copied
   xferring.style.display = 'none';
   
-  // logHtml('', 'Fully transferred to DB');
-  runSelectTest();
+  // we're fully copied and it's time to render the 
+  // most relevant list, i.e. the one for the query string parms we were passed
+  initialRender();
   
   return true;
+}
+
+const initialRender = function() {
+  const urlParams = new URLSearchParams(location.search);
+  // defaults
+  let owner = '*';
+  let pageType = 'followingOnTwitter';
+  
+  for (const [key, value] of urlParams) {
+    if (key === 'owner') {
+      owner = value;
+    }
+    else if (key === 'pageType') {
+      pageType = value;
+    }
+  }
+
+  networkSearch(owner, pageType);
 }
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
@@ -86,10 +96,35 @@ worker.onmessage = function ({ data }) {
     case 'copiedToDb':
       onCopiedToDb(data.cacheKey);
       break;
-//    case 'renderFollow':
-  //    renderFollow(data);
+    case 'renderFollows':
+      renderFollows(data.payload);
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
   }
 };
+
+// FOR NOW INPUTS ARE HARD-WIRED
+const networkSearch = function(owner = '*', pageType = 'followingOnTwitter') {
+  worker.postMessage({ 
+    actionType: 'networkSearch', 
+    pageType: pageType,
+    networkOwner: owner, 
+    searchText: '*', 
+    orderBy: 'Handle',  // Handle or DisplayName
+    skip: 0,
+    take: 10  // 50
+    });
+}
+
+const renderFollows = function(payload) {
+  const request = payload.request;
+  const rows = payload.rows;
+  console.log(payload);
+  for (let i = 0; i < rows.length; i++) {
+    let row = rows[i];
+    logHtml('', row.TotalCount);
+    logHtml('', row.Handle);
+  }
+}
