@@ -103,11 +103,6 @@ worker.onmessage = function ({ data }) {
 };
 
 const initUi = function(owner, pageType) {
-  // owner
-  if (owner && !owner.startsWith('@')) {
-    owner = '@' + owner;
-  }
-  
   txtFollowPivotHandle.value = owner;
   
   // pageType/direction
