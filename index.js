@@ -70,7 +70,6 @@ const initialRender = function() {
   }
   
   initUi(owner, pageType);
-  networkSearch(owner, pageType);
 }
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
@@ -93,6 +92,11 @@ worker.onmessage = function ({ data }) {
     case 'copiedToDb':
       onCopiedToDb(data.cacheKey);
       break;
+    case 'renderSuggestedOwner':
+      renderSuggestedOwner(data.payload);
+      break;
+    case 'renderMatchedOwners':
+      renderMatchedOwners(data.payload);
     case 'renderFollows':
       renderFollows(data.payload);
       break;
@@ -103,10 +107,8 @@ worker.onmessage = function ({ data }) {
 };
 
 const initUi = function(owner, pageType) {
-  txtFollowPivotHandle.value = owner;
-  
   // pageType/direction
-  pageType = pageType || getCachedPageType();
+  pageType = pageType || getCachedPageType() || 'followingOnTwitter';
   
   switch (pageType) {
     case 'followersOnTwitter':
@@ -118,10 +120,49 @@ const initUi = function(owner, pageType) {
     default:
       break;
   }
+
+  // set owner
+  owner = owner || getCachedOwner();
+  let waitForOwnerCallback = false;
+  
+  if (!owner || owner.length === 0) {
+    // we'll initialize to empty string, but 
+    // we'll tell the worker to call us back with the most sensible initial value
+    const msg = { 
+      actionType: 'suggestOwner', 
+      pageType: pageType
+    };
+    
+    waitForOwnerCallback = true;
+    worker.postMessage(msg);
+  }
+  
+  txtFollowPivotHandle.value = owner || '';
+  
+  if (waitForOwnerCallback === false) {
+    networkSearch(owner, pageType);
+  }
 }
 
-const getCachedPageType = function() {
-  return localStorage.getItem('pageType') || 'followingOnTwitter';
+const renderMatchedOwners = function(owners) {
+  // TODO...
+  console.log(owners);
+}
+
+const renderSuggestedOwner = function(payload) {
+  const owner = payload.owner;
+  
+  if (!owner || !owner.Handle || owner.Handle.length === 0) {
+    return;
+  }
+  
+  const value = getUiValue('txtFollowPivotHandle');
+  
+  if (!value || value.length === 0) {
+    document.getElementById('txtFollowPivotHandle').value = owner.Handle;
+    // we're doing a page init and so far it's empty, so let's
+    networkSearch();
+  }
 }
 
 const getUiValue = function(id) {
@@ -161,11 +202,24 @@ const getPageType = function(direction) {
   }
 }
 
+const getCachedOwner = function() {
+  return localStorage.getItem('networkOwner');
+}
+
+const getCachedPageType = function() {
+  return localStorage.getItem('pageType');
+}
+
 const cachePageState = function(msg) {
   if (!msg) { return; }
   
-  localStorage.setItem('owner', msg.owner);
-  localStorage.setItem('pageType', msg.pageType);
+  if (msg.networkOwner) {
+    localStorage.setItem('networkOwner', msg.networkOwner);
+  }
+  
+  if (msg.pageType) {
+    localStorage.setItem('pageType', msg.pageType);
+  }
 }
 
 const buildNetworkSearchRequestFromUi = function() {
@@ -193,7 +247,6 @@ const networkSearch = function() {
 }
 
 const renderFollows = function(payload) {
-  const request = payload.request;
   const rows = payload.rows;
   
   for (let i = 0; i < rows.length; i++) {
@@ -205,13 +258,40 @@ const renderFollows = function(payload) {
 
 const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
 const ulFollowPivotPicker = document.getElementById('ulFollowPivotPicker');
+const optFollowing = document.getElementById('optFollowing');
+const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtFollowSearch');
 
-/*
+optFollowing.addEventListener('change', (event) => {
+  networkSearch();
+})
+optFollowers.addEventListener('change', (event) => {
+  networkSearch();
+})
+
+// hit enter on account owner
+txtFollowPivotHandle.addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    networkSearch();
+  }
+});
+
+// typeahead for account owner
 txtFollowPivotHandle.oninput = function () {
+  const userInput = this.value;
+  
+  if (!userInput || userInput.length === 0) {
+    ulFollowPivotPicker.innerHTML = '';
+    return;
+  }
+  
+  const pageType = getPageType();
+  
   worker.postMessage({
-    actionType: 'pickFollowOwner'
-    
+    actionType: 'inputFollowOwner',
+    pageType: pageType,
+    searchText: userInput,
+    limit: 5
   });
 };
-*/

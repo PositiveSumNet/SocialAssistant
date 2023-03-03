@@ -259,6 +259,11 @@ onmessage = (evt) => {
     case 'save':
       xferCacheToDb(evt.data);
       break;
+    case 'suggestOwner':
+      suggestOwner(evt.data);
+    case 'inputFollowOwner':
+      inputFollowOwner(evt.data);
+      break;
     case 'networkSearch':
       networkSearch(evt.data);
       break;
@@ -517,7 +522,95 @@ const saveFollows = function(db, data, meta, graph) {
   postMessage({ type: 'copiedToDb', cacheKey: data.key });
 }
 
-// request: networkOwner, searchText, skip, take
+// suggesting a single owner on init
+const suggestOwner = function(data) {
+  let rows = searchOwners(data);
+  
+  if (rows.length === 1) {
+    postMessage({ 
+      type: 'renderSuggestedOwner',
+      payload: { 
+        owner: rows[0]
+      }
+    });
+  }
+}
+
+// find owners matching the search
+const inputFollowOwner = function(data) {
+  let rows = searchOwners(data);
+  
+  if (rows.length > 0) {
+    postMessage({ 
+      type: 'renderMatchedOwners',
+      payload: { 
+        rows: rows
+      }
+    });
+  }
+}
+
+const searchOwners = function(data) {
+  const pageType = data.pageType;
+  const limit = data.limit || 1;
+  const searchText = data.searchText || '';
+  
+  const tblFollow = getFollowTable(pageType);
+  const tblDisplay = getDisplayNameTable(pageType);
+  const tblImgCdnUrl = getImgCdnUrlTable(pageType);
+  const tblImg64Url = getImg64UrlTable(pageType);
+  
+  const bind = [];
+  const conjunction = 'WHERE';
+  const searchCols = ['f.sHandle', 'd.oValue'];
+  const searchClause = writeSearchClause(searchCols, searchText, conjunction);
+  let searchClauseSql = '';
+  
+  if (searchClause) {
+    searchClauseSql = searchClause.sql;
+    for (let i = 0; i < searchClause.parms; i++) {
+      let parm = searchClause.parms[i];
+      bind.push(parm);
+    }
+  }
+  
+  const sql = `
+  SELECT x.*
+  FROM (
+    SELECT  f.sHandle AS Handle, 
+            d.oValue AS DisplayName, imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
+            COUNT(f.sHandle) AS Cnt
+    FROM ${tblFollow} f
+    LEFT JOIN ${tblDisplay} d ON d.sHandle = f.sHandle AND d.NamedGraph = f.NamedGraph
+    LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.sHandle AND imgcdn.NamedGraph = f.NamedGraph
+    LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.sHandle AND img64.NamedGraph = f.NamedGraph
+    ${searchClauseSql}
+    GROUP BY f.sHandle, d.oValue, imgcdn.oValue, img64.oValue
+  ) x
+  ORDER BY x.Cnt DESC
+  LIMIT ${limit}
+  `;
+  
+  const db = getDb();
+  const rows = [];
+  
+  try {
+    db.exec({
+      sql: sql, 
+      bind: bind,
+      rowMode: 'object', 
+      callback: function (row) {
+          rows.push(row);
+        }
+      });
+  }
+  finally {
+    db.close();
+  }
+  
+  return rows;
+}
+
 const networkSearch = function(request) {
   // could add a NamedGraph filter
   const pageType = request.pageType;
@@ -542,6 +635,15 @@ const networkSearch = function(request) {
   
   const searchCols = ['f.oValue', 'd.oValue'];
   const searchClause = writeSearchClause(searchCols, request.searchText, conjunction);
+  let searchClauseSql = '';
+  
+  if (searchClause) {
+    searchClauseSql = searchClause.sql;
+    for (let i = 0; i < searchClause.parms; i++) {
+      let parm = searchClause.parms[i];
+      bind.push(parm);
+    }
+  }
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
@@ -552,7 +654,7 @@ const networkSearch = function(request) {
   LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
   ${ownerCondition}
-  ${searchClause}
+  ${searchClauseSql}
   ORDER BY ${orderBy}
   LIMIT ${take} OFFSET ${skip};
   `
@@ -584,16 +686,18 @@ const networkSearch = function(request) {
 }
 
 // conjunction is WHERE or AND
+// returns { sql: sql, parms: bindThese }
 const writeSearchClause = function(textCols, searchText, conjunction) {
-  if (!searchText || searchText === '*') {
-    return '';
+  if (!searchText || searchText.length === 0 || searchText === '*') {
+    return null;
   }
   
   const terms = searchText.split(' ');
   if (terms.length === 0) {
-    return '';
+    return null;
   }
   
+  const parms = [];
   // we'll check for a match of each keyword, appearing in at least one col
   let sql = '';
   let didOne = false;
@@ -606,9 +710,10 @@ const writeSearchClause = function(textCols, searchText, conjunction) {
     
     for (let c = 0; c < textCols.length; c++) {
       let col = textCols[c];
+      parms.push(`%${term}%'`);
       
       sql = `${sql}
-      WHEN ${col} LIKE '%${term}%' THEN 1`;
+      WHEN ${col} LIKE ? THEN 1`;
     }
     
     sql = `${sql}
@@ -624,5 +729,5 @@ const writeSearchClause = function(textCols, searchText, conjunction) {
     ELSE 0
   END = 1`;
   
-  return sql;
+  return { sql: sql, parms: parms };
 }
