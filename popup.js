@@ -89,6 +89,8 @@ const reviewDb = async function() {
     queryString = `?pageType=${urlInfo.pageType}&owner=${urlInfo.owner}`;
   }
   chrome.tabs.create({url: `index.html${queryString}`});
+  
+  chrome.action.setBadgeText({text: ''}); // clear badge
 }
 
 const activateApp = function() {
