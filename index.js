@@ -97,6 +97,7 @@ worker.onmessage = function ({ data }) {
       break;
     case 'renderMatchedOwners':
       renderMatchedOwners(data.payload);
+      break;
     case 'renderFollows':
       renderFollows(data.payload);
       break;
@@ -145,8 +146,10 @@ const initUi = function(owner, pageType) {
 }
 
 const renderMatchedOwners = function(owners) {
-  // TODO...
-  console.log(owners);
+  ulFollowPivotPicker.style.display = 'block';
+  for (i = 0; i < owners.length; i++) {
+    ulFollowPivotPicker.innerHTML += "<li>" + owners[i] + "</li>";
+  }
 }
 
 const renderSuggestedOwner = function(payload) {
@@ -280,7 +283,7 @@ txtFollowPivotHandle.addEventListener('keypress', function(event) {
 // typeahead for account owner
 txtFollowPivotHandle.oninput = function () {
   const userInput = this.value;
-  
+
   if (!userInput || userInput.length === 0) {
     ulFollowPivotPicker.innerHTML = '';
     return;

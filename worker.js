@@ -261,6 +261,7 @@ onmessage = (evt) => {
       break;
     case 'suggestOwner':
       suggestOwner(evt.data);
+      break;
     case 'inputFollowOwner':
       inputFollowOwner(evt.data);
       break;
@@ -563,15 +564,12 @@ const searchOwners = function(data) {
   const bind = [];
   const conjunction = 'WHERE';
   const searchCols = ['f.sHandle', 'd.oValue'];
-  const searchClause = writeSearchClause(searchCols, searchText, conjunction);
+  const searchClause = writeSearchClause(searchCols, searchText, conjunction, bind.length);
   let searchClauseSql = '';
   
-  if (searchClause) {
+  if (searchClause && searchClause.sql.length > 0) {
     searchClauseSql = searchClause.sql;
-    for (let i = 0; i < searchClause.parms; i++) {
-      let parm = searchClause.parms[i];
-      bind.push(parm);
-    }
+    bind.push(...searchClause.parms);
   }
   
   const sql = `
@@ -588,16 +586,18 @@ const searchOwners = function(data) {
     GROUP BY f.sHandle, d.oValue, imgcdn.oValue, img64.oValue
   ) x
   ORDER BY x.Cnt DESC
-  LIMIT ${limit}
+  LIMIT ${limit};
   `;
   
   const db = getDb();
   const rows = [];
   
+  const bound = bindConsol(bind);
+  
   try {
     db.exec({
       sql: sql, 
-      bind: bind,
+      bind: bound,
       rowMode: 'object', 
       callback: function (row) {
           rows.push(row);
@@ -607,7 +607,7 @@ const searchOwners = function(data) {
   finally {
     db.close();
   }
-  
+
   return rows;
 }
 
@@ -628,21 +628,19 @@ const networkSearch = function(request) {
   let conjunction = 'WHERE';
   let ownerCondition = '';
   if (request.networkOwner && request.networkOwner != '*') {
-    ownerCondition = `${conjunction} f.sHandle = ?`;
-    bind.push(request.networkOwner);
+    let parm = {key: '$owner', value: request.networkOwner};
+    ownerCondition = `${conjunction} f.sHandle = ${parm.key}`;
+    bind.push(parm);
     conjunction = 'AND';
   }
   
   const searchCols = ['f.oValue', 'd.oValue'];
-  const searchClause = writeSearchClause(searchCols, request.searchText, conjunction);
+  const searchClause = writeSearchClause(searchCols, request.searchText, conjunction, bind.length);
   let searchClauseSql = '';
   
   if (searchClause) {
     searchClauseSql = searchClause.sql;
-    for (let i = 0; i < searchClause.parms; i++) {
-      let parm = searchClause.parms[i];
-      bind.push(parm);
-    }
+    bind.push(...searchClause.parms);
   }
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
@@ -659,12 +657,14 @@ const networkSearch = function(request) {
   LIMIT ${take} OFFSET ${skip};
   `
   
+  const bound = bindConsol(bind);
+  
   const db = getDb();
   const rows = [];
   try {
     db.exec({
       sql: sql, 
-      bind: bind,
+      bind: bound,
       rowMode: 'object', 
       callback: function (row) {
           rows.push(row);
@@ -687,7 +687,7 @@ const networkSearch = function(request) {
 
 // conjunction is WHERE or AND
 // returns { sql: sql, parms: bindThese }
-const writeSearchClause = function(textCols, searchText, conjunction) {
+const writeSearchClause = function(textCols, searchText, conjunction, parmCounter) {
   if (!searchText || searchText.length === 0 || searchText === '*') {
     return null;
   }
@@ -701,6 +701,7 @@ const writeSearchClause = function(textCols, searchText, conjunction) {
   // we'll check for a match of each keyword, appearing in at least one col
   let sql = '';
   let didOne = false;
+  parmCounter = parmCounter || 0;
   for (let i = 0; i < terms.length; i++) {
     let term = terms[i];
     let plus = (didOne === true) ? ' +' : '';
@@ -708,12 +709,15 @@ const writeSearchClause = function(textCols, searchText, conjunction) {
     sql = `${sql}${plus} 
     CASE `;
     
+    parmCounter++;
+    let parm = {key: '$srch' + parmCounter, value: `%${term}%`};
+    parms.push(parm);
+    
     for (let c = 0; c < textCols.length; c++) {
       let col = textCols[c];
-      parms.push(`%${term}%'`);
       
       sql = `${sql}
-      WHEN ${col} LIKE ? THEN 1`;
+      WHEN ${col} LIKE ${parm.key} THEN 1`;
     }
     
     sql = `${sql}
@@ -724,10 +728,26 @@ const writeSearchClause = function(textCols, searchText, conjunction) {
   }
   
   // wrap in an outer case statement
-  sql = `${conjunction} CASE WHEN 
-  ${sql} = ${terms.length} THEN 1
-    ELSE 0
+  sql = `${conjunction} CASE 
+  WHEN 
+    ${sql} = ${terms.length} THEN 1
+  ELSE 0
   END = 1`;
   
-  return { sql: sql, parms: parms };
+  const result = { sql: sql, parms: parms };
+  return result;
+}
+
+// from array of key/value pairs to a single object
+// needed for the named-argument approach 
+// (which we wanted b/c of multiple usages of a particular nth parameter in search)
+// sqlite.org/wasm/doc/trunk/api-oo1.md#stmt-bind
+const bindConsol = function(bind) {
+  const obj = {};
+  for (let i = 0; i < bind.length; i++) {
+    let parm = bind[i];
+    obj[parm.key] = parm.value;
+  }
+  
+  return obj;
 }
