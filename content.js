@@ -1,6 +1,6 @@
 // for recording
 var _savableFollows = [];
-var _savableFollowHandleSet = new Set(); // to avoid storing dupes
+var _savableFollowKeySet = new Set(); // to avoid storing dupes
 var _savedFollowHandleSet = new Set();
 var _photos = [];
 var _photoHandleSet = new Set();
@@ -53,7 +53,7 @@ chrome.runtime.onMessage.addListener(
 
 const reinit = function() {
   _savableFollows = [];
-  _savableFollowHandleSet = new Set(); // to avoid storing dupes
+  _savableFollowKeySet = new Set(); // to avoid storing dupes
   _savedFollowHandleSet = new Set();
   _photos = [];
   _photoHandleSet = new Set();
@@ -97,7 +97,7 @@ const setFollowSaveTimer = function() {
   
   if (_savableFollows.length > 0) {
     ensureFollowPhotosInfused();
-    
+    console.log(_savableFollows);
     // tell background js to save to local storage cache
     chrome.runtime.sendMessage(
     {
@@ -113,7 +113,7 @@ const setFollowSaveTimer = function() {
           }
         }
         
-        if (_countWhenScrollDoneSet != _savableFollowHandleSet.size + _savedFollowHandleSet.size) {
+        if (_countWhenScrollDoneSet != _savableFollowKeySet.size + _savedFollowHandleSet.size) {
           // tell background js to update badge (the condition is so that we don't set to a number when 'DONE' was in place)
           chrome.runtime.sendMessage({
             actionType: 'setBadge',
@@ -124,7 +124,7 @@ const setFollowSaveTimer = function() {
     
     // clear
     _savableFollows = [];
-    _savableFollowHandleSet = new Set();
+    _savableFollowKeySet = new Set();
     _photos = [];
     _photoHandleSet = new Set();
   }
@@ -265,12 +265,12 @@ const processTwitterFollowsOnPage = function(scopeElm) {
   if (ppl.length > 0) {
     for (let i = 0; i < ppl.length; i++) {
       let item = ppl[i];
-      
-      if (!_savableFollowHandleSet.has(item.h.toLowerCase()) && !_savedFollowHandleSet.has(item.h.toLowerCase())) {
+      let key = `${item.h}-${item.owner}-${item.pageType}`.toLowerCase();
+      if (!_savableFollowKeySet.has(key) && !_savedFollowHandleSet.has(key)) {
         // add newly found handles to what we want to save
         
         _savableFollows.push(item);
-        _savableFollowHandleSet.add(item.h.toLowerCase());
+        _savableFollowKeySet.add(key);
         _lastDiscoveryTime = Date.now();
       }
     }
@@ -319,7 +319,7 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
   
   if (scrollable === true) {
     // did we come up empty between prior run and now?
-    let count = _savableFollowHandleSet.size + _savedFollowHandleSet.size;
+    let count = _savableFollowKeySet.size + _savedFollowHandleSet.size;
     
     let emptyScroll = count <= _preScrollCount;
     
