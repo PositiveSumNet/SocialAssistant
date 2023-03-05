@@ -3,17 +3,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.actionType)
     {
       case 'save':
-        switch (request.pageType) {
-          case 'followingOnTwitter':
-          case 'followersOnTwitter':
-            await injectImageBase64s(request);
-            saveToTempStorage(request);
-            break;
-          default:
-            return;
-        }
-        
-        sendResponse({saved: request.payload, success: true});
+        const saveResponse = await processSave(request.payload);
+        sendResponse(saveResponse);
         break;
       case 'setBadge':
         chrome.action.setBadgeText({text: request.badgeText});
@@ -25,12 +16,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
+const processSave = async function(follows) {
+  await injectImageBase64s(follows);
+  saveToTempStorage(follows);
+  return {saved: follows, success: true};
+}
+
 // TODO: Parallel tasks like one of these
 // bytelimes.com/batch-async-tasks-with-async-generators/
 // stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
-const injectImageBase64s = async function(request) {
-  for (let i = 0; i < request.payload.length; i++) {
-    let item = request.payload[i];
+const injectImageBase64s = async function(follows) {
+  for (let i = 0; i < follows.length; i++) {
+    let item = follows[i];
     if (item.imgCdnUrl) {
       item.img64Url = await getImageBase64(item.imgCdnUrl);
     }
@@ -38,15 +35,10 @@ const injectImageBase64s = async function(request) {
 }
 
 // caches what we'll want to persist to the sqlitedb when we get the chance
-const saveToTempStorage = function(request) {
+const saveToTempStorage = function(follows) {
   // the 'fordb-' prefix is how we find all such pending batches
   const key = 'fordb-' + Date.now().toString();
-  
-  for (let i = 0; i < request.payload.length; i++) {
-    let item = request.payload[i];
-  }
-  
-  chrome.storage.local.set({ [key]: request });
+  chrome.storage.local.set({ [key]: follows });
 }
 
 // stackoverflow.com/questions/57346889/how-to-return-base64-data-from-a-fetch-promise

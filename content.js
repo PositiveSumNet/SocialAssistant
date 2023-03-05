@@ -1,17 +1,9 @@
-// clear prior run's state
-chrome.storage.local.remove('recording');
-
-// clear badge
-chrome.runtime.sendMessage({actionType: 'setBadge', badgeText: ''});
-
-// reinit variables
 // for recording
 var _savableFollows = [];
 var _savableFollowHandleSet = new Set(); // to avoid storing dupes
 var _savedFollowHandleSet = new Set();
 var _photos = [];
 var _photoHandleSet = new Set();
-var _parsedUrl;
 var _observer;
 // for scrolling
 var _lastDiscoveryTime = null;
@@ -24,13 +16,17 @@ var _countWhenScrollDoneSet;
 
 //console.log("Content Script initialized.");
 
+const getParsedUrl = function() {
+  return parseUrl(window.location.href);
+}
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     switch (request.actionType) {
       case 'startRecording':
-        _parsedUrl = parseUrl(window.location.href);
+        var parsedUrl = getParsedUrl();
         
-        if (!_observer && _parsedUrl && _parsedUrl.site === 'twitter') {
+        if (!_observer && parsedUrl.site === 'twitter') {
           // begin recording
           recordTwitter();
           // periodically check for collected items to save
@@ -39,7 +35,7 @@ chrome.runtime.onMessage.addListener(
         
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
-          let avoidScrollIfHidden = (_parsedUrl.site === 'twitter');
+          let avoidScrollIfHidden = (parsedUrl.site === 'twitter');
           scrollAsNeeded(avoidScrollIfHidden);
         }
         
@@ -61,7 +57,6 @@ const reinit = function() {
   _savedFollowHandleSet = new Set();
   _photos = [];
   _photoHandleSet = new Set();
-  _parsedUrl = undefined;
   _observer = undefined;
   _lastDiscoveryTime = null;
   _lastScrollTime = null;
@@ -100,15 +95,13 @@ const setFollowSaveTimer = function() {
     return;
   }
   
-  if (_parsedUrl && _savableFollows.length > 0) {
+  if (_savableFollows.length > 0) {
     ensureFollowPhotosInfused();
     
     // tell background js to save to local storage cache
     chrome.runtime.sendMessage(
     {
       actionType: 'save',
-      pageType: _parsedUrl.pageType,
-      owner: _parsedUrl.owner,
       payload: _savableFollows
     }, 
     function(response) {
@@ -234,6 +227,9 @@ const twitterProfileUrlFromHandle = function(handle) {
 }
 
 const processTwitterFollowsOnPage = function(scopeElm) {
+  
+  const parsedUrl = getParsedUrl();
+  
   // all links
   const all = Array.from(scopeElm.getElementsByTagName('a')).map(function(a) {
     return { u: a.getAttribute('href'), d: a.innerText };
@@ -259,7 +255,7 @@ const processTwitterFollowsOnPage = function(scopeElm) {
         if (!item.d.startsWith('@')) {
           // it had display text (not the @handle)
           // this is the display name title anchor, usable as the handle/display pair
-          let per = { h: h, d: item.d };
+          let per = { h: h, d: item.d, pageType: parsedUrl.pageType, owner: parsedUrl.owner };
           ppl.push(per);
         }
       }

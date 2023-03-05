@@ -202,7 +202,7 @@ const start = function() {
   
   try {
     // can set to true while debugging to reset the db
-    const startOver = false;
+    const startOver = true;
     if (startOver === true) {
       db.exec("drop table if exists Migration;");
       db.exec("drop table if exists RdfImport1to1;");
@@ -256,7 +256,7 @@ self
 onmessage = (evt) => {
   let actionType = getActionType(evt);
   switch(actionType) {
-    case 'save':
+    case 'xferCacheToDb':
       xferCacheToDb(evt.data);
       break;
     case 'suggestOwner':
@@ -286,17 +286,26 @@ const getActionType = function(evt) {
 }
 
 // per index.js ensureCopiedToDb, data.key is the storage key of the data we're transferring, and
-// data.val is the request originally cached by background.js (made by setSaveTimer in content.js)
+// data.val is the request originally cached by background.js (made by setFollowSaveTimer in content.js)
 const xferCacheToDb = function(data) {
-  let meta = getSaveMetadata(data.val.pageType);
-  let db = getDb();
-  try {
-    if (meta.action == 'saveFollows') {
-      saveFollows(db, data, meta, _meGraph);
+  // We have data.val.payload, which is _savableFollows from content.js (via background.js)
+  // need to group by pageType
+  const items = data.val;
+  const groups = groupBy(items, 'pageType');
+  
+  for (let i = 0; i < groups.length; i++) {
+    let group = groups[i];
+    let pageType = group[0].pageType;
+    let meta = getSaveMetadata(pageType);
+    let db = getDb();
+    try {
+      if (meta.action == 'saveFollows') {
+        saveFollows(db, group, data.key, meta, _meGraph);
+      }
+    } 
+    finally {
+      db.close();
     }
-  } 
-  finally {
-    db.close();
   }
 }
 
@@ -472,7 +481,7 @@ const execUpsert = function(db, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue')
   db.exec(sql);
 }
 
-const saveFollows = function(db, data, meta, graph) {
+const saveFollows = function(db, follows, cacheKey, meta, graph) {
   // guids for this batch
   const followUid = crypto.randomUUID();
   const handleDisplayUid = crypto.randomUUID();
@@ -484,25 +493,24 @@ const saveFollows = function(db, data, meta, graph) {
   const qMark = `?`;
   const gParm = `'${graph}'`;
   
-  // only need to specify the aspects of the sog that are per-item variables
-  const followSogs = data.val.payload.map(function(x) {
-    return {o: x.h};
+  const followSogs = follows.map(function(x) {
+    return {s: x.owner, o: x.h};
   });
   
-  const handleDisplaySogs = data.val.payload.map(function(x) {
+  const handleDisplaySogs = follows.map(function(x) {
     return {s: x.h, o: x.d};
   });
 
-  const imgCdnSogs = data.val.payload.map(function(x) {
+  const imgCdnSogs = follows.map(function(x) {
     return {s: x.h, o: x.imgCdnUrl};
   });
 
-  const img64Sogs = data.val.payload.map(function(x) {
+  const img64Sogs = follows.map(function(x) {
     return {s: x.h, o: x.img64Url};
   });
   
   // bulk import
-  execBulkImport(db, false, followUid, `'${data.val.owner}'`, qMark, gParm, followSogs);
+  execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);
   execBulkImport(db, true, handleDisplayUid, qMark, qMark, gParm, handleDisplaySogs);
   execBulkImport(db, true, imgCdnUid, qMark, qMark, gParm, imgCdnSogs);
   execBulkImport(db, true, img64Uid, qMark, qMark, gParm, img64Sogs);
@@ -520,7 +528,7 @@ const saveFollows = function(db, data, meta, graph) {
   clearBulkImport(db, img64Uid, meta.tblImg64Url, true);
   
   // tell caller it can clear that cache key and send over the next one
-  postMessage({ type: 'copiedToDb', cacheKey: data.key });
+  postMessage({ type: 'copiedToDb', cacheKey: cacheKey });
 }
 
 // suggesting a single owner on init
@@ -750,4 +758,11 @@ const bindConsol = function(bind) {
   }
   
   return obj;
+}
+
+// stackoverflow.com/questions/21776389/javascript-object-grouping
+function groupBy(arr, prop) {
+  const map = new Map(Array.from(arr, obj => [obj[prop], []]));
+  arr.forEach(obj => map.get(obj[prop]).push(obj));
+  return Array.from(map.values());
 }

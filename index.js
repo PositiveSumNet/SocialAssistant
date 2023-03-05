@@ -39,7 +39,7 @@ const ensureCopiedToDb = async function() {
   
   for (const [key, val] of entries) {
     if (key.startsWith('fordb-')) {
-      worker.postMessage({ key: key, val: val });
+      worker.postMessage({ key: key, val: val, actionType: 'xferCacheToDb' });
       return; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
     }
   }
@@ -237,7 +237,7 @@ const buildNetworkSearchRequestFromUi = function() {
     searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
     skip: 0,
-    take: 10  // 50
+    take: 50
     };
   
   return msg;

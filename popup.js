@@ -28,7 +28,7 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     
     // reflect button visibility based on whether recording
     chrome.storage.local.get(['recording'], function(result) {
-      let isRecording = (result.recording == tab.url);
+      let isRecording = (result.recording === true);
       let ifRecordings = document.getElementsByClassName('ifRecording');
       for (let i = 0; i < ifRecordings.length; i++) {
         let elm = ifRecordings[i];
@@ -103,10 +103,9 @@ const kickoffRecording = async function(record, auto) {
 
   if (tab && tab.id) {
     
-    // store knowledge that this page is being recorded
     let actionType = '';
     if (record === true) {
-      chrome.storage.local.set({ recording: tab.url });
+      chrome.storage.local.set({ recording: true });
       actionType = 'startRecording';
     }
     else {
