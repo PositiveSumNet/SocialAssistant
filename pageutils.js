@@ -1,3 +1,7 @@
+const getParsedUrl = function() {
+  return parseUrl(window.location.href);
+}
+
 const parseUrl = function(url) {
 
   var pageType;

@@ -14,25 +14,49 @@ var _autoScroll = false;
 var _scrollIsPending = false;
 var _countWhenScrollDoneSet;
 
-//console.log("Content Script initialized.");
+// on startup, see if supposed to already be recording
+chrome.storage.local.get(['recording'], function(result) {
+  if (result.recording === true) {
+    // here at startup, extension is in a 'load if we can' state
+    const parsedUrl = getParsedUrl();
+    if (parsedUrl && parsedUrl.site === 'twitter') {
+      tryStartRecordingTwitter();
+    }
+  }
+});
 
-const getParsedUrl = function() {
-  return parseUrl(window.location.href);
+const tryStartRecordingTwitter = function() {
+  const warnIfNotYetReady = false;
+  let col = getTwitterMainColumn(warnIfNotYetReady);
+  
+  if (col) {
+    startRecording();
+  }
+  else {
+    // try again in a couple seconds to see if page is loaded
+    setTimeout(() => {
+      tryStartRecordingTwitter();
+    }, 2500);
+  }
+}
+
+const startRecording = function() {
+  const parsedUrl = getParsedUrl();
+  const site = parsedUrl.site;
+  
+  if (!_observer && site === 'twitter') {
+    // begin recording
+    recordTwitter();
+    // periodically check for collected items to save
+    setFollowSaveTimer();
+  }
 }
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     switch (request.actionType) {
       case 'startRecording':
-        var parsedUrl = getParsedUrl();
-        
-        if (!_observer && parsedUrl.site === 'twitter') {
-          // begin recording
-          recordTwitter();
-          // periodically check for collected items to save
-          setFollowSaveTimer();
-        }
-        
+        startRecording();
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
           let avoidScrollIfHidden = (parsedUrl.site === 'twitter');
@@ -106,6 +130,7 @@ const setFollowSaveTimer = function() {
     }, 
     function(response) {
       if (response && response.success === true && response.saved && response.saved.length > 0) {
+        const newSaveCnt = response.saved.length;
         for (let i = 0; i < response.saved.length; i++) {
           let item = response.saved[i];
           if (!_savedFollowHandleSet.has(item.h.toLowerCase())) {
@@ -115,9 +140,12 @@ const setFollowSaveTimer = function() {
         
         if (_countWhenScrollDoneSet != _savableFollowKeySet.size + _savedFollowHandleSet.size) {
           // tell background js to update badge (the condition is so that we don't set to a number when 'DONE' was in place)
+          
+          const badgeText = '+' + newSaveCnt;
+          
           chrome.runtime.sendMessage({
             actionType: 'setBadge',
-            badgeText: badgeNum(_savedFollowHandleSet.size)});
+            badgeText: badgeText});
         }
       }
     });
@@ -165,14 +193,16 @@ const recordTwitter = function() {
   processTwitterFollowsAndPhotos(mainColumn);
 }
 
-const getTwitterMainColumn = function() {
+const getTwitterMainColumn = function(warn) {
   const elms = document.querySelectorAll('div[data-testid="primaryColumn"]');
   
   if (elms && elms.length === 1) {
     return elms[0];
   }
   else {
-    console.error('Cannot find twitter main column; page structure may have changed.');
+    if (warn === true) {
+      console.warn('Cannot find twitter main column; page structure may have changed.');
+    }
   }
 }
 
