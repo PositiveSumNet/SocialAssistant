@@ -97,7 +97,7 @@ const setFollowSaveTimer = function() {
   
   if (_savableFollows.length > 0) {
     ensureFollowPhotosInfused();
-    console.log(_savableFollows);
+    
     // tell background js to save to local storage cache
     chrome.runtime.sendMessage(
     {
