@@ -59,7 +59,8 @@ chrome.runtime.onMessage.addListener(
         startRecording();
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
-          let avoidScrollIfHidden = (parsedUrl.site === 'twitter');
+          const parsedUrl = getParsedUrl();
+          const avoidScrollIfHidden = (parsedUrl.site === 'twitter');
           scrollAsNeeded(avoidScrollIfHidden);
         }
         
