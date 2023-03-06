@@ -553,7 +553,7 @@ const inputFollowOwner = function(data) {
     postMessage({ 
       type: 'renderMatchedOwners',
       payload: { 
-        rows: rows
+        owners: rows
       }
     });
   }

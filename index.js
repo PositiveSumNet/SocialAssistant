@@ -145,10 +145,38 @@ const initUi = function(owner, pageType) {
   }
 }
 
-const renderMatchedOwners = function(owners) {
+const renderPerson = function(person) {
+  const imgUrl = person.Img64Url || person.ImgCdnUrl;
+  const imgType = inferImageFileExt(person.ImgCdnUrl);
+  
+  let img = '';
+  if (person.Img64Url) {
+    img = `<img src='data:image/${imgType};base64,${person.Img64Url}'/>`;
+    console.log(img);
+  }
+  else if (person.ImgCdnUrl) {
+    img = `<img src='${person.ImgCdnUrl}'/>`;
+  }
+  
+  return `<div class='person row'>
+    <div class='col'>${img}</div>
+    <div class='col'>
+      <div class='personHandle'>${person.Handle}</div>
+      <div class='personDisplay'>${person.DisplayName}</div>
+    </div>
+  </div>`;
+}
+
+const renderMatchedOwner = function(owner) {
+  return '<li>' + renderPerson(owner) + '</li>';
+}
+
+const renderMatchedOwners = function(payload) {
+  const owners = payload.owners;
   ulFollowPivotPicker.style.display = 'block';
+  
   for (i = 0; i < owners.length; i++) {
-    ulFollowPivotPicker.innerHTML += "<li>" + owners[i] + "</li>";
+    ulFollowPivotPicker.innerHTML += renderMatchedOwner(owners[i]);
   }
 }
 
@@ -298,3 +326,21 @@ txtFollowPivotHandle.oninput = function () {
     limit: 5
   });
 };
+
+const inferImageFileExt = function(url) {
+  if (!url) {
+    return 'png';
+  }
+  else if (url.endsWith('.jpg')) {
+    return 'jpg';
+  }
+  else if (url.endsWith('.jpeg')) {
+    return 'jpeg';
+  }
+  else if (url.endsWith('.gif')) {
+    return 'gif';
+  }
+  else {
+    return 'png';
+  }
+}

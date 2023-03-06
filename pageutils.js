@@ -33,17 +33,6 @@ const parseUrl = function(url) {
   }
 }
 
-// up to 4 characters
-const badgeNum = function(num) {
-  if (num > 9999) {
-    let k = num/1000;
-    return k.toString() + 'k';
-  }
-  else {
-    return num.toString();
-  }
-}
-
 const sameText = function(a, b, insensitive = true) {
   if (a === b) {
     return true;
@@ -68,7 +57,7 @@ const buildLinkedImg = function(img) {
 }
 
 // stackoverflow.com/questions/7332179/how-to-recursively-search-all-parentnodes/7333885#7333885
-function findUpTag(el, tag) {
+const findUpTag = function(el, tag) {
   while (el.parentNode) {
     el = el.parentNode;
     if (sameText(el.tagName, tag)) {
