@@ -152,7 +152,6 @@ const renderPerson = function(person) {
   let img = '';
   if (person.Img64Url) {
     img = `<img src='data:image/${imgType};base64,${person.Img64Url}'/>`;
-    console.log(img);
   }
   else if (person.ImgCdnUrl) {
     img = `<img src='${person.ImgCdnUrl}'/>`;
@@ -162,21 +161,17 @@ const renderPerson = function(person) {
     <div class='col'>${img}</div>
     <div class='col'>
       <div class='personHandle'>${person.Handle}</div>
-      <div class='personDisplay'>${person.DisplayName}</div>
+      <div class='personDisplay'>${person.DisplayName ?? ''}</div>
     </div>
   </div>`;
 }
 
-const renderMatchedOwner = function(owner) {
-  return '<li>' + renderPerson(owner) + '</li>';
-}
-
 const renderMatchedOwners = function(payload) {
   const owners = payload.owners;
-  ulFollowPivotPicker.style.display = 'block';
+  listFollowPivotPicker.innerHTML = '';
   
   for (i = 0; i < owners.length; i++) {
-    ulFollowPivotPicker.innerHTML += renderMatchedOwner(owners[i]);
+    listFollowPivotPicker.innerHTML += renderPerson(owners[i]);
   }
 }
 
@@ -288,7 +283,7 @@ const renderFollows = function(payload) {
 }
 
 const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
-const ulFollowPivotPicker = document.getElementById('ulFollowPivotPicker');
+const listFollowPivotPicker = document.getElementById('listFollowPivotPicker');
 const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtFollowSearch');
@@ -313,7 +308,7 @@ txtFollowPivotHandle.oninput = function () {
   const userInput = this.value;
 
   if (!userInput || userInput.length === 0) {
-    ulFollowPivotPicker.innerHTML = '';
+    listFollowPivotPicker.innerHTML = '';
     return;
   }
   
