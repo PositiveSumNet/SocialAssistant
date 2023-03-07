@@ -148,20 +148,26 @@ const initUi = function(owner, pageType) {
 const renderPerson = function(person) {
   const imgUrl = person.Img64Url || person.ImgCdnUrl;
   const imgType = inferImageFileExt(person.ImgCdnUrl);
+  const imgStyling = `style='width:92px;height:92px;padding:2px;'`;
   
   let img = '';
   if (person.Img64Url) {
-    img = `<img src='data:image/${imgType};base64,${person.Img64Url}'/>`;
+    img = `<img ${imgStyling} src='data:image/${imgType};base64,${person.Img64Url}'/>`;
   }
   else if (person.ImgCdnUrl) {
-    img = `<img src='${person.ImgCdnUrl}'/>`;
+    img = `<img ${imgStyling} src='${person.ImgCdnUrl}'/>`;
+  }
+  else {
+    img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
   }
   
+  const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
+  
   return `<div class='person row'>
-    <div class='col'>${img}</div>
+    <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
-      <div class='personHandle'>${person.Handle}</div>
-      <div class='personDisplay'>${person.DisplayName ?? ''}</div>
+      <div class='personHandle pt-2'><b>${handle}</b></div>
+      <div class='personDisplay pt-2'>${person.DisplayName ?? ''}</div>
     </div>
   </div>`;
 }
@@ -353,7 +359,7 @@ const inferImageFileExt = function(url) {
 }
 
 const findUpClass = function(el, cls, selfCheck = true) {
-  if(selfCheck === true && el.classList.contains(cls)) { return el; }
+  if(selfCheck === true && el && el.classList.contains(cls)) { return el; }
   while (el.parentNode) {
     el = el.parentNode;
     if (el.classList.contains(cls)) {

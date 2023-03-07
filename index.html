@@ -13,17 +13,17 @@
     <div>
       <h1 class="bg-header inkfree"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></h1>
       <h5 class="bg-subheader inkfree">Locally Cached Social Database</h5>
-      <div id="dbui" class="p-3">
+      <div id="dbui" class="pb-2 ps-4 pe-4">
         <div id='transferringMsg' style="display:none;">Copying recent recordings to local database...</div>
         <div id='followList'>
-          <div class='listHeader'>
-            <div class='listPivot'>
-              <label for='txtFollowPivotHandle'>Account </label>
+          <div class='listHeader h4'>
+            <div class='listPivot pt-2'>
+              <label for='txtFollowPivotHandle' class='pe-2 text-muted'>Account </label>
               <input id='txtFollowPivotHandle' type='text' placeholder='@handle' />
-              <div id='listFollowPivotPicker' class='container'>
+              <div id='listFollowPivotPicker' class='container pt-2'>
               </div>
             </div>
-            <div id='followDirection'>
+            <div id='followDirection pt-2'>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing" checked>
                 <label class="form-check-label" for="optFollowing">
@@ -37,7 +37,7 @@
                 </label>
               </div>
             </div>
-            <div>
+            <div class='pt-4'>
               <input id='txtFollowSearch' type='text' placeholder='search...' />
             </div>
           </div>
