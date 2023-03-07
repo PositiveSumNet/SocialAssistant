@@ -159,7 +159,7 @@ const renderPerson = function(person) {
   
   return `<div class='person row'>
     <div class='col'>${img}</div>
-    <div class='col'>
+    <div class='col personLabel'>
       <div class='personHandle'>${person.Handle}</div>
       <div class='personDisplay'>${person.DisplayName ?? ''}</div>
     </div>
@@ -249,7 +249,10 @@ const cachePageState = function(msg) {
 }
 
 const buildNetworkSearchRequestFromUi = function() {
-  const owner = getUiValue('txtFollowPivotHandle');
+  // trim the '@'
+  let owner = getUiValue('txtFollowPivotHandle');
+  owner = owner && owner.startsWith('@') ? owner.substring(1) : owner;
+  
   const pageType = getPageType();
   const searchText = getUiValue('txtFollowSearch');
   
@@ -304,6 +307,7 @@ txtFollowPivotHandle.addEventListener('keypress', function(event) {
 });
 
 // typeahead for account owner
+// w3collective.com/autocomplete-search-javascript/
 txtFollowPivotHandle.oninput = function () {
   const userInput = this.value;
 
@@ -322,6 +326,14 @@ txtFollowPivotHandle.oninput = function () {
   });
 };
 
+// choose from typeahead results
+listFollowPivotPicker.onclick = function(event) {
+  const personElm = findUpClass(event.target, 'person');
+  const handleElm = personElm.querySelector('.personLabel > .personHandle');
+  txtFollowPivotHandle.value = handleElm.innerText;
+  this.innerHTML = "";
+};
+
 const inferImageFileExt = function(url) {
   if (!url) {
     return 'png';
@@ -338,4 +350,15 @@ const inferImageFileExt = function(url) {
   else {
     return 'png';
   }
+}
+
+const findUpClass = function(el, cls, selfCheck = true) {
+  if(selfCheck === true && el.classList.contains(cls)) { return el; }
+  while (el.parentNode) {
+    el = el.parentNode;
+    if (el.classList.contains(cls)) {
+      return el;
+    }
+  }
+  return null;
 }

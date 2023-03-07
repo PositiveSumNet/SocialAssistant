@@ -57,7 +57,9 @@ const buildLinkedImg = function(img) {
 }
 
 // stackoverflow.com/questions/7332179/how-to-recursively-search-all-parentnodes/7333885#7333885
-const findUpTag = function(el, tag) {
+// stackoverflow.com/questions/7332179/how-to-recursively-search-all-parentnodes/7333885#7333885
+const findUpTag = function(el, tag, selfCheck = true) {
+  if(selfCheck === true && sameText(el.tagName, tag)) { return el; }
   while (el.parentNode) {
     el = el.parentNode;
     if (sameText(el.tagName, tag)) {
