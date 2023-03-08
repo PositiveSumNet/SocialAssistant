@@ -65,6 +65,13 @@ const initialRender = function() {
     }
   }
   
+  if (owner || pageType) {
+    // clear url parms so that a page refresh going forward respects the UI state instead of the query string
+    // stackoverflow.com/questions/38625654/remove-url-parameter-without-page-reloading
+    const url= document.location.href;
+    window.history.pushState({}, "", url.split("?")[0]);
+  }
+  
   if (!pageType) {
     pageType = getCachedPageType();
   }
@@ -202,7 +209,7 @@ const getUiValue = function(id) {
     case 'txtFollowPivotHandle':
       return txtFollowPivotHandle.value;
     case 'optFollowDirection':
-      return document.getElementById('optFollowing').checked ? 'following' : 'followers';
+      return document.getElementById('optFollowers').checked ? 'followers' : 'following';
     case 'txtFollowSearch':
       return txtFollowSearch.value;
     default:
@@ -340,6 +347,8 @@ listFollowPivotPicker.onclick = function(event) {
   handleText = handleText.startsWith('@') ? handleText.substring(1) : handleText;
   txtFollowPivotHandle.value = handleText;
   this.innerHTML = "";
+  // trigger the same action as hitting "Enter"
+  networkSearch();
 };
 
 const inferImageFileExt = function(url) {
