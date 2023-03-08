@@ -119,3 +119,12 @@ body {
   color: #fff;
   background: #5991C5;
 }
+
+.row .striped {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #6c757d;
+}
+
+.row .striped:nth-child(odd) {
+  background-color: #dee2e6;
+}

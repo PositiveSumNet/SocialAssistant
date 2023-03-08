@@ -145,10 +145,10 @@ const initUi = function(owner, pageType) {
   }
 }
 
-const renderPerson = function(person) {
+const renderPerson = function(person, imgSize = 92) {
   const imgUrl = person.Img64Url || person.ImgCdnUrl;
   const imgType = inferImageFileExt(person.ImgCdnUrl);
-  const imgStyling = `style='width:92px;height:92px;padding:2px;'`;
+  const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
   
   let img = '';
   if (person.Img64Url) {
@@ -163,11 +163,11 @@ const renderPerson = function(person) {
   
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
   
-  return `<div class='person row'>
+  return `<div class='person row striped pt-1' role='button'>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
-      <div class='personHandle pt-2'><b>${handle}</b></div>
-      <div class='personDisplay pt-2'>${person.DisplayName ?? ''}</div>
+      <div class='personHandle'><b>${handle}</b></div>
+      <div class='personDisplay'>${person.DisplayName ?? ''}</div>
     </div>
   </div>`;
 }
@@ -177,7 +177,7 @@ const renderMatchedOwners = function(payload) {
   listFollowPivotPicker.innerHTML = '';
   
   for (i = 0; i < owners.length; i++) {
-    listFollowPivotPicker.innerHTML += renderPerson(owners[i]);
+    listFollowPivotPicker.innerHTML += renderPerson(owners[i], 46);
   }
 }
 
@@ -336,7 +336,9 @@ txtFollowPivotHandle.oninput = function () {
 listFollowPivotPicker.onclick = function(event) {
   const personElm = findUpClass(event.target, 'person');
   const handleElm = personElm.querySelector('.personLabel > .personHandle');
-  txtFollowPivotHandle.value = handleElm.innerText;
+  let handleText = handleElm.innerText;
+  handleText = handleText.startsWith('@') ? handleText.substring(1) : handleText;
+  txtFollowPivotHandle.value = handleText;
   this.innerHTML = "";
 };
 

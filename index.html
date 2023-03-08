@@ -15,33 +15,34 @@
       <h5 class="bg-subheader inkfree">Locally Cached Social Database</h5>
       <div id="dbui" class="pb-2 ps-4 pe-4">
         <div id='transferringMsg' style="display:none;">Copying recent recordings to local database...</div>
-        <div id='followList'>
-          <div class='listHeader h4'>
-            <div class='listPivot pt-2'>
-              <label for='txtFollowPivotHandle' class='pe-2 text-muted'>Account </label>
-              <input id='txtFollowPivotHandle' type='text' placeholder='@handle' />
-              <div id='listFollowPivotPicker' class='container pt-2'>
+        <div id='followList container'>
+          <div class='listHeader row container'>
+            <div class='listPivot pt-2 col'>
+              <div class='col input-group'>
+                <label for='txtFollowPivotHandle' class='text-muted input-group-text'>@</label>
+                <input id='txtFollowPivotHandle' type='text' placeholder='account' class='form-control' />
               </div>
             </div>
-            <div id='followDirection pt-2'>
-              <div class="form-check form-check-inline">
+            <div id='followDirection' class='col-sm-auto'>
+              <div class="form-check form-check">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing" checked>
                 <label class="form-check-label" for="optFollowing">
                   is following...
                 </label>
               </div>
-              <div class="form-check form-check-inline">
+              <div class="form-check form-check">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
                 <label class="form-check-label" for="optFollowers">
                   has followers...
                 </label>
               </div>
             </div>
-            <div class='pt-4'>
-              <input id='txtFollowSearch' type='text' placeholder='search...' />
+            <div class='pt-2 col input-group'>
+              <input id='txtFollowSearch' type='text' class='form-control' placeholder='search...' />
             </div>
           </div>
-          <div class='listMain' id='followListMain'>
+          <div id='listFollowPivotPicker' class='row container pt-2'></div>
+          <div class='listMain row' id='followListMain'>
             <ul id='paginated-list' aria-live='polite'>
             </ul>
             <nav class="pagination-container">
@@ -60,7 +61,7 @@
         </div>
       </div>
     </div>
-    <div class="fixed-bottom p-3">
+    <div class="fixed-bottom">
       <span>
         <span>SQLite DB Version: <span id='sqliteVersionLib'></span></span>, 
         <span>OPFS: <span id='sqliteOpfsOk'></span></span>, 
