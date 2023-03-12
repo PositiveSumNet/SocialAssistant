@@ -107,9 +107,11 @@ const migrateDb = function(db, dbVersion) {
         sHandle TEXT NOT NULL,
         oValue TEXT NOT NULL,
         NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
         UNIQUE(sHandle, oValue, NamedGraph));
         
         CREATE INDEX IF NOT EXISTS IX_FollowerOnTwitter_os ON FollowerOnTwitter(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_FollowerOnTwitter_Timestamp ON FollowerOnTwitter(Timestamp);
         
         
         /* s is following o on Twitter per source "g" */
@@ -117,9 +119,11 @@ const migrateDb = function(db, dbVersion) {
         sHandle TEXT NOT NULL,
         oValue TEXT NOT NULL,
         NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
         UNIQUE(sHandle, oValue, NamedGraph));
         
         CREATE INDEX IX_FollowingOnTwitter_os ON FollowingOnTwitter(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_FollowingOnTwitter_Timestamp ON FollowingOnTwitter(Timestamp);
         
         
         /* s has o as its display name on Twitter per source "g" */
@@ -127,9 +131,23 @@ const migrateDb = function(db, dbVersion) {
         sHandle TEXT NOT NULL,
         oValue TEXT,
         NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
         UNIQUE(sHandle, NamedGraph));
         
         CREATE INDEX IF NOT EXISTS IX_TwitterDisplayName_os ON TwitterDisplayName(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterDisplayName_Timestamp ON TwitterDisplayName(Timestamp);
+        
+        
+        /* s has o as its profile description on Twitter per source "g" */
+        CREATE TABLE IF NOT EXISTS TwitterProfileDescription(
+        sHandle TEXT NOT NULL,
+        oValue TEXT,
+        NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
+        UNIQUE(sHandle, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileDescription_os ON TwitterProfileDescription(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileDescription_Timestamp ON TwitterProfileDescription(Timestamp);
         
 
         /* migration version */
@@ -146,9 +164,11 @@ const migrateDb = function(db, dbVersion) {
         sHandle TEXT NOT NULL,
         oValue TEXT,
         NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
         UNIQUE(sHandle, NamedGraph));
         
         CREATE INDEX IF NOT EXISTS IX_TwitterImgCdnUrl_os ON TwitterImgCdnUrl(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterImgCdnUrl_Timestamp ON TwitterImgCdnUrl(Timestamp);
         
 
         /* s has image data url (*stored here as base 64*) o on Twitter per source "g" */
@@ -156,9 +176,11 @@ const migrateDb = function(db, dbVersion) {
         sHandle TEXT NOT NULL,
         oValue TEXT,
         NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
         UNIQUE(sHandle, NamedGraph));
         
         CREATE INDEX IF NOT EXISTS IX_TwitterImg64Url_os ON TwitterImg64Url(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterImg64Url_Timestamp ON TwitterImg64Url(Timestamp);
         
 
         /* migration version */
@@ -208,6 +230,7 @@ const start = function() {
       db.exec("drop table if exists RdfImport1to1;");
       db.exec("drop table if exists RdfImport1ton;");
       db.exec("drop table if exists TwitterDisplayName;");
+      db.exec("drop table if exists TwitterProfileDescription;");
       db.exec("drop table if exists FollowingOnTwitter;");
       db.exec("drop table if exists FollowerOnTwitter;");
       db.exec("drop table if exists TwitterImgCdnUrl;");
@@ -332,6 +355,16 @@ const getDisplayNameTable = function(pageType) {
   }
 }
 
+const getDescriptionTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterProfileDescription';
+    default:
+      return null;
+  }
+}
+
 const getImgCdnUrlTable = function(pageType) {
   switch (pageType) {
     case 'followingOnTwitter':
@@ -353,9 +386,10 @@ const getImg64UrlTable = function(pageType) {
 }
 const getSaveMetadata = function(pageType) {
   const tblFollow = getFollowTable(pageType);
-  let tblDisplayName = getDisplayNameTable(pageType);
-  let tblImgCdnUrl = getImgCdnUrlTable(pageType);
-  let tblImg64Url = getImg64UrlTable(pageType);
+  const tblDisplayName = getDisplayNameTable(pageType);
+  const tblDescription = getDescriptionTable(pageType);
+  const tblImgCdnUrl = getImgCdnUrlTable(pageType);
+  const tblImg64Url = getImg64UrlTable(pageType);
   
   let action = '';
   switch (pageType) {
@@ -371,6 +405,7 @@ const getSaveMetadata = function(pageType) {
     action: action,
     tblFollow: tblFollow,
     tblDisplayName: tblDisplayName,
+    tblDescription: tblDescription,
     tblImgCdnUrl: tblImgCdnUrl,
     tblImg64Url: tblImg64Url
   };
@@ -472,8 +507,8 @@ const execUpsert = function(db, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue')
   const importTable = getImportTable(oneToOne);
   
   const sql = `
-  REPLACE INTO ${tbl} ( ${s}, ${o}, NamedGraph )
-  SELECT RdfSubject, RdfObject, NamedGraph
+  REPLACE INTO ${tbl} ( ${s}, ${o}, NamedGraph, Timestamp )
+  SELECT RdfSubject, RdfObject, NamedGraph, ImportTime
   FROM ${importTable}
   WHERE BatchUid LIKE '${uid}%';
   `;
@@ -485,6 +520,7 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   // guids for this batch
   const followUid = crypto.randomUUID();
   const handleDisplayUid = crypto.randomUUID();
+  const descriptionUid = crypto.randomUUID();
   const imgCdnUid = crypto.randomUUID();
   const img64Uid = crypto.randomUUID();
   
@@ -500,6 +536,10 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   const handleDisplaySogs = follows.map(function(x) {
     return {s: x.h, o: x.d};
   });
+  
+  const handleDescriptionSogs = follows.map(function(x) {
+    return {s: x.h, o: x.description};
+  });
 
   const imgCdnSogs = follows.map(function(x) {
     return {s: x.h, o: x.imgCdnUrl};
@@ -512,18 +552,21 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   // bulk import
   execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);
   execBulkImport(db, true, handleDisplayUid, qMark, qMark, gParm, handleDisplaySogs);
+  execBulkImport(db, true, descriptionUid, qMark, qMark, gParm, handleDescriptionSogs);
   execBulkImport(db, true, imgCdnUid, qMark, qMark, gParm, imgCdnSogs);
   execBulkImport(db, true, img64Uid, qMark, qMark, gParm, img64Sogs);
   
   // process temp into final
   execUpsert(db, followUid, meta.tblFollow, false);
   execUpsert(db, handleDisplayUid, meta.tblDisplayName, true);
+  execUpsert(db, descriptionUid, meta.tblDescription, true);
   execUpsert(db, imgCdnUid, meta.tblImgCdnUrl, true);
   execUpsert(db, img64Uid, meta.tblImg64Url, true);
   
   // clear out import tables
   clearBulkImport(db, followUid, meta.tblFollow, false);
   clearBulkImport(db, handleDisplayUid, meta.tblDisplayName, true);
+  clearBulkImport(db, descriptionUid, meta.tblDescription, true);
   clearBulkImport(db, imgCdnUid, meta.tblImgCdnUrl, true);
   clearBulkImport(db, img64Uid, meta.tblImg64Url, true);
   
@@ -566,6 +609,7 @@ const searchOwners = function(data) {
   
   const tblFollow = getFollowTable(pageType);
   const tblDisplay = getDisplayNameTable(pageType);
+  const tblDescription = getDescriptionTable(pageType);
   const tblImgCdnUrl = getImgCdnUrlTable(pageType);
   const tblImg64Url = getImg64UrlTable(pageType);
   
@@ -584,14 +628,17 @@ const searchOwners = function(data) {
   SELECT x.*
   FROM (
     SELECT  f.sHandle AS Handle, 
-            d.oValue AS DisplayName, imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
+            f.Timestamp,
+            d.oValue AS DisplayName, dx.oValue AS Description,
+            imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
             COUNT(f.sHandle) AS Cnt
     FROM ${tblFollow} f
     LEFT JOIN ${tblDisplay} d ON d.sHandle = f.sHandle AND d.NamedGraph = f.NamedGraph
+    LEFT JOIN ${tblDescription} dx ON dx.sHandle = f.sHandle AND d.NamedGraph = f.NamedGraph
     LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.sHandle AND imgcdn.NamedGraph = f.NamedGraph
     LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.sHandle AND img64.NamedGraph = f.NamedGraph
     ${searchClauseSql}
-    GROUP BY f.sHandle, d.oValue, imgcdn.oValue, img64.oValue
+    GROUP BY f.sHandle, f.Timestamp, d.oValue, dx.oValue, imgcdn.oValue, img64.oValue
   ) x
   ORDER BY x.Cnt DESC
   LIMIT ${limit};
@@ -615,7 +662,7 @@ const searchOwners = function(data) {
   finally {
     db.close();
   }
-
+  
   return rows;
 }
 
@@ -624,6 +671,7 @@ const networkSearch = function(request) {
   const pageType = request.pageType;
   const tblFollow = getFollowTable(pageType);
   const tblDisplay = getDisplayNameTable(pageType);
+  const tblDescription = getDescriptionTable(pageType);
   const tblImgCdnUrl = getImgCdnUrlTable(pageType);
   const tblImg64Url = getImg64UrlTable(pageType);
   
@@ -642,7 +690,7 @@ const networkSearch = function(request) {
     conjunction = 'AND';
   }
   
-  const searchCols = ['f.oValue', 'd.oValue'];
+  const searchCols = ['f.oValue', 'd.oValue', 'dx.oValue'];
   const searchClause = writeSearchClause(searchCols, request.searchText, conjunction, bind.length);
   let searchClauseSql = '';
   
@@ -653,10 +701,13 @@ const networkSearch = function(request) {
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
-  SELECT DISTINCT f.oValue AS Handle, d.oValue AS DisplayName, imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
+  SELECT DISTINCT f.oValue AS Handle, f.Timestamp,
+      d.oValue AS DisplayName, dx.oValue AS Description,
+      imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
       COUNT() OVER() AS TotalCount
   FROM ${tblFollow} f
   LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
+  LEFT JOIN ${tblDescription} dx ON dx.sHandle = f.oValue AND dx.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
   ${ownerCondition}

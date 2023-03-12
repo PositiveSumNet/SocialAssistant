@@ -293,9 +293,11 @@ const renderFollows = function(payload) {
   
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
+    console.log(row);
     logHtml('', row.TotalCount);
     logHtml('', row.Handle);
     logHtml('', row.DisplayName);
+    logHtml('', row.Description);
   }
 }
 
