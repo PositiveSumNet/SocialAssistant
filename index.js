@@ -164,7 +164,7 @@ const initUi = function(owner, pageType) {
   }
 }
 
-const renderPerson = function(person, imgSize = 92) {
+const renderPerson = function(person, imgSize = 92, withDescription = true) {
   const imgUrl = person.Img64Url || person.ImgCdnUrl;
   const imgType = inferImageFileExt(person.ImgCdnUrl);
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
@@ -181,12 +181,14 @@ const renderPerson = function(person, imgSize = 92) {
   }
   
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
+  const description = (withDescription === true && person.Description) ? `<div class='personDescription'>${person.Description}</div>` : ``;
   
   return `<div class='person row striped pt-1' role='button'>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
       <div class='personHandle'><b>${handle}</b></div>
       <div class='personDisplay'>${person.DisplayName ?? ''}</div>
+      ${description}
     </div>
   </div>`;
 }
@@ -196,7 +198,7 @@ const renderMatchedOwners = function(payload) {
   listFollowPivotPicker.innerHTML = '';
   
   for (i = 0; i < owners.length; i++) {
-    listFollowPivotPicker.innerHTML += renderPerson(owners[i], 46);
+    listFollowPivotPicker.innerHTML += renderPerson(owners[i], 46, false);
   }
 }
 
@@ -301,15 +303,13 @@ const networkSearch = function() {
 }
 
 const renderFollows = function(payload) {
-  const rows = payload.rows;
+  const plist = document.getElementById('paginated-list');
+  plist.innerHTML = '';
   
+  const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    
-    //logHtml('', row.TotalCount);
-    logHtml('', row.Handle);
-    //logHtml('', row.DisplayName);
-    //logHtml('', row.Description);
+    plist.innerHTML += renderPerson(row, 92);
   }
 }
 
@@ -331,10 +331,10 @@ const handleTypeSearch = debounce((event) => {
   networkSearch();
 }, 250);
 // ... uses debounce
-followSearch.addEventListener('keypress', handleTypeSearch);
+followSearch.addEventListener('keydown', handleTypeSearch);
 
 // hit enter on account owner
-txtFollowPivotHandle.addEventListener('keypress', function(event) {
+txtFollowPivotHandle.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     event.preventDefault();
     networkSearch();

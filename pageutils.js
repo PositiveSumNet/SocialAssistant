@@ -111,6 +111,10 @@ const getUnfurledTwitterText = function(elm) {
       if (e.innerText != elps) {
         text = e.innerText;
       }
+      if (prior.length > 0 && prior === text) {
+        // skip this; anchor is redundant to the span that contains it
+        text = '';
+      }
     }
     else if (tagName === 'a') {
       text = e.innerText;
