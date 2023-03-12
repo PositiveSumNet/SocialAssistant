@@ -1,3 +1,15 @@
+
+// joshwcomeau.com/snippets/javascript/debounce/
+const debounce = (callback, wait) => {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback.apply(null, args);
+    }, wait);
+  };
+}
+
 // html grid via webdesign.tutsplus.com/tutorials/pagination-with-vanilla-javascript--cms-41896
 
 // default (legacy) logging
@@ -293,11 +305,11 @@ const renderFollows = function(payload) {
   
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    console.log(row);
-    logHtml('', row.TotalCount);
+    
+    //logHtml('', row.TotalCount);
     logHtml('', row.Handle);
-    logHtml('', row.DisplayName);
-    logHtml('', row.Description);
+    //logHtml('', row.DisplayName);
+    //logHtml('', row.Description);
   }
 }
 
@@ -313,6 +325,13 @@ optFollowing.addEventListener('change', (event) => {
 optFollowers.addEventListener('change', (event) => {
   networkSearch();
 })
+
+// searching
+const handleTypeSearch = debounce((event) => {
+  networkSearch();
+}, 250);
+// ... uses debounce
+followSearch.addEventListener('keypress', handleTypeSearch);
 
 // hit enter on account owner
 txtFollowPivotHandle.addEventListener('keypress', function(event) {
@@ -342,7 +361,7 @@ txtFollowPivotHandle.oninput = function () {
   });
 };
 
-// choose from typeahead results
+// choose owner from typeahead results
 listFollowPivotPicker.onclick = function(event) {
   const personElm = findUpClass(event.target, 'person');
   const handleElm = personElm.querySelector('.personLabel > .personHandle');
