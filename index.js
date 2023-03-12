@@ -295,6 +295,7 @@ const renderFollows = function(payload) {
     let row = rows[i];
     logHtml('', row.TotalCount);
     logHtml('', row.Handle);
+    logHtml('', row.DisplayName);
   }
 }
 

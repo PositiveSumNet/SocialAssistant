@@ -263,7 +263,7 @@ const processTwitterFollowsOnPage = function(scopeElm) {
   
   // all links
   const all = Array.from(scopeElm.getElementsByTagName('a')).map(function(a) {
-    return { u: a.getAttribute('href'), d: a.innerText };
+    return { u: a.getAttribute('href'), d: a.innerText, displayNameAnchor: a };
   });
   
   // those that are handles
@@ -286,7 +286,10 @@ const processTwitterFollowsOnPage = function(scopeElm) {
         if (!item.d.startsWith('@')) {
           // it had display text (not the @handle)
           // this is the display name title anchor, usable as the handle/display pair
-          let per = { h: h, d: item.d, pageType: parsedUrl.pageType, owner: parsedUrl.owner };
+          
+          let description = getTwitterProfileDescription(item.displayNameAnchor);
+          let finalDisplay = getUnfurledTwitterText(item.displayNameAnchor);  // grabs emojis too
+          let per = { h: h, d: finalDisplay, pageType: parsedUrl.pageType, owner: parsedUrl.owner, description: description };
           ppl.push(per);
         }
       }
@@ -306,6 +309,16 @@ const processTwitterFollowsOnPage = function(scopeElm) {
       }
     }
   }
+}
+
+const getTwitterProfileDescription = function(displayNameAnchorElm) {
+  if (!displayNameAnchorElm) { return null; }
+  const parentCell = findUpTwitterUserCell(displayNameAnchorElm);
+  if (!parentCell) { return null; }
+  const descripElm = findTwitterDescriptionWithinUserCell(parentCell);
+  if (!descripElm) { return null; }
+  let text = getUnfurledTwitterText(descripElm);
+  return text;
 }
 
 const scrollAsNeeded = function(avoidScrollIfHidden) {
