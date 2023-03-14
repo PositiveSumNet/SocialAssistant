@@ -93,56 +93,51 @@ const findTwitterDescriptionWithinUserCell = function(cell) {
   }
 }
 
-// accounts for emojis and abbreviated hyperlinks
-const getUnfurledTwitterText = function(elm) {
-  const es = Array.from(elm.getElementsByTagName('*'));
-  const elps = '…'; // twitter ellipses
-  const texts = [];
-  let prior = '';
-  
-  for (let i=0; i < es.length; i++) {
-    let e = es[i];
-    let tagName = e.tagName.toLowerCase();
-    let text = '';
-    
-    if (tagName === 'span' && !e.ariaHidden) {
-      // not interested in the hidden 'https://' associated with ariaHidden
-      // not interested in the ellipses
-      if (e.innerText != elps) {
-        text = e.innerText;
-      }
-      if (prior.length > 0 && prior === text) {
-        // skip this; anchor is redundant to the span that contains it
-        text = '';
-      }
-    }
-    else if (tagName === 'a') {
-      text = e.innerText;
-      
-      if (prior.length > 0 && prior === text) {
-        // skip this; anchor is redundant to the span that contains it
-        text = '';
-      }
-      else {
-        // the anchor text is relevant (and defaults to innerText); check for the interesting scenario of abbreviated anchor
-        let nextSpan = e.nextSibling;
-        if (nextSpan && nextSpan.innerText === elps) {
-          // innerText is abbreviated; expect a twitter link as the only way to reliably get there
-          text = `(${text}${elps} | ${e.getAttribute('href')})`;
-        }
-      }
-    }
-    else if (tagName === 'img') {
-      // emojis
-      text = e.getAttribute('alt');
-    }
-    
-    if (text && text.length > 0) {
-      texts.push(text);
-      prior = text;
-    }
+// www.wisdomgeek.com/development/web-development/javascript/how-to-check-if-a-string-contains-emojis-in-javascript/
+const _emojiRegex = /\p{Emoji}/u;
+const isEmoji = function(txt) {
+  if (!txt || txt.length === 0) {
+    return false;
   }
   
-  const concat = texts.join('');
+  return _emojiRegex.test(txt);
+}
+
+const getDepthFirstTree = function(elem, elems = null) {
+  elems = elems ?? [];
+  elems.push(elem);
+  
+  for (let i = 0; i < elem.childNodes.length; i++) {
+    let child = elem.childNodes[i];
+    getDepthFirstTree(child, elems);
+  }
+  
+  return elems;
+}
+
+// accounts for emojis
+const getUnfurledText = function(elem) {
+  let elems = getDepthFirstTree(elem);
+  
+  const elps = '…'; // twitter ellipses
+  let concat = '';
+  
+  for (let i = 0; i < elems.length; i++) {
+    let e = elems[i];
+    let txt = '';
+    if (e.tagName && e.tagName.toLowerCase() === 'img') {
+      let altAttr = e.getAttribute('alt');  // possible emoji
+      if (isEmoji(altAttr)) {
+        txt = altAttr;
+      }
+    }
+    else if (e.nodeType == 3 && e.data && e.data != elps) {
+      // text node
+      txt = e.data;
+    }
+    
+    concat = `${concat}${txt}`;
+  }
+
   return concat;
 }

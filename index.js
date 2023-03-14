@@ -164,7 +164,23 @@ const initUi = function(owner, pageType) {
   }
 }
 
-const renderPerson = function(person, imgSize = 92, withDescription = true) {
+const renderPerson = function(person, context) {
+  let roleInfo = '';
+  let imgSize = 92;
+  let withDescription = true;
+  
+  switch (context) {
+    case 'owner':
+      imgSize = 46;
+      roleInfo = ` role='button'`;  // clickable
+      withDescription = false;
+      break;
+    case 'followResult':
+      break;
+    default:
+      break;
+  }
+  
   const imgUrl = person.Img64Url || person.ImgCdnUrl;
   const imgType = inferImageFileExt(person.ImgCdnUrl);
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
@@ -183,7 +199,7 @@ const renderPerson = function(person, imgSize = 92, withDescription = true) {
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
   const description = (withDescription === true && person.Description) ? `<div class='personDescription'>${person.Description}</div>` : ``;
   
-  return `<div class='person row striped pt-1' role='button'>
+  return `<div class='person row striped pt-1' ${roleInfo}>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
       <div class='personHandle'><b>${handle}</b></div>
@@ -198,7 +214,7 @@ const renderMatchedOwners = function(payload) {
   listFollowPivotPicker.innerHTML = '';
   
   for (i = 0; i < owners.length; i++) {
-    listFollowPivotPicker.innerHTML += renderPerson(owners[i], 46, false);
+    listFollowPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
   }
 }
 
@@ -309,7 +325,7 @@ const renderFollows = function(payload) {
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    plist.innerHTML += renderPerson(row, 92);
+    plist.innerHTML += renderPerson(row, 'followResult');
   }
 }
 
