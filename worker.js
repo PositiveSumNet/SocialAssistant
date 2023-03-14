@@ -628,7 +628,7 @@ const searchOwners = function(data) {
   SELECT x.*
   FROM (
     SELECT  f.sHandle AS Handle, 
-            f.Timestamp,
+            MAX(f.Timestamp) AS Timestamp,
             d.oValue AS DisplayName, dx.oValue AS Description,
             imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
             COUNT(f.sHandle) AS Cnt
@@ -638,7 +638,7 @@ const searchOwners = function(data) {
     LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.sHandle AND imgcdn.NamedGraph = f.NamedGraph
     LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.sHandle AND img64.NamedGraph = f.NamedGraph
     ${searchClauseSql}
-    GROUP BY f.sHandle, f.Timestamp, d.oValue, dx.oValue, imgcdn.oValue, img64.oValue
+    GROUP BY f.sHandle, d.oValue, dx.oValue, imgcdn.oValue, img64.oValue
   ) x
   ORDER BY x.Cnt DESC
   LIMIT ${limit};
@@ -701,7 +701,8 @@ const networkSearch = function(request) {
   
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
-  SELECT DISTINCT f.oValue AS Handle, f.Timestamp,
+  SELECT DISTINCT f.oValue AS Handle, 
+      f.Timestamp AS Timestamp,
       d.oValue AS DisplayName, dx.oValue AS Description,
       imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
       COUNT() OVER() AS TotalCount
