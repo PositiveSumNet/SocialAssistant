@@ -1,3 +1,4 @@
+const _pageSize = 50;
 
 // joshwcomeau.com/snippets/javascript/debounce/
 const debounce = (callback, wait) => {
@@ -8,6 +9,35 @@ const debounce = (callback, wait) => {
       callback.apply(null, args);
     }, wait);
   };
+}
+
+const inferImageFileExt = function(url) {
+  if (!url) {
+    return 'png';
+  }
+  else if (url.endsWith('.jpg')) {
+    return 'jpg';
+  }
+  else if (url.endsWith('.jpeg')) {
+    return 'jpeg';
+  }
+  else if (url.endsWith('.gif')) {
+    return 'gif';
+  }
+  else {
+    return 'png';
+  }
+}
+
+const findUpClass = function(el, cls, selfCheck = true) {
+  if(selfCheck === true && el && el.classList.contains(cls)) { return el; }
+  while (el.parentNode) {
+    el = el.parentNode;
+    if (el.classList.contains(cls)) {
+      return el;
+    }
+  }
+  return null;
 }
 
 // html grid via webdesign.tutsplus.com/tutorials/pagination-with-vanilla-javascript--cms-41896
@@ -242,6 +272,8 @@ const getUiValue = function(id) {
       return document.getElementById('optFollowers').checked ? 'followers' : 'following';
     case 'txtFollowSearch':
       return txtFollowSearch.value;
+    case 'txtPageNum':
+      return parseInt(txtPageNum.value);
     default:
       return undefined;
   }
@@ -291,6 +323,18 @@ const cachePageState = function(msg) {
   }
 }
 
+const getPageNum = function() {
+  let pageNum = getUiValue('txtPageNum');
+  if (isNaN(pageNum)) { pageNum = 1 };
+  return pageNum;
+}
+
+const calcSkip = function() {
+  const pageNum = getPageNum();
+  const skip = (pageNum - 1) * _pageSize;
+  return skip;
+}
+
 const buildNetworkSearchRequestFromUi = function() {
   // trim the '@'
   let owner = getUiValue('txtFollowPivotHandle');
@@ -298,6 +342,7 @@ const buildNetworkSearchRequestFromUi = function() {
   
   const pageType = getPageType();
   const searchText = getUiValue('txtFollowSearch');
+  const skip = calcSkip();
   
   const msg = { 
     actionType: 'networkSearch', 
@@ -305,8 +350,8 @@ const buildNetworkSearchRequestFromUi = function() {
     networkOwner: owner, 
     searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
-    skip: 0,
-    take: 50
+    skip: skip,
+    take: _pageSize
     };
   
   return msg;
@@ -322,11 +367,16 @@ const renderFollows = function(payload) {
   const plist = document.getElementById('paginated-list');
   plist.innerHTML = '';
   
+  // rows
+  let count = 0;
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
+    count = parseInt(row.TotalCount);
     plist.innerHTML += renderPerson(row, 'followResult');
   }
+  
+  document.getElementById('pageCount').innerText = Math.ceil(count / _pageSize);
 }
 
 const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
@@ -334,6 +384,7 @@ const listFollowPivotPicker = document.getElementById('listFollowPivotPicker');
 const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtFollowSearch');
+const txtPageNum = document.getElementById('txtPageNum');
 
 optFollowing.addEventListener('change', (event) => {
   networkSearch();
@@ -348,6 +399,14 @@ const handleTypeSearch = debounce((event) => {
 }, 250);
 // ... uses debounce
 followSearch.addEventListener('keydown', handleTypeSearch);
+
+// hit enter on page number
+txtPageNum.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    networkSearch();
+  }
+});
 
 // hit enter on account owner
 txtFollowPivotHandle.addEventListener('keydown', function(event) {
@@ -377,6 +436,26 @@ txtFollowPivotHandle.oninput = function () {
   });
 };
 
+// click for prior page
+document.getElementById('priorPage').onclick = function(event) {
+  const pageNum = getUiValue('txtPageNum');
+  if (pageNum > 1) {
+    txtPageNum.value = pageNum - 1;
+    networkSearch();
+  }
+  return false;
+};
+
+document.getElementById('nextPage').onclick = function(event) {
+  const pageNum = getPageNum();
+  let pageCount = parseInt(document.getElementById('pageCount').innerText);
+  if (pageNum < pageCount) {
+    txtPageNum.value = pageNum + 1;
+    networkSearch();
+  }
+  return false;
+};
+
 // choose owner from typeahead results
 listFollowPivotPicker.onclick = function(event) {
   const personElm = findUpClass(event.target, 'person');
@@ -388,32 +467,3 @@ listFollowPivotPicker.onclick = function(event) {
   // trigger the same action as hitting "Enter"
   networkSearch();
 };
-
-const inferImageFileExt = function(url) {
-  if (!url) {
-    return 'png';
-  }
-  else if (url.endsWith('.jpg')) {
-    return 'jpg';
-  }
-  else if (url.endsWith('.jpeg')) {
-    return 'jpeg';
-  }
-  else if (url.endsWith('.gif')) {
-    return 'gif';
-  }
-  else {
-    return 'png';
-  }
-}
-
-const findUpClass = function(el, cls, selfCheck = true) {
-  if(selfCheck === true && el && el.classList.contains(cls)) { return el; }
-  while (el.parentNode) {
-    el = el.parentNode;
-    if (el.classList.contains(cls)) {
-      return el;
-    }
-  }
-  return null;
-}

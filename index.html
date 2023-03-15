@@ -10,7 +10,7 @@
     <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' />
   </head>
   <body>
-    <div>
+    <div class='main'>
       <h1 class="bg-header inkfree"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></h1>
       <h5 class="bg-subheader inkfree">Locally Cached Social Database</h5>
       <div id="dbui" class="pb-2 ps-4 pe-4">
@@ -37,26 +37,22 @@
                 </label>
               </div>
             </div>
-            <div class='pt-2 col input-group'>
+            <div class='pt-2 col'>
               <input id='txtFollowSearch' type='text' class='form-control' placeholder='search...' />
+            </div>
+            <div class='pt-2 col input-group row'>
+              <label for='txtPageNum' class='text-muted input-group-text col'>page</label>
+              <input id='txtPageNum' type='text' style='max-width:55px;' class='form-control col' value='1' />
+              <span class='text-muted input-group-text col-sm-auto' style='border-right:none;'>of </span>
+              <span id='pageCount' class='text-muted input-group-text col-sm-auto' style='border-left:none;'>1</span>
+              <a class='form-control text-center col' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
+              <a class='form-control text-center col' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
             </div>
           </div>
           <div id='listFollowPivotPicker' class='row container pt-2'></div>
           <div class='listMain row' id='followListMain'>
             <div id='paginated-list' aria-live='polite'>
             </div>
-            <nav class="pagination-container">
-              <button class="pagination-button" id="prev-button" title="Previous page" aria-label="Previous page">
-                &lt;
-              </button>
-              
-              <div id="pagination-numbers">
-              </div>
-              
-              <button class="pagination-button" id="next-button" title="Next page" aria-label="Next page">
-                &gt;
-              </button>
-            </nav>            
           </div>
         </div>
       </div>
