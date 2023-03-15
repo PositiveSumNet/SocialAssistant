@@ -260,6 +260,7 @@ const renderSuggestedOwner = function(payload) {
   if (!value || value.length === 0) {
     document.getElementById('txtFollowPivotHandle').value = owner.Handle;
     // we're doing a page init and so far it's empty, so let's
+    resetPage();
     networkSearch();
   }
 }
@@ -321,6 +322,10 @@ const cachePageState = function(msg) {
   if (msg.pageType) {
     localStorage.setItem('pageType', msg.pageType);
   }
+}
+
+const resetPage = function() {
+  document.getElementById('txtPageNum').value = 1;
 }
 
 const getPageNum = function() {
@@ -387,14 +392,17 @@ const followSearch = document.getElementById('txtFollowSearch');
 const txtPageNum = document.getElementById('txtPageNum');
 
 optFollowing.addEventListener('change', (event) => {
+  resetPage();
   networkSearch();
 })
 optFollowers.addEventListener('change', (event) => {
+  resetPage();
   networkSearch();
 })
 
 // searching
 const handleTypeSearch = debounce((event) => {
+  resetPage();
   networkSearch();
 }, 250);
 // ... uses debounce
@@ -412,6 +420,7 @@ txtPageNum.addEventListener('keydown', function(event) {
 txtFollowPivotHandle.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     event.preventDefault();
+    resetPage();
     networkSearch();
   }
 });

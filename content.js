@@ -246,10 +246,14 @@ const processTwitterPhotosOnPage = function(scopeElm) {
   }
 }
 
-// exclude the '@'
 const twitterHandleFromProfileUrl = function(url) {
   let trimmed = url.startsWith('/') ? url.substring(1) : url;
-  return  trimmed;
+  
+  if (!trimmed.startsWith('@')) {
+    trimmed = '@' + trimmed;
+  }
+  
+  return trimmed;
 }
 
 const twitterProfileUrlFromHandle = function(handle) {
