@@ -1,5 +1,58 @@
 const _pageSize = 50;
 
+// figured this out by analyzing a-z values from:
+// emojipedia.org/regional-indicator-symbol-letter-a/
+// console.log('🇦'.charCodeAt(1));
+// console.log('a'.charCodeAt(0));
+// console.log('🇿'.charCodeAt(1));
+// console.log('z'.charCodeAt(0));
+const unicodeRegionCharToAscii = function(u) {
+  if (u.charCodeAt(0) != 55356) {
+    return u;
+  }
+  
+  let ucc = u.charCodeAt(1);
+  if (!ucc) { return u; }
+  if (ucc < 56806 || ucc > 56831) { return u; }
+  let asciCode = ucc - 56709;     // by analyzing regional 'a' vs ascii 'a'
+  // convert it to char
+  let chr = String.fromCharCode(asciCode);
+  return chr;
+}
+
+// stackoverflow.com/questions/24531751/how-can-i-split-a-string-containing-emoji-into-an-array
+const emojiStringToArray = function (str) {
+  const split = str.split(/([\uD800-\uDBFF][\uDC00-\uDFFF])/);
+  const arr = [];
+  for (let i=0; i < split.length; i++) {
+    let char = split[i]
+    if (char !== "") {
+      arr.push(char);
+    }
+  }
+  
+  return arr;
+};
+
+// unicode.org/reports/tr51/#EBNF_and_Regex
+const _flagRegexCapture = /(\p{RI}\p{RI})/ug;
+const injectFlagEmojis = function(raw) {
+  if (!raw) { return raw; }
+  
+  return raw.replace(_flagRegexCapture, function(matched) { 
+    const emojiArr = emojiStringToArray(matched);
+    const asChars = emojiArr.map(function(u) { return unicodeRegionCharToAscii(u); });
+    const concat = asChars.join('');
+    return `<i class="flag flag-${concat}"></i>`; 
+  });
+}
+
+const prepareDisplayText = function(txt) {
+  if (!txt) { return txt; }
+  txt = injectFlagEmojis(txt);
+  return txt;
+}
+
 // joshwcomeau.com/snippets/javascript/debounce/
 const debounce = (callback, wait) => {
   let timeoutId = null;
@@ -227,13 +280,15 @@ const renderPerson = function(person, context) {
   }
   
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
-  const description = (withDescription === true && person.Description) ? `<div class='personDescription'>${person.Description}</div>` : ``;
+  const preparedDisplayName = prepareDisplayText(person.DisplayName);
+  const preparedDescription = prepareDisplayText(person.Description);
+  const description = (withDescription === true && person.Description) ? `<div class='personDescription'>${preparedDescription}</div>` : ``;
   
   return `<div class='person row striped pt-1' ${roleInfo}>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
       <div class='personHandle'><b>${handle}</b></div>
-      <div class='personDisplay'>${person.DisplayName ?? ''}</div>
+      <div class='personDisplay'>${preparedDisplayName ?? ''}</div>
       ${description}
     </div>
   </div>`;
