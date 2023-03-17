@@ -1,3 +1,6 @@
+// a note on scraping (legal standing):
+// cpomagazine.com/data-privacy/what-the-hiq-vs-linkedin-case-means-for-automated-web-scraping/
+
 // for recording
 var _savableFollows = [];
 var _savableFollowKeySet = new Set(); // to avoid storing dupes

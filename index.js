@@ -47,9 +47,43 @@ const injectFlagEmojis = function(raw) {
   });
 }
 
+// geeksforgeeks.org/how-to-replace-plain-url-with-link-using-javascript/
+// stackoverflow.com/questions/31760030/extracting-for-url-from-string-using-regex
+const _urlRexCapture = /(https?:\/\/[^ ]{0,256})/g;
+function renderUrlAnchors(text) {
+  if (!text) { return text; }
+  
+  return text.replace(_urlRexCapture, function(url) {
+    let display = url.replace('https://','').replace('http://','').replace('www.','');
+    const maxLen = 30;
+    if (display.length > maxLen) {
+      display = display.substring(0, maxLen) + '...';
+    }
+    return `<a href='${url}' target='_blank'>${display}</a>`;
+  });
+}
+
+// regex101.com/r/ac4fG5/1
+const _mastodonRexCapture = /@\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
+function renderMastodonAnchors(text) {
+  if (!text) { return text; }
+  
+  return text.replace(_mastodonRexCapture, function(match, handle, domain) {
+    let display = match;
+    const maxLen = 30;
+    if (display.length > maxLen) {
+      display = display.substring(0, maxLen) + '...';
+    }
+    let url = `https://${domain}/@${handle}`;
+    return `<a href='${url}' target='_blank'>${display}</a>`;
+  });
+}
+
 const prepareDisplayText = function(txt) {
   if (!txt) { return txt; }
   txt = injectFlagEmojis(txt);
+  txt = renderUrlAnchors(txt);
+  txt = renderMastodonAnchors(txt);
   return txt;
 }
 
