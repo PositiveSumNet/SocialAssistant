@@ -34,6 +34,7 @@ const emojiStringToArray = function (str) {
   return arr;
 };
 
+// microsoft doesn't render flag emojis, so this got funky
 // unicode.org/reports/tr51/#EBNF_and_Regex
 const _flagRegexCapture = /(\p{RI}\p{RI})/ug;
 const injectFlagEmojis = function(raw) {
@@ -44,6 +45,16 @@ const injectFlagEmojis = function(raw) {
     const asChars = emojiArr.map(function(u) { return unicodeRegionCharToAscii(u); });
     const concat = asChars.join('');
     return `<i class="flag flag-${concat}"></i>`; 
+  });
+}
+
+const _emailRexCapture = /([A-Za-z0-9._%+-]+(@| at |\(at\))[A-Za-z0-9.-]+(\.| dot |\(dot\))[A-Za-z]{2,4})/g;
+function renderEmailAnchors(text) {
+  if (!text) { return text; }
+  
+  return text.replace(_emailRexCapture, function(match) {
+    let email = match.replace(' at ', '@').replace('(at)', '@').replace(' dot ', '.').replace('(dot)', '.');
+    return `<a href='mailto:${email}' target='_blank'>${match}</a>`;
   });
 }
 
@@ -109,6 +120,7 @@ const prepareDisplayText = function(txt) {
   if (!txt) { return txt; }
   txt = injectFlagEmojis(txt);
   txt = renderUrlAnchors(txt);
+  txt = renderEmailAnchors(txt);
   txt = renderMastodon1Anchors(txt);
   txt = renderMastodon2Anchors(txt);
   txt = renderMastodon3Anchors(txt);
