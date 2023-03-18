@@ -63,19 +63,33 @@ function renderUrlAnchors(text) {
   });
 }
 
-// regex101.com/r/ac4fG5/1
-const _mastodonRexCapture = /@\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
-function renderMastodonAnchors(text) {
-  if (!text) { return text; }
-  
-  return text.replace(_mastodonRexCapture, function(match, handle, domain) {
-    let display = match;
+const renderMastodonAnchor = function(display, handle, domain) {
     const maxLen = 30;
     if (display.length > maxLen) {
       display = display.substring(0, maxLen) + '...';
     }
     let url = `https://${domain}/@${handle}`;
     return `<a href='${url}' target='_blank'>${display}</a>`;
+}
+
+// regex101.com/r/ac4fG5/1
+// @scafaria@toad.social
+const _mastodon1RexCapture = /@\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
+function renderMastodon1Anchors(text) {
+  if (!text) { return text; }
+  
+  return text.replace(_mastodon1RexCapture, function(match, handle, domain) {
+    return renderMastodonAnchor(match, handle, domain);
+  });
+}
+
+// toad.social/@scafaria
+const _mastodon2RexCapture = /\s([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
+function renderMastodon2Anchors(text) {
+  if (!text) { return text; }
+  
+  return text.replace(_mastodon2RexCapture, function(match, domain, handle) {
+    return renderMastodonAnchor(match, handle, domain);
   });
 }
 
@@ -83,7 +97,8 @@ const prepareDisplayText = function(txt) {
   if (!txt) { return txt; }
   txt = injectFlagEmojis(txt);
   txt = renderUrlAnchors(txt);
-  txt = renderMastodonAnchors(txt);
+  txt = renderMastodon1Anchors(txt);
+  txt = renderMastodon2Anchors(txt);
   return txt;
 }
 
