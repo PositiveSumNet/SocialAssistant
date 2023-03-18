@@ -93,12 +93,25 @@ function renderMastodon2Anchors(text) {
   });
 }
 
+// scafaria@toad.social
+// note the missed starting @ -- and instead of trying to keep up with all the server instances
+// we simply hard-wire to detect this syntax when it's "xyz.social" (or xyz.online)
+const _mastodon3RexCapture = /\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
+function renderMastodon3Anchors(text) {
+  if (!text) { return text; }
+  
+  return text.replace(_mastodon3RexCapture, function(match, handle, domain) {
+    return renderMastodonAnchor(match, handle, domain);
+  });
+}
+
 const prepareDisplayText = function(txt) {
   if (!txt) { return txt; }
   txt = injectFlagEmojis(txt);
   txt = renderUrlAnchors(txt);
   txt = renderMastodon1Anchors(txt);
   txt = renderMastodon2Anchors(txt);
+  txt = renderMastodon3Anchors(txt);
   return txt;
 }
 
