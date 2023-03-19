@@ -436,12 +436,12 @@ const getUiValue = function(id) {
       return parseInt(txtPageNum.value);
     case 'chkMutual':
       return chkMutual.checked;
-    case 'chkWithMdon':
-      return chkWithMdon.checked;
-    case 'chkWithEmail':
-      return chkWithEmail.checked;
-    case 'chkWithUrl':
-      return chkWithUrl.checked;
+    case 'optWithMdon':
+      return optWithMdon.checked;
+    case 'optWithEmail':
+      return optWithEmail.checked;
+    case 'optWithUrl':
+      return optWithUrl.checked;
     default:
       return undefined;
   }
@@ -516,9 +516,9 @@ const buildNetworkSearchRequestFromUi = function() {
   const searchText = getUiValue('txtFollowSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
-  const withMdom = getUiValue('chkWithMdom');
-  const withEmail = getUiValue('chkWithEmail');
-  const withUrl = getUiValue('chkWithUrl');
+  const withMdom = getUiValue('optWithMdom');
+  const withEmail = getUiValue('optWithEmail');
+  const withUrl = getUiValue('optWithUrl');
   
   const msg = { 
     actionType: 'networkSearch', 
@@ -567,9 +567,9 @@ const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtFollowSearch');
 const txtPageNum = document.getElementById('txtPageNum');
 const chkMutual = document.getElementById('chkMutual');
-const chkWithMdon = document.getElementById('chkWithMdon');
-const chkWithEmail = document.getElementById('chkWithEmail');
-const chkWithUrl = document.getElementById('chkWithUrl');
+const optWithMdon = document.getElementById('optWithMdon');
+const optWithEmail = document.getElementById('optWithEmail');
+const optWithUrl = document.getElementById('optWithUrl');
 
 optFollowing.addEventListener('change', (event) => {
   resetPage();
@@ -584,15 +584,15 @@ chkMutual.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })
-chkWithMdon.addEventListener('change', (event) => {
+optWithMdon.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })
-chkWithEmail.addEventListener('change', (event) => {
+optWithEmail.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })
-chkWithUrl.addEventListener('change', (event) => {
+optWithUrl.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })

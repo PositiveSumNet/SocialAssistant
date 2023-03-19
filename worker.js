@@ -391,6 +391,17 @@ const getFollowTable = function(pageType) {
   }
 }
 
+const getInverseFollowTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+      return 'FollowerOnTwitter';
+    case 'followersOnTwitter':
+      return 'FollowingOnTwitter';
+    default:
+      return null;
+  }
+}
+
 const getDisplayNameTable = function(pageType) {
   switch (pageType) {
     case 'followingOnTwitter':
@@ -787,6 +798,11 @@ const networkSearch = function(request) {
   const tblDescription = getDescriptionTable(pageType);
   const tblImgCdnUrl = getImgCdnUrlTable(pageType);
   const tblImg64Url = getImg64UrlTable(pageType);
+  // filters
+  const tblMutual = getInverseFollowTable(pageType);
+  const tblProfileMdon = getProfileMastodonTable(pageType);
+  const tblProfileExtUrl = getProfileUrlTable(pageType);
+  const tblProfileEmail = getProfileEmailTable(pageType);
   
   const skip = request.skip || 0;
   const take = request.take || 50;
