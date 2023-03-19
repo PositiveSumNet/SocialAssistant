@@ -5,7 +5,7 @@
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
 var _sqlite3;
-const _codeVersion = 3;
+const _codeVersion = 4;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
 // LOGGING *****************************************
@@ -188,6 +188,49 @@ const migrateDb = function(db, dbVersion) {
       `;
       
       db.exec(sql3);
+      break;
+    case 3:
+      // 3 => 4
+      let sql4 = `
+        /* with format @scafaria@toad.social */
+        CREATE TABLE IF NOT EXISTS TwitterProfileMastodonAccount(
+        sHandle TEXT NOT NULL,
+        oValue TEXT,
+        NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
+        UNIQUE(sHandle, oValue, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileMastodonAccount_os ON TwitterProfileMastodonAccount(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileMastodonAccount_Timestamp ON TwitterProfileMastodonAccount(Timestamp);
+        
+
+        CREATE TABLE IF NOT EXISTS TwitterProfileExternalUrl(
+        sHandle TEXT NOT NULL,
+        oValue TEXT,
+        NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
+        UNIQUE(sHandle, oValue, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileExternalUrl_os ON TwitterProfileExternalUrl(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileExternalUrl_Timestamp ON TwitterProfileExternalUrl(Timestamp);
+        
+
+        CREATE TABLE IF NOT EXISTS TwitterProfileEmail(
+        sHandle TEXT NOT NULL,
+        oValue TEXT,
+        NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
+        UNIQUE(sHandle, oValue, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileEmail_os ON TwitterProfileEmail(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterProfileEmail_Timestamp ON TwitterProfileEmail(Timestamp);
+        
+
+        /* migration version */
+        UPDATE Migration SET Version = 4 WHERE AppName = 'SocialAssistant';
+      `;
+      
+      db.exec(sql4);
       break;
     default:
       break;
