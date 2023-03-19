@@ -434,6 +434,14 @@ const getUiValue = function(id) {
       return txtFollowSearch.value;
     case 'txtPageNum':
       return parseInt(txtPageNum.value);
+    case 'chkMutual':
+      return chkMutual.checked;
+    case 'chkWithMdon':
+      return chkWithMdon.checked;
+    case 'chkWithEmail':
+      return chkWithEmail.checked;
+    case 'chkWithUrl':
+      return chkWithUrl.checked;
     default:
       return undefined;
   }
@@ -507,6 +515,10 @@ const buildNetworkSearchRequestFromUi = function() {
   const pageType = getPageType();
   const searchText = getUiValue('txtFollowSearch');
   const skip = calcSkip();
+  const mutual = getUiValue('chkMutual');
+  const withMdom = getUiValue('chkWithMdom');
+  const withEmail = getUiValue('chkWithEmail');
+  const withUrl = getUiValue('chkWithUrl');
   
   const msg = { 
     actionType: 'networkSearch', 
@@ -515,7 +527,12 @@ const buildNetworkSearchRequestFromUi = function() {
     searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
     skip: skip,
-    take: _pageSize
+    take: _pageSize,
+    // filters
+    mutual: mutual,
+    withMdom: withMdom,
+    withEmail: withEmail,
+    withUrl: withUrl
     };
   
   return msg;
@@ -549,12 +566,33 @@ const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtFollowSearch');
 const txtPageNum = document.getElementById('txtPageNum');
+const chkMutual = document.getElementById('chkMutual');
+const chkWithMdon = document.getElementById('chkWithMdon');
+const chkWithEmail = document.getElementById('chkWithEmail');
+const chkWithUrl = document.getElementById('chkWithUrl');
 
 optFollowing.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })
 optFollowers.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+})
+
+chkMutual.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+})
+chkWithMdon.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+})
+chkWithEmail.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+})
+chkWithUrl.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })
