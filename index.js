@@ -383,6 +383,7 @@ const renderPerson = function(person, context) {
   }
   
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
+  const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
   const preparedDisplayName = prepareDisplayText(person.DisplayName);
   const preparedDescription = prepareDisplayText(person.Description);
   const description = (withDescription === true && person.Description) ? `<div class='personDescription'>${preparedDescription}</div>` : ``;
@@ -390,7 +391,7 @@ const renderPerson = function(person, context) {
   return `<div class='person row striped pt-1' ${roleInfo}>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
-      <div class='personHandle'><b>${handle}</b></div>
+      <div class='personHandle'><a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a></div>
       <div class='personDisplay'>${preparedDisplayName ?? ''}</div>
       ${description}
     </div>

@@ -17,37 +17,69 @@
       <div id="dbui" class="pb-2 ps-4 pe-4">
         <div id='transferringMsg' style="display:none;">Copying recent recordings to local database...</div>
         <div id='followList container'>
-          <div class='listHeader row container'>
-            <div class='listPivot pt-2 col'>
-              <div class='col input-group'>
+          <div class='listHeader row'>
+            <div class='listPivot pt-2 col-2'>
+              <div class='input-group'>
                 <label for='txtFollowPivotHandle' class='text-muted input-group-text'>@</label>
                 <input id='txtFollowPivotHandle' type='text' placeholder='account' class='form-control' />
               </div>
             </div>
             <div id='followDirection' class='col-sm-auto'>
-              <div class="form-check form-check">
+              <div class="form-check">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing">
                 <label class="form-check-label" for="optFollowing">
-                  is following...
+                  is following
                 </label>
               </div>
-              <div class="form-check form-check">
+              <div class="form-check">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
                 <label class="form-check-label" for="optFollowers">
-                  has followers...
+                  has followers
                 </label>
               </div>
             </div>
-            <div class='pt-2 col'>
+            <div class='pt-2 col-2'>
               <input id='txtFollowSearch' type='text' class='form-control' placeholder='search...' />
             </div>
-            <div class='pt-2 col input-group row'>
-              <label for='txtPageNum' class='text-muted input-group-text col'>page</label>
-              <input id='txtPageNum' type='text' style='max-width:55px;' class='form-control col' value='1' />
-              <span class='text-muted input-group-text col-sm-auto' style='border-right:none;'>of </span>
-              <span id='pageCount' class='text-muted input-group-text col-sm-auto' style='border-left:none;'>1</span>
-              <a class='form-control text-center col' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
-              <a class='form-control text-center col' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
+            <div class='pt-2 col-3 container'>
+              <div class='row input-group'>
+                <label for='txtPageNum' class='text-muted input-group-text col-2'>page</label>
+                <input id='txtPageNum' type='text' style='min-width:35px; max-width:55px; border-right:none;' class='form-control col' value='1' />
+                <span class='text-muted input-group-text col-sm-auto' style='border-left:none;border-right:none;'>of </span>
+                <span id='pageCount' class='text-muted input-group-text col-2' style='border-left:none;'>1</span>
+                <a class='form-control text-center col-3' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
+                <a class='form-control text-center col-3' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
+              </div>
+            </div>
+            <div id='queryOptions' class='col-3 container'>
+              <div class='row'>
+                <div class="form-check form-check col">
+                  <input class="form-check-input" type="checkbox">
+                  <label class="form-check-label">
+                    Mutual follows
+                  </label>
+                </div>
+                <div class="form-check form-check col">
+                  <input class="form-check-input" type="checkbox">
+                  <label class="form-check-label">
+                    w/ Mastodon
+                  </label>
+                </div>
+              </div>
+              <div class='row'>
+                <div class="form-check form-check col">
+                  <input class="form-check-input" type="checkbox">
+                  <label class="form-check-label">
+                    w/ Email
+                  </label>
+                </div>
+                <div class="form-check form-check col">
+                  <input class="form-check-input" type="checkbox">
+                  <label class="form-check-label">
+                    w/ Url
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
           <div id='listFollowPivotPicker' class='row container pt-2'></div>
