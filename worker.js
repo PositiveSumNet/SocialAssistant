@@ -496,7 +496,8 @@ const getSaveMetadata = function(pageType) {
 
 // SAVING TO DB *****************************************
 
-const clearBulkImport = function(db, oneToOne, uid) {
+const clearBulkImport = function(db, arr, oneToOne, uid) {
+  if (!arr || arr.length === 0) { return; } // no work to do
   const importTable = getImportTable(oneToOne);
   
   const sql = `
@@ -586,7 +587,8 @@ const getImportTable = function(oneToOne) {
   return oneToOne === true ? 'RdfImport1to1' : 'RdfImport1ton';
 }
 
-const execUpsert = function(db, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue') {
+const execUpsert = function(db, arr, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue') {
+  if (!arr || arr.length === 0) { return; } // no work to do
   const importTable = getImportTable(oneToOne);
   
   const sql = `
@@ -607,7 +609,7 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   const imgCdnUid = crypto.randomUUID();
   const img64Uid = crypto.randomUUID();
   const mdonUid = crypto.randomUUID();
-  const urlId = crypto.randomUUID();
+  const urlUid = crypto.randomUUID();
   const emailUid = crypto.randomUUID();
   
   // dump values into import table
@@ -635,25 +637,21 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
     return {s: x.h, o: x.img64Url};
   });
   
-  const mdons = [];
-  const urls = [];
-  const emails = [];
+  const mdonSogs = [];
+  const urlSogs = [];
+  const emailSogs = [];
   for (let i = 0; i < follows.length; i++) {
     let follow = follows[i];
     if (follow.accounts && follow.accounts.mdons) {
-      follow.accounts.mdons.forEach(x => mdons.push({s: follow.h, o: x}));
+      follow.accounts.mdons.forEach(x => mdonSogs.push({s: follow.h, o: x}));
     }
     if (follow.accounts && follow.accounts.urls) {
-      follow.accounts.urls.forEach(x => urls.push({s: follow.h, o: x}));
+      follow.accounts.urls.forEach(x => urlSogs.push({s: follow.h, o: x}));
     }
     if (follow.accounts && follow.accounts.emails) {
-      follow.accounts.emails.forEach(x => emails.push({s: follow.h, o: x}));
+      follow.accounts.emails.forEach(x => emailSogs.push({s: follow.h, o: x}));
     }
   }
-  
-  console.log(mdons);
-  console.log(urls);
-  console.log(emails);
   
   // bulk import
   execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);
@@ -661,20 +659,29 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   execBulkImport(db, true, descriptionUid, qMark, qMark, gParm, handleDescriptionSogs);
   execBulkImport(db, true, imgCdnUid, qMark, qMark, gParm, imgCdnSogs);
   execBulkImport(db, true, img64Uid, qMark, qMark, gParm, img64Sogs);
+  execBulkImport(db, false, mdonUid, qMark, qMark, gParm, mdonSogs);
+  execBulkImport(db, false, urlUid, qMark, qMark, gParm, urlSogs);
+  execBulkImport(db, false, emailUid, qMark, qMark, gParm, emailSogs);
   
   // process temp into final
-  execUpsert(db, followUid, meta.tblFollow, false);
-  execUpsert(db, handleDisplayUid, meta.tblDisplayName, true);
-  execUpsert(db, descriptionUid, meta.tblDescription, true);
-  execUpsert(db, imgCdnUid, meta.tblImgCdnUrl, true);
-  execUpsert(db, img64Uid, meta.tblImg64Url, true);
+  execUpsert(db, followSogs, followUid, meta.tblFollow, false);
+  execUpsert(db, handleDisplaySogs, handleDisplayUid, meta.tblDisplayName, true);
+  execUpsert(db, handleDescriptionSogs, descriptionUid, meta.tblDescription, true);
+  execUpsert(db, imgCdnSogs, imgCdnUid, meta.tblImgCdnUrl, true);
+  execUpsert(db, img64Sogs, img64Uid, meta.tblImg64Url, true);
+  execUpsert(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
+  execUpsert(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
+  execUpsert(db, emailSogs, emailUid, meta.tblProfileEmail, false);
   
   // clear out import tables
-  clearBulkImport(db, followUid, meta.tblFollow, false);
-  clearBulkImport(db, handleDisplayUid, meta.tblDisplayName, true);
-  clearBulkImport(db, descriptionUid, meta.tblDescription, true);
-  clearBulkImport(db, imgCdnUid, meta.tblImgCdnUrl, true);
-  clearBulkImport(db, img64Uid, meta.tblImg64Url, true);
+  clearBulkImport(db, followSogs, followUid, meta.tblFollow, false);
+  clearBulkImport(db, handleDisplaySogs, handleDisplayUid, meta.tblDisplayName, true);
+  clearBulkImport(db, handleDescriptionSogs, descriptionUid, meta.tblDescription, true);
+  clearBulkImport(db, imgCdnSogs, imgCdnUid, meta.tblImgCdnUrl, true);
+  clearBulkImport(db, img64Sogs, img64Uid, meta.tblImg64Url, true);
+  clearBulkImport(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
+  clearBulkImport(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
+  clearBulkImport(db, emailSogs, emailUid, meta.tblProfileEmail, false);
   
   // tell caller it can clear that cache key and send over the next one
   postMessage({ type: 'copiedToDb', cacheKey: cacheKey });
