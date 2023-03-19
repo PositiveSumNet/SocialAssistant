@@ -6,6 +6,51 @@ const distinctify = function(arr) {
   return Array.from(set);
 }
 
+const stripSuffix = function(txt, suffix) {
+  if (!txt) { return txt; }
+  
+  if (txt.endsWith(suffix)) {
+    txt = txt.substring(0, txt.length - suffix.length);
+  }
+  
+  return txt;
+}
+
+const sameText = function(a, b, insensitive = true) {
+  if (a === b) {
+    return true;
+  }
+  
+  if (insensitive && a && b) {
+    return a.toLowerCase() === b.toLowerCase();
+  }
+  else {
+    return false;
+  }
+}
+
+// DRY this vs index.js
+const stripSuffixes = function(txt, suffixes) {
+  if (!txt) { return txt; }
+  
+  for (let i = 0; i < suffixes.length; i++) {
+    let suffix = suffixes[i];
+    txt = stripSuffix(txt, suffix);
+  }
+  
+  return txt;
+}
+
+// DRY this vs index.js
+const looksLikeMastodonUrl = function(url) {
+  if (!url) { return false; }
+  url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
+  const parts = url.split('/');
+  if (parts.length === 0) { return false; }
+  const last = parts[parts.length-1];
+  return last.startsWith('@');
+}
+
 const _emailRexCapture = /(?:^|\s|\()([A-Za-z0-9._%+-]+(@| at |\(at\))[A-Za-z0-9.-]+(\.| dot |\(dot\))[A-Za-z]{2,4})\b/g;
 const extractEmails = function(text) {
   if (!text) { return []; }
@@ -22,10 +67,8 @@ const extractEmails = function(text) {
   return emails;
 }
 
-// stackoverflow.com/questions/31760030/extracting-for-url-from-string-using-regex
-// makeuseof.com/regular-expressions-validate-url/
-// with a tweak to avoid capturing mastodon
-const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b[^@]([-a-zA-Z0-9:%_\+.~#?&\/=]*))\b/g;
+// simple regex, but requires cleanup afterward for ending punctuation and ignore if it's a mastodon url
+const _urlRexCapture = /http[s]?:\/\/[^\s]+/g;
 const extractUrls = function(text) {
   if (!text) { return []; }
   
@@ -33,11 +76,14 @@ const extractUrls = function(text) {
   const urls = [];
   for (let i = 0; i < matches.length; i++) {
     let match = matches[i];
-    let url = match[1];
-    urls.push(url);
+    let url = match[0];
+    url = stripSuffixes(url, ['.',')','!']); // in case it attached punctuation, e.g. a sentence ending with an url
+    if (!looksLikeMastodonUrl(url)) {
+      urls.push(url);
+    }
   }
   
-  return urls;
+  return urls.filter(function(u) { return u && u.length > 0; });
 }
 
 const standardizeMastodonAccount = function(handle, domain) {
@@ -61,7 +107,7 @@ const extractMastodonFormat1s = function(text) {
 }
 
 // toad.social/@scafaria
-const _mastodon2RexCapture = /(?:^|\s|\()([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
+const _mastodon2RexCapture = /(?:^|\s|\()(https?:\/\/)?(www\.)?([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
 const extractMastodonFormat2s = function(text) {
   if (!text) { return []; }
   
@@ -69,8 +115,8 @@ const extractMastodonFormat2s = function(text) {
   const accounts = [];
   for (let i = 0; i < matches.length; i++) {
     let match = matches[i];
-    let domain = match[1];
-    let handle = match[2];
+    let domain = match[3];  // note: the 1 slot is http, the 2 slot is 222, then comes domain at 3 and handle at 4
+    let handle = match[4];
     let account = standardizeMastodonAccount(handle, domain);
     accounts.push(account);
   }
@@ -157,29 +203,6 @@ const parseUrl = function(url) {
   }
   else {
     return null;
-  }
-}
-
-const stripSuffix = function(txt, suffix) {
-  if (!txt) { return txt; }
-  
-  if (txt.endsWith(suffix)) {
-    txt = txt.substring(0, txt.length - suffix.length);
-  }
-  
-  return txt;
-}
-
-const sameText = function(a, b, insensitive = true) {
-  if (a === b) {
-    return true;
-  }
-  
-  if (insensitive && a && b) {
-    return a.toLowerCase() === b.toLowerCase();
-  }
-  else {
-    return false;
   }
 }
 

@@ -58,16 +58,42 @@ const renderEmailAnchors = function(text) {
   });
 }
 
-// geeksforgeeks.org/how-to-replace-plain-url-with-link-using-javascript/
-// stackoverflow.com/questions/31760030/extracting-for-url-from-string-using-regex
-// makeuseof.com/regular-expressions-validate-url/
-// with a tweak to avoid capturing mastodon
-const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b[^@]([-a-zA-Z0-9:%_\+.~#?&\/=]*))\b/g;
+const stripHttpWwwPrefix = function(url) {
+  if (!url) { return url; }
+  return url.replace('https://','').replace('http://','').replace('www.','');
+}
+
+const stripSuffixes = function(txt, suffixes) {
+  if (!txt) { return txt; }
+  
+  for (let i = 0; i < suffixes.length; i++) {
+    let suffix = suffixes[i];
+    if (txt.endsWith(suffix)) {
+      txt = txt.substring(0, txt.length - suffix.length);
+    }
+  }
+  
+  return txt;
+}
+
+const looksLikeMastodonUrl = function(url) {
+  if (!url) { return false; }
+  url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
+  const parts = url.split('/');
+  if (parts.length === 0) { return false; }
+  const last = parts[parts.length-1];
+  return last.startsWith('@');
+}
+
+// simple regex, but requires cleanup afterward for ending punctuation and ignore if it's a mastodon url
+const _urlRexCapture = /http[s]?:\/\/[^\s]+/g;
 const renderUrlAnchors = function(text) {
   if (!text) { return text; }
   
   return text.replace(_urlRexCapture, function(url) {
-    let display = url.replace('https://','').replace('http://','').replace('www.','');
+    if (looksLikeMastodonUrl(url) === true) { return url; }
+    let display = stripHttpWwwPrefix(url);
+    url = stripSuffixes(url, ['.',')','!']); // in case it attached punctuation, e.g. a sentence ending with an url
     const maxLen = 30;
     if (display.length > maxLen) {
       display = display.substring(0, maxLen) + '...';
@@ -78,6 +104,7 @@ const renderUrlAnchors = function(text) {
 
 const renderMastodonAnchor = function(display, handle, domain) {
     const maxLen = 30;
+    display = stripHttpWwwPrefix(display);
     if (display.length > maxLen) {
       display = display.substring(0, maxLen) + '...';
     }
@@ -96,12 +123,12 @@ const renderMastodon1Anchors = function(text) {
   });
 }
 
-// toad.social/@scafaria
-const _mastodon2RexCapture = /(?:^|\s|\()([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
+// toad.social/@scafaria or https://toad.social/@scafaria
+const _mastodon2RexCapture = /(?:^|\s|\()(https?:\/\/)?(www\.)?([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
 const renderMastodon2Anchors = function(text) {
   if (!text) { return text; }
   
-  return text.replace(_mastodon2RexCapture, function(match, domain, handle) {
+  return text.replace(_mastodon2RexCapture, function(match, http, www, domain, handle) {
     return renderMastodonAnchor(match, handle, domain);
   });
 }
