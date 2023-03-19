@@ -278,6 +278,9 @@ const start = function() {
       db.exec("drop table if exists FollowerOnTwitter;");
       db.exec("drop table if exists TwitterImgCdnUrl;");
       db.exec("drop table if exists TwitterImg64Url;");
+      db.exec("drop table if exists TwitterProfileMastodonAccount;");
+      db.exec("drop table if exists TwitterProfileExternalUrl;");
+      db.exec("drop table if exists TwitterProfileEmail;");
     }
     
     migrateDbAsNeeded(db);
@@ -427,12 +430,46 @@ const getImg64UrlTable = function(pageType) {
       return null;
   }
 }
+
+const getProfileMastodonTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterProfileMastodonAccount';
+    default:
+      return null;
+  }
+}
+
+const getProfileUrlTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterProfileExternalUrl';
+    default:
+      return null;
+  }
+}
+
+const getProfileEmailTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterProfileEmail';
+    default:
+      return null;
+  }
+}
+
 const getSaveMetadata = function(pageType) {
   const tblFollow = getFollowTable(pageType);
   const tblDisplayName = getDisplayNameTable(pageType);
   const tblDescription = getDescriptionTable(pageType);
   const tblImgCdnUrl = getImgCdnUrlTable(pageType);
   const tblImg64Url = getImg64UrlTable(pageType);
+  const tblProfileMdon = getProfileMastodonTable(pageType);
+  const tblProfileExtUrl = getProfileUrlTable(pageType);
+  const tblProfileEmail = getProfileEmailTable(pageType);
   
   let action = '';
   switch (pageType) {
@@ -450,7 +487,10 @@ const getSaveMetadata = function(pageType) {
     tblDisplayName: tblDisplayName,
     tblDescription: tblDescription,
     tblImgCdnUrl: tblImgCdnUrl,
-    tblImg64Url: tblImg64Url
+    tblImg64Url: tblImg64Url,
+    tblProfileMdon: tblProfileMdon,
+    tblProfileExtUrl: tblProfileExtUrl,
+    tblProfileEmail: tblProfileEmail
   };
 }
 
@@ -566,6 +606,9 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   const descriptionUid = crypto.randomUUID();
   const imgCdnUid = crypto.randomUUID();
   const img64Uid = crypto.randomUUID();
+  const mdonUid = crypto.randomUUID();
+  const urlId = crypto.randomUUID();
+  const emailUid = crypto.randomUUID();
   
   // dump values into import table
   // note: use of import table streamlines upsert scenarios and de-duping
@@ -591,6 +634,26 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   const img64Sogs = follows.map(function(x) {
     return {s: x.h, o: x.img64Url};
   });
+  
+  const mdons = [];
+  const urls = [];
+  const emails = [];
+  for (let i = 0; i < follows.length; i++) {
+    let follow = follows[i];
+    if (follow.accounts && follow.accounts.mdons) {
+      follow.accounts.mdons.forEach(x => mdons.push({s: follow.h, o: x}));
+    }
+    if (follow.accounts && follow.accounts.urls) {
+      follow.accounts.urls.forEach(x => urls.push({s: follow.h, o: x}));
+    }
+    if (follow.accounts && follow.accounts.emails) {
+      follow.accounts.emails.forEach(x => emails.push({s: follow.h, o: x}));
+    }
+  }
+  
+  console.log(mdons);
+  console.log(urls);
+  console.log(emails);
   
   // bulk import
   execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);

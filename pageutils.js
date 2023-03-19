@@ -24,7 +24,8 @@ const extractEmails = function(text) {
 
 // stackoverflow.com/questions/31760030/extracting-for-url-from-string-using-regex
 // makeuseof.com/regular-expressions-validate-url/
-const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/=]*))\b/g;
+// with a tweak to avoid capturing mastodon
+const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b[^@]([-a-zA-Z0-9:%_\+.~#?&\/=]*))\b/g;
 const extractUrls = function(text) {
   if (!text) { return []; }
   
@@ -43,7 +44,7 @@ const standardizeMastodonAccount = function(handle, domain) {
   return `@${handle.trim().replace('@','')}@${domain.trim().replace('@','')}`;
 }
 
-const _mastodon1RexCapture = /@\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
+const _mastodon1RexCapture = /(?:^|\s|\()@([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
 const extractMastodonFormat1s = function(text) {
   if (!text) { return []; }
   
@@ -60,7 +61,7 @@ const extractMastodonFormat1s = function(text) {
 }
 
 // toad.social/@scafaria
-const _mastodon2RexCapture = /\b([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
+const _mastodon2RexCapture = /(?:^|\s|\()([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
 const extractMastodonFormat2s = function(text) {
   if (!text) { return []; }
   
@@ -80,7 +81,7 @@ const extractMastodonFormat2s = function(text) {
 // scafaria@toad.social
 // note the missed starting @ -- and instead of trying to keep up with all the server instances
 // we simply hard-wire to detect this syntax when it's "xyz.social" (or xyz.online)
-const _mastodon3RexCapture = /\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
+const _mastodon3RexCapture = /(?:^|\s|\()([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
 const extractMastodonFormat3s = function(text) {
   if (!text) { return []; }
   

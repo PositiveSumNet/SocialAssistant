@@ -61,7 +61,8 @@ const renderEmailAnchors = function(text) {
 // geeksforgeeks.org/how-to-replace-plain-url-with-link-using-javascript/
 // stackoverflow.com/questions/31760030/extracting-for-url-from-string-using-regex
 // makeuseof.com/regular-expressions-validate-url/
-const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/=]*))\b/g;
+// with a tweak to avoid capturing mastodon
+const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b[^@]([-a-zA-Z0-9:%_\+.~#?&\/=]*))\b/g;
 const renderUrlAnchors = function(text) {
   if (!text) { return text; }
   
@@ -86,7 +87,7 @@ const renderMastodonAnchor = function(display, handle, domain) {
 
 // regex101.com/r/ac4fG5/1
 // @scafaria@toad.social
-const _mastodon1RexCapture = /@\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
+const _mastodon1RexCapture = /(?:^|\s|\()@([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
 const renderMastodon1Anchors = function(text) {
   if (!text) { return text; }
   
@@ -96,7 +97,7 @@ const renderMastodon1Anchors = function(text) {
 }
 
 // toad.social/@scafaria
-const _mastodon2RexCapture = /\b([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
+const _mastodon2RexCapture = /(?:^|\s|\()([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
 const renderMastodon2Anchors = function(text) {
   if (!text) { return text; }
   
@@ -108,7 +109,7 @@ const renderMastodon2Anchors = function(text) {
 // scafaria@toad.social
 // note the missed starting @ -- and instead of trying to keep up with all the server instances
 // we simply hard-wire to detect this syntax when it's "xyz.social" (or xyz.online)
-const _mastodon3RexCapture = /\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
+const _mastodon3RexCapture = /(?:^|\s|\()([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
 const renderMastodon3Anchors = function(text) {
   if (!text) { return text; }
   
