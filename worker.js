@@ -791,7 +791,7 @@ const searchOwners = function(data) {
 }
 
 const networkSearch = function(request) {
-  // could add a NamedGraph filter
+  const graphFilter = request.graph || _meGraph;
   const pageType = request.pageType;
   const tblFollow = getFollowTable(pageType);
   const tblDisplay = getDisplayNameTable(pageType);
@@ -814,7 +814,7 @@ const networkSearch = function(request) {
   let ownerCondition = '';
   if (request.networkOwner && request.networkOwner != '*') {
     let parm = {key: '$owner', value: request.networkOwner};
-    ownerCondition = `${conjunction} f.sHandle = ${parm.key}`;
+    ownerCondition = `${conjunction} f.sHandle = ${parm.key} AND f.NamedGraph = '${graphFilter}'`;
     bind.push(parm);
     conjunction = 'AND';
   }
@@ -828,14 +828,46 @@ const networkSearch = function(request) {
     bind.push(...searchClause.parms);
   }
   
+  // special filters
+  let joinMutual = '';
+  let joinMastodon = '';
+  let joinEmail = '';
+  let joinUrl = '';
+  // by default we return back the description
+  // if a special report (email, url, mdon), we return that instead (to render in the same template)
+  let detail = 'dx.oValue';
+  
+  if (request.mutual === true) {
+    joinMutual = `JOIN ${tblMutual} mutual ON mutual.oValue = f.oValue AND mutual.sHandle = f.sHandle AND mutual.NamedGraph = f.NamedGraph`;
+  }
+  
+  if (request.withMdon === true) {
+    joinMastodon = `JOIN ${tblProfileMdon} mdon ON mdon.sHandle = f.oValue AND mdon.NamedGraph = f.NamedGraph`;
+    detail = 'mdon.oValue';
+  }
+  else if (request.withEmail === true) {
+    joinEmail = `JOIN ${tblProfileEmail} ema ON ema.sHandle = f.oValue AND ema.NamedGraph = f.NamedGraph`;
+    detail = 'ema.oValue';
+  }
+  else if (request.withUrl === true) {
+    joinUrl = `JOIN ${tblProfileExtUrl} durl ON durl.sHandle = f.oValue AND durl.NamedGraph = f.NamedGraph`;
+    detail = 'durl.oValue';
+  }
+  
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
   SELECT DISTINCT f.oValue AS Handle, 
       f.Timestamp AS Timestamp,
-      d.oValue AS DisplayName, dx.oValue AS Description,
-      imgcdn.oValue AS ImgCdnUrl, img64.oValue AS Img64Url,
+      d.oValue AS DisplayName, 
+      ${detail} AS Detail,
+      imgcdn.oValue AS ImgCdnUrl, 
+      img64.oValue AS Img64Url,
       COUNT() OVER() AS TotalCount
   FROM ${tblFollow} f
+  ${joinMutual}
+  ${joinMastodon}
+  ${joinEmail}
+  ${joinUrl}
   LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblDescription} dx ON dx.sHandle = f.oValue AND dx.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph

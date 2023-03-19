@@ -350,16 +350,21 @@ const initUi = function(owner, pageType) {
   }
 }
 
+// the Detail returned back when we say "with" email/url/mdon is special and we'd like to bold it
+const detailReflectsFilter = function() {
+  return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
+}
+
 const renderPerson = function(person, context) {
   let roleInfo = '';
   let imgSize = 92;
-  let withDescription = true;
+  let withDetail = true;
   
   switch (context) {
     case 'owner':
       imgSize = 46;
       roleInfo = ` role='button'`;  // clickable
-      withDescription = false;
+      withDetail = false;
       break;
     case 'followResult':
       break;
@@ -385,15 +390,20 @@ const renderPerson = function(person, context) {
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
   const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
   const preparedDisplayName = prepareDisplayText(person.DisplayName);
-  const preparedDescription = prepareDisplayText(person.Description);
-  const description = (withDescription === true && person.Description) ? `<div class='personDescription'>${preparedDescription}</div>` : ``;
+  let preparedDetail = prepareDisplayText(person.Detail);
+
+  if (detailReflectsFilter() === true) {
+    preparedDetail = `<b>${preparedDetail}</b>`;
+  }
+
+  const detail = (withDetail === true && person.Detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
   
   return `<div class='person row striped pt-1' ${roleInfo}>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
       <div class='personHandle'><a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a></div>
       <div class='personDisplay'>${preparedDisplayName ?? ''}</div>
-      ${description}
+      ${detail}
     </div>
   </div>`;
 }
@@ -516,7 +526,7 @@ const buildNetworkSearchRequestFromUi = function() {
   const searchText = getUiValue('txtFollowSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
-  const withMdom = getUiValue('optWithMdom');
+  const withMdon = getUiValue('optWithMdon');
   const withEmail = getUiValue('optWithEmail');
   const withUrl = getUiValue('optWithUrl');
   
@@ -530,7 +540,7 @@ const buildNetworkSearchRequestFromUi = function() {
     take: _pageSize,
     // filters
     mutual: mutual,
-    withMdom: withMdom,
+    withMdon: withMdon,
     withEmail: withEmail,
     withUrl: withUrl
     };
