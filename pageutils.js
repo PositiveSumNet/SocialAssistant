@@ -1,3 +1,129 @@
+const distinctify = function(arr) {
+  const set = new Set();
+  for (let i = 0; i < arr.length; i++) {
+    set.add(arr[i]);
+  }
+  return Array.from(set);
+}
+
+const _emailRexCapture = /(?:^|\s|\()([A-Za-z0-9._%+-]+(@| at |\(at\))[A-Za-z0-9.-]+(\.| dot |\(dot\))[A-Za-z]{2,4})\b/g;
+const extractEmails = function(text) {
+  if (!text) { return []; }
+  
+  const matches = Array.from(text.matchAll(_emailRexCapture));
+  const emails = [];
+  for (let i = 0; i < matches.length; i++) {
+    let match = matches[i];
+    let email = match[1];   // the 1st capture group is clean (excludes the negative lookback of the match param at position 0)
+    let clean = email.trim().replace(' at ', '@').replace('(at)', '@').replace(' dot ', '.').replace('(dot)', '.');
+    emails.push(clean);
+  }
+  
+  return emails;
+}
+
+// stackoverflow.com/questions/31760030/extracting-for-url-from-string-using-regex
+// makeuseof.com/regular-expressions-validate-url/
+const _urlRexCapture = /((https?:\/\/|www\.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/=]*))\b/g;
+const extractUrls = function(text) {
+  if (!text) { return []; }
+  
+  const matches = Array.from(text.matchAll(_urlRexCapture));
+  const urls = [];
+  for (let i = 0; i < matches.length; i++) {
+    let match = matches[i];
+    let url = match[1];
+    urls.push(url);
+  }
+  
+  return urls;
+}
+
+const standardizeMastodonAccount = function(handle, domain) {
+  return `@${handle.trim().replace('@','')}@${domain.trim().replace('@','')}`;
+}
+
+const _mastodon1RexCapture = /@\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
+const extractMastodonFormat1s = function(text) {
+  if (!text) { return []; }
+  
+  const matches = Array.from(text.matchAll(_mastodon1RexCapture));
+  const accounts = [];
+  for (let i = 0; i < matches.length; i++) {
+    let match = matches[i];
+    let handle = match[1];
+    let domain = match[2];
+    let account = standardizeMastodonAccount(handle, domain);
+    accounts.push(account);
+  }
+  return accounts;
+}
+
+// toad.social/@scafaria
+const _mastodon2RexCapture = /\b([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
+const extractMastodonFormat2s = function(text) {
+  if (!text) { return []; }
+  
+  const matches = Array.from(text.matchAll(_mastodon2RexCapture));
+  const accounts = [];
+  for (let i = 0; i < matches.length; i++) {
+    let match = matches[i];
+    let domain = match[1];
+    let handle = match[2];
+    let account = standardizeMastodonAccount(handle, domain);
+    accounts.push(account);
+  }
+  
+  return accounts;
+}
+
+// scafaria@toad.social
+// note the missed starting @ -- and instead of trying to keep up with all the server instances
+// we simply hard-wire to detect this syntax when it's "xyz.social" (or xyz.online)
+const _mastodon3RexCapture = /\b([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
+const extractMastodonFormat3s = function(text) {
+  if (!text) { return []; }
+  
+  const matches = Array.from(text.matchAll(_mastodon3RexCapture));
+  const accounts = [];
+  for (let i = 0; i < matches.length; i++) {
+    let match = matches[i];
+    let handle = match[1];
+    let domain = match[2];
+    let account = standardizeMastodonAccount(handle, domain);
+    accounts.push(account);
+  }
+  
+  return accounts;
+}
+
+const extractMastodonAccounts = function(text) {
+  const arr = [];
+  arr.push(...extractMastodonFormat1s(text));
+  arr.push(...extractMastodonFormat2s(text));
+  arr.push(...extractMastodonFormat3s(text));
+  return distinctify(arr);
+}
+
+// pass in e.g. display name plus description
+const extractAccounts = function(texts) {
+  let emails = [];
+  let urls = [];
+  let mdons = [];
+  for (let i = 0; i < texts.length; i++) {
+    let text = texts[i];
+    emails.push(...extractEmails(text));
+    urls.push(...extractUrls(text));
+    mdons.push(...extractMastodonAccounts(text));
+  }
+  
+  return {
+    emails: distinctify(emails),
+    urls: distinctify(urls),
+    mdons: distinctify(mdons)
+  };
+}
+
 const getParsedUrl = function() {
   return parseUrl(window.location.href);
 }
@@ -31,6 +157,16 @@ const parseUrl = function(url) {
   else {
     return null;
   }
+}
+
+const stripSuffix = function(txt, suffix) {
+  if (!txt) { return txt; }
+  
+  if (txt.endsWith(suffix)) {
+    txt = txt.substring(0, txt.length - suffix.length);
+  }
+  
+  return txt;
 }
 
 const sameText = function(a, b, insensitive = true) {

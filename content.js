@@ -297,6 +297,7 @@ const processTwitterFollowsOnPage = function(scopeElm) {
           let description = getTwitterProfileDescription(item.displayNameAnchor);
           let finalDisplay = getUnfurledText(item.displayNameAnchor);  // grabs emojis too
           let per = { h: h, d: finalDisplay, pageType: parsedUrl.pageType, owner: parsedUrl.owner, description: description };
+          per.accounts = extractAccounts([per.d, per.description]);
           ppl.push(per);
         }
       }
