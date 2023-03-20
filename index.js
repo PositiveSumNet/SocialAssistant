@@ -1,5 +1,3 @@
-const _pageSize = 50;
-
 // figured this out by analyzing a-z values from:
 // emojipedia.org/regional-indicator-symbol-letter-a/
 // console.log('🇦'.charCodeAt(1));
@@ -481,6 +479,12 @@ const getPageType = function(direction) {
   }
 }
 
+const getPageSize = function() {
+  let size = parseInt(localStorage.getItem('pageSize'));
+  if (isNaN(size)) { size = 50 };
+  return size;
+}
+
 const getCachedOwner = function() {
   return localStorage.getItem('networkOwner');
 }
@@ -513,7 +517,8 @@ const getPageNum = function() {
 
 const calcSkip = function() {
   const pageNum = getPageNum();
-  const skip = (pageNum - 1) * _pageSize;
+  const pageSize = getPageSize();
+  const skip = (pageNum - 1) * pageSize;
   return skip;
 }
 
@@ -523,6 +528,7 @@ const buildNetworkSearchRequestFromUi = function() {
   owner = owner && owner.startsWith('@') ? owner.substring(1) : owner;
   
   const pageType = getPageType();
+  const pageSize = getPageSize();
   const searchText = getUiValue('txtFollowSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
@@ -537,7 +543,7 @@ const buildNetworkSearchRequestFromUi = function() {
     searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
     skip: skip,
-    take: _pageSize,
+    take: pageSize,
     // filters
     mutual: mutual,
     withMdon: withMdon,
@@ -567,7 +573,13 @@ const renderFollows = function(payload) {
     plist.innerHTML += renderPerson(row, 'followResult');
   }
   
-  document.getElementById('pageCount').innerText = Math.ceil(count / _pageSize);
+  const pageSize = getPageSize();
+  const pageCount = Math.ceil(count / pageSize);
+  const pagingTip = `${pageCount} pages / ${count} items total`;
+  document.getElementById('nextPage').setAttribute("title", pagingTip);
+  
+  const pageGearTip = `Page size is ${pageSize}. Click to modify.`;
+  document.getElementById('pageGear').setAttribute("title", pageGearTip);
 }
 
 const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
@@ -606,6 +618,7 @@ optWithUrl.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 })
+
 
 // searching
 const handleTypeSearch = debounce((event) => {
@@ -664,9 +677,20 @@ document.getElementById('priorPage').onclick = function(event) {
 
 document.getElementById('nextPage').onclick = function(event) {
   const pageNum = getPageNum();
-  let pageCount = parseInt(document.getElementById('pageCount').innerText);
-  if (pageNum < pageCount) {
-    txtPageNum.value = pageNum + 1;
+  txtPageNum.value = pageNum + 1;
+  networkSearch();
+  return false;
+};
+
+document.getElementById('pageGear').onclick = function(event) {
+  const pageSize = getPageSize();
+  const input = prompt("Choose page size", pageSize.toString());
+  const intVal = parseInt(input);
+  if (isNaN(intVal)) {
+    alert("Invalid input; page size unchanged");
+  }
+  else {
+    localStorage.setItem('pageSize', intVal);
     networkSearch();
   }
   return false;
