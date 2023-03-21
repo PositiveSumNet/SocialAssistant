@@ -81,15 +81,23 @@ a {
 
 .bg-subheader {
   padding: 1rem;
+}
+
+.bg-subheader {
   background-color: #216CB1;
   color: #ffffff;
 }
 
-.bg-header a {
+.fixed-bottom {
+  background-color: #14416A;
   color: #ffffff;
 }
 
-.bg-header a:hover {
+.bg-header a, .fixed-bottom a {
+  color: #ffffff;
+}
+
+.bg-header a:hover, .fixed-bottom a:hover {
   color: #5991C5;
 }
 

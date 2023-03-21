@@ -355,11 +355,18 @@ const getActionType = function(evt) {
 }
 
 // per index.js ensureCopiedToDb, data.key is the storage key of the data we're transferring, and
-// data.val is the request originally cached by background.js (made by setFollowSaveTimer in content.js)
+// within each batch, val is the request originally cached by background.js (made by setFollowSaveTimer in content.js)
 const xferCacheToDb = function(data) {
-  // We have data.val.payload, which is _savableFollows from content.js (via background.js)
-  // need to group by pageType
-  const items = data.val;
+  // we were passed 
+  var items = [];
+  var keys = [];
+  
+  for (let i = 0; i < data.batches.length; i++) {
+    let batch = data.batches[i];
+    keys.push(batch.key);
+    items.push(...batch.val); // batch.val was the list of follows which is _savableFollows from content.js (via background.js)
+  }
+  
   const groups = groupBy(items, 'pageType');
   
   for (let i = 0; i < groups.length; i++) {
@@ -369,7 +376,7 @@ const xferCacheToDb = function(data) {
     let db = getDb();
     try {
       if (meta.action == 'saveFollows') {
-        saveFollows(db, group, data.key, meta, _meGraph);
+        saveFollows(db, group, keys, meta, _meGraph);
       }
     } 
     finally {
@@ -612,7 +619,7 @@ const execUpsert = function(db, arr, uid, tbl, oneToOne, s = 'sHandle', o = 'oVa
   db.exec(sql);
 }
 
-const saveFollows = function(db, follows, cacheKey, meta, graph) {
+const saveFollows = function(db, follows, cacheKeys, meta, graph) {
   // guids for this batch
   const followUid = crypto.randomUUID();
   const handleDisplayUid = crypto.randomUUID();
@@ -693,9 +700,9 @@ const saveFollows = function(db, follows, cacheKey, meta, graph) {
   clearBulkImport(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
   clearBulkImport(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
   clearBulkImport(db, emailSogs, emailUid, meta.tblProfileEmail, false);
-  
-  // tell caller it can clear that cache key and send over the next one
-  postMessage({ type: 'copiedToDb', cacheKey: cacheKey });
+
+  // tell caller it can clear those cache keys and send over the next ones
+  postMessage({ type: 'copiedToDb', cacheKeys: cacheKeys });
 }
 
 // suggesting a single owner on init

@@ -347,9 +347,9 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
     scrollable = false;
   }
   
-  let minRest = 500;  // milliseconds
-  let maxRest = 1500;
-  let scrollBy = 0.8;
+  let minRest = 300;  // milliseconds
+  let maxRest = 600;
+  let scrollBy = 0.5;
   
   if (scrollable === true && _lastDiscoveryTime == null) {
     // if we haven't found any records, scrolling isn't expected to help

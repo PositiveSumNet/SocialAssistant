@@ -215,11 +215,14 @@ const logDbScriptVersion = function(versionInfo) {
   document.getElementById('dbScriptNumber').innerHTML = versionInfo.version.toString();
 }
 
-const onCopiedToDb = async function(cacheKey) {
-  // we can clear out the cache key
-  await chrome.storage.local.remove(cacheKey);
+const onCopiedToDb = async function(cacheKeys) {
+  // we can clear out the cache keys
+  for (let i = 0; i < cacheKeys.length; i++) {
+    let cacheKey = cacheKeys[i];
+    await chrome.storage.local.remove(cacheKey);
+  }
   
-  // and queue up the next one
+  // and queue up the next run
   await ensureCopiedToDb();
 }
 
@@ -233,17 +236,31 @@ const ensureCopiedToDb = async function() {
     xferring.style.display = 'block';
   }
   
+  // allow sqlite to do process in larger batches than what was cached
+  const batches = [];
+  const maxBatches = 10;
+  let ctr = 0;
   for (const [key, val] of entries) {
     if (key.startsWith('fordb-')) {
-      worker.postMessage({ key: key, val: val, actionType: 'xferCacheToDb' });
-      return; // we only do *one* because we don't want to multi-thread sqlite; wait for callback
+      let batch = { key: key, val: val };
+      batches.push(batch);
+      ctr++;
+      
+      if (ctr >= maxBatches) {
+        // come back for more rather than sending massive messages around
+        break;
+      }
     }
   }
   
-  // if we got to here, we're fully copied
-  xferring.style.display = 'none';
-  
-  initialRender();
+  if (batches.length > 0) {
+    worker.postMessage( { batches: batches, actionType: 'xferCacheToDb' } );
+  }
+  else {
+    // if we got to here, we're fully copied
+    xferring.style.display = 'none';
+    initialRender();
+  }
 }
 
 const initialRender = function() {
@@ -293,7 +310,7 @@ worker.onmessage = function ({ data }) {
       ensureCopiedToDb();
       break;
     case 'copiedToDb':
-      onCopiedToDb(data.cacheKey);
+      onCopiedToDb(data.cacheKeys);
       break;
     case 'renderSuggestedOwner':
       renderSuggestedOwner(data.payload);
@@ -575,7 +592,8 @@ const renderFollows = function(payload) {
   
   const pageSize = getPageSize();
   const pageCount = Math.ceil(count / pageSize);
-  const pagingTip = `${pageCount} pages / ${count} items total`;
+  const pageWord = pageCount > 1 ? 'pages' : 'page';
+  const pagingTip = `${pageCount} ${pageWord} / ${count} items total`;
   document.getElementById('nextPage').setAttribute("title", pagingTip);
   
   const pageGearTip = `Page size is ${pageSize}. Click to modify.`;
