@@ -310,7 +310,6 @@ const processTwitterFollowsOnPage = function(scopeElm) {
       let key = `${item.h}-${item.owner}-${item.pageType}`.toLowerCase();
       if (!_savableFollowKeySet.has(key) && !_savedFollowHandleSet.has(key)) {
         // add newly found handles to what we want to save
-        
         _savableFollows.push(item);
         _savableFollowKeySet.add(key);
         _lastDiscoveryTime = Date.now();
@@ -349,7 +348,7 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
   
   let minRest = 300;  // milliseconds
   let maxRest = 600;
-  let scrollBy = 0.5;
+  let scrollBy = 0.8;
   
   if (scrollable === true && _lastDiscoveryTime == null) {
     // if we haven't found any records, scrolling isn't expected to help
@@ -407,5 +406,5 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
   // queue it up again
   setTimeout(() => {
     scrollAsNeeded();
-  }, 500);
+  }, 300);
 }
