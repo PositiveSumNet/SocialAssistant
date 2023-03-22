@@ -5,9 +5,7 @@
 var _savableFollows = [];
 var _savableFollowKeySet = new Set(); // to avoid storing dupes
 var _savedFollowHandleSet = new Set();
-var _photos = [];
-var _photoHandleSet = new Set();
-var _observer;
+var _twitterObserver;
 // for scrolling
 var _lastDiscoveryTime = null;
 var _lastScrollTime = null;
@@ -16,6 +14,14 @@ var _preScrollCount = 0;
 var _autoScroll = false;
 var _scrollIsPending = false;
 var _countWhenScrollDoneSet;
+
+const _twitterProfileImgSrcHint = 'profile_images/';
+
+var _mutationSettings = { 
+  attributes: false, 
+  childList: true, 
+  subtree: true
+};
 
 // on startup, see if supposed to already be recording
 chrome.storage.local.get(['recording'], function(result) {
@@ -47,7 +53,7 @@ const startRecording = function() {
   const parsedUrl = getParsedUrl();
   const site = parsedUrl.site;
   
-  if (!_observer && site === 'twitter') {
+  if (!_twitterObserver && site === 'twitter') {
     // begin recording
     recordTwitter();
     // periodically check for collected items to save
@@ -83,9 +89,12 @@ const reinit = function() {
   _savableFollows = [];
   _savableFollowKeySet = new Set(); // to avoid storing dupes
   _savedFollowHandleSet = new Set();
-  _photos = [];
-  _photoHandleSet = new Set();
-  _observer = undefined;
+
+  if (_twitterObserver) {
+    _twitterObserver.disconnect();
+  }
+  _twitterObserver = undefined;
+
   _lastDiscoveryTime = null;
   _lastScrollTime = null;
   _emptyScrollCount = 0;
@@ -101,31 +110,12 @@ const stopRecording = function(badgeText) {
   chrome.storage.local.remove('recording');
 }
 
-const ensureFollowPhotosInfused = function() {
-  for (let i = 0; i < _savableFollows.length; i++) {
-    let follow = _savableFollows[i];
-    let followUrl = twitterProfileUrlFromHandle(follow.h).toLowerCase();
-    
-    if (!follow.imgCdnUrl && _photoHandleSet.has(followUrl)) {
-      let photo = _photos.find(function(p) {
-        return sameText(p.href, followUrl);
-      });
-      
-      if (photo) {
-        follow.imgCdnUrl = photo.imgSrc;
-      }
-    }
-  }
-}
-
 const setFollowSaveTimer = function() {
-  if (!_observer) {
+  if (!_twitterObserver) {
     return;
   }
   
   if (_savableFollows.length > 0) {
-    ensureFollowPhotosInfused();
-    
     // tell background js to save to local storage cache
     chrome.runtime.sendMessage(
     {
@@ -137,8 +127,8 @@ const setFollowSaveTimer = function() {
         const newSaveCnt = response.saved.length;
         for (let i = 0; i < response.saved.length; i++) {
           let item = response.saved[i];
-          if (!_savedFollowHandleSet.has(item.h.toLowerCase())) {
-            _savedFollowHandleSet.add(item.h.toLowerCase());
+          if (!_savedFollowHandleSet.has(item.handle.toLowerCase())) {
+            _savedFollowHandleSet.add(item.handle.toLowerCase());
           }
         }
         
@@ -157,8 +147,6 @@ const setFollowSaveTimer = function() {
     // clear
     _savableFollows = [];
     _savableFollowKeySet = new Set();
-    _photos = [];
-    _photoHandleSet = new Set();
   }
   
   // every 5 seconds, see if time to save
@@ -167,34 +155,47 @@ const setFollowSaveTimer = function() {
   }, 5000);
 }
 
+const getTwitterFollowImgs = function(scopeElem) {
+  if (isTwitterProfilePhoto(scopeElem)) {
+    return [scopeElem];
+  }
+  else {
+    // all img elms with src that starts with the tell-tale prefix
+    return Array.from(scopeElem.querySelectorAll(`img[src*="${_twitterProfileImgSrcHint}"]`));
+  }
+}
+
+const twitterFollowMutationCallback = function(mutations) {
+  for (let mutation of mutations) {
+    if (mutation.type === 'childList') {
+      let nodes = mutation.addedNodes;
+      for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i];
+        
+        // The twitter profile photo points upward to anchor with href of '/myhandle' 
+        // then upward to div with data-testid of UserCell.
+        // The UserCell has two anchor elements (other than the img anchor), the first for DisplayName and the next with Handle (myhandle).
+        // So we can grab everything using this photo node.
+        if (isTwitterProfilePhoto(node)) {
+          processTwitterFollows(node);
+        }
+      }
+    }
+  }
+}
+
 const recordTwitter = function() {
   
   const mainColumn = getTwitterMainColumn();
-  
   if (!mainColumn) {
     return;
   }
   
   // stackoverflow.com/questions/57468727/when-to-disconnect-mutationobserver-in-chrome-web-extension
-  _observer = new MutationObserver((mutationsList, observer) => {
-    for (let mutation of mutationsList) {
-      if (mutation.type === 'childList') {
-        let nodes = mutation.addedNodes;
-        for (let i = 0; i < nodes.length; i++) {
-          let node = nodes[i];
-          processTwitterFollowsAndPhotos(node);
-        }
-      }
-    }
-  });
-
-  _observer.observe(mainColumn, { 
-      attributes: false, 
-      childList: true, 
-      subtree: true }
-  );
-
-  processTwitterFollowsAndPhotos(mainColumn);
+  // www.smashingmagazine.com/2019/04/mutationobserver-api-guide/
+  _twitterObserver = new MutationObserver(twitterFollowMutationCallback);
+  _twitterObserver.observe(mainColumn, _mutationSettings);
+  processTwitterFollows(mainColumn);
 }
 
 const getTwitterMainColumn = function(warn) {
@@ -210,43 +211,9 @@ const getTwitterMainColumn = function(warn) {
   }
 }
 
-const processTwitterFollowsAndPhotos = function(scopeElm) {
-  processTwitterFollowsOnPage(scopeElm);
-  processTwitterPhotosOnPage(scopeElm);
-}
-
 const isTwitterProfilePhoto = function(elm) {
-  const srcPrefix = 'https://pbs.twimg.com/profile_images';
-  const isPhoto = elm && sameText(elm.tagName, 'img') && elm.getAttribute('src').startsWith(srcPrefix);
+  const isPhoto = elm && sameText(elm.tagName, 'img') && elm.getAttribute('src').includes(_twitterProfileImgSrcHint);
   return isPhoto;
-}
-
-const processTwitterPhotosOnPage = function(scopeElm) {
-  let photos = [];
-  
-  if (isTwitterProfilePhoto(scopeElm) === true) {
-    const photo = buildLinkedImg(scopeElm);
-    if (photo) {
-      photos.push(photo);
-    }
-  }
-  else {
-    photos = Array.from(scopeElm.getElementsByTagName('img')).filter(function(img) {
-      return isTwitterProfilePhoto(img);
-    }).map(function(img) {
-      return buildLinkedImg(img);
-    }).filter(function(p) {
-      return (p && p.href && p.imgSrc);
-    });
-  }
-  
-  for (let i = 0; i < photos.length; i++) {
-    let photo = photos[i];
-    if (!_photoHandleSet.has(photo.href.toLowerCase())) {
-      _photos.push(photo);
-      _photoHandleSet.add(photo.href.toLowerCase());
-    }
-  }
 }
 
 const twitterHandleFromProfileUrl = function(url) {
@@ -259,55 +226,55 @@ const twitterHandleFromProfileUrl = function(url) {
   return trimmed;
 }
 
-const twitterProfileUrlFromHandle = function(handle) {
-  let trimmed = handle.startsWith('@') ? handle.substring(1) : handle;
-  return  '/' + trimmed;
+// see comments at Mutation callback
+const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
+  const imgSrc = img.getAttribute('src');
+  const imgAnchor = findUpTag(img, 'a', false);
+  const profileUrl = imgAnchor.getAttribute('href');
+  const handle = profileUrl.substring(1); // trim the starting '/'
+  const atHandle = twitterHandleFromProfileUrl(profileUrl); 
+  const userCell = findUpTwitterUserCell(img);
+  // one is handle, one is description
+  
+  const textAnchors = Array.from(userCell.getElementsByTagName('a')).filter(function(a) { return a != imgAnchor; });
+  
+  const displayNameAnchor = textAnchors.find(function(a) { 
+    return a.innerText && a.innerText.length > 0 && 
+            a.innerText.toLowerCase() != atHandle.toLowerCase(); 
+  });
+  
+  const displayName = getUnfurledText(displayNameAnchor);
+  const description = getTwitterProfileDescription(displayNameAnchor);
+
+  const per = {
+    handle: handle,
+    displayName: displayName,
+    description: description,
+    pageType: parsedUrl.pageType,
+    owner: parsedUrl.owner,
+    imgCdnUrl: imgSrc
+  };
+  
+  per.accounts = extractAccounts([per.displayName, per.description]);
+  
+  return per;
 }
 
-const processTwitterFollowsOnPage = function(scopeElm) {
-  
+const processTwitterFollows = function(scopeElm) {
   const parsedUrl = getParsedUrl();
-  
-  // all links
-  const all = Array.from(scopeElm.getElementsByTagName('a')).map(function(a) {
-    return { u: a.getAttribute('href'), d: a.innerText, displayNameAnchor: a };
-  });
-  
-  // those that are handles
-  const handles = all.filter(function(a) {
-    return a.u.startsWith('/') && a.d.startsWith('@');
-  });
-  
-  // a hash of the urls
-  const urlSet = new Set(handles.map(function(h) { return h.u.toLowerCase() }));
-  
+  const photos = getTwitterFollowImgs(scopeElm);
   const ppl = [];
   
-  // loop through all anchors and spot those that are valid handles
-  for (let i = 0; i < all.length; i++) {
-    let item = all[i];
-    
-    if (item.u && urlSet.has(item.u.toLowerCase())) {
-      let h = twitterHandleFromProfileUrl(item.u);
-      if (item.d && item.d.length > 1) {
-        if (!item.d.startsWith('@')) {
-          // it had display text (not the @handle)
-          // this is the display name title anchor, usable as the handle/display pair
-          
-          let description = getTwitterProfileDescription(item.displayNameAnchor);
-          let finalDisplay = getUnfurledText(item.displayNameAnchor);  // grabs emojis too
-          let per = { h: h, d: finalDisplay, pageType: parsedUrl.pageType, owner: parsedUrl.owner, description: description };
-          per.accounts = extractAccounts([per.d, per.description]);
-          ppl.push(per);
-        }
-      }
-    }
+  for (let i = 0; i < photos.length; i++) {
+    let photo = photos[i];
+    let per = buildTwitterFollowFromPhoto(photo, parsedUrl);
+    ppl.push(per);
   }
   
   if (ppl.length > 0) {
     for (let i = 0; i < ppl.length; i++) {
       let item = ppl[i];
-      let key = `${item.h}-${item.owner}-${item.pageType}`.toLowerCase();
+      let key = `${item.handle}-${item.owner}-${item.pageType}`.toLowerCase();
       if (!_savableFollowKeySet.has(key) && !_savedFollowHandleSet.has(key)) {
         // add newly found handles to what we want to save
         _savableFollows.push(item);
@@ -330,7 +297,7 @@ const getTwitterProfileDescription = function(displayNameAnchorElm) {
 
 const scrollAsNeeded = function(avoidScrollIfHidden) {
   
-  if (_autoScroll != true || !_observer) {
+  if (_autoScroll != true || !_twitterObserver) {
     return;
   }
   
@@ -346,9 +313,11 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
     scrollable = false;
   }
   
-  let minRest = 300;  // milliseconds
-  let maxRest = 600;
-  let scrollBy = 0.8;
+  let minRest = 500;  // milliseconds
+  let maxRest = 1500;
+  
+  let minScrollBy = 0.7;
+  let maxScrollBy = 0.8;
   
   if (scrollable === true && _lastDiscoveryTime == null) {
     // if we haven't found any records, scrolling isn't expected to help
@@ -357,6 +326,7 @@ const scrollAsNeeded = function(avoidScrollIfHidden) {
   
   // random rest period
   let restMs = Math.random() * (maxRest - minRest) + minRest;
+  let scrollBy = Math.random() * (maxScrollBy - minScrollBy) + minScrollBy;
   
   if (scrollable === true && Date.now() < _lastDiscoveryTime + restMs) {
     // last found item was recent; maybe it was part of a set, so wait

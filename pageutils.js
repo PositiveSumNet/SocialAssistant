@@ -265,11 +265,16 @@ const isEmoji = function(txt) {
 
 const getDepthFirstTree = function(elem, elems = null) {
   elems = elems ?? [];
-  elems.push(elem);
   
-  for (let i = 0; i < elem.childNodes.length; i++) {
-    let child = elem.childNodes[i];
-    getDepthFirstTree(child, elems);
+  if (elem) {
+    elems.push(elem);
+    
+    if (elem.childNodes) {
+      for (let i = 0; i < elem.childNodes.length; i++) {
+        let child = elem.childNodes[i];
+        getDepthFirstTree(child, elems);
+      }
+    }
   }
   
   return elems;

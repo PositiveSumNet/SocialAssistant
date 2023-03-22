@@ -143,14 +143,18 @@ const renderMastodon3Anchors = function(text) {
   });
 }
 
-const prepareDisplayText = function(txt) {
+const prepareDisplayText = function(txt, withAnchors = true) {
   if (!txt) { return txt; }
   txt = injectFlagEmojis(txt);
-  txt = renderUrlAnchors(txt);
-  txt = renderEmailAnchors(txt);
-  txt = renderMastodon1Anchors(txt);
-  txt = renderMastodon2Anchors(txt);
-  txt = renderMastodon3Anchors(txt);
+  
+  if (withAnchors) {
+    txt = renderUrlAnchors(txt);
+    txt = renderEmailAnchors(txt);
+    txt = renderMastodon1Anchors(txt);
+    txt = renderMastodon2Anchors(txt);
+    txt = renderMastodon3Anchors(txt);
+  }
+  
   return txt;
 }
 
@@ -230,10 +234,13 @@ const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
   const xferring = document.getElementById('transferringMsg');
+  const followList = document.getElementById('followList');
+  
   xferring.innerHTML = 'Copying ' + entries.length + ' pages of data to local database...';
   
   if (entries.length > 0) {
     xferring.style.display = 'block';
+    followList.style.display = 'none';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -259,6 +266,7 @@ const ensureCopiedToDb = async function() {
   else {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
+    followList.style.display = 'block';
     initialRender();
   }
 }
@@ -374,12 +382,14 @@ const renderPerson = function(person, context) {
   let roleInfo = '';
   let imgSize = 92;
   let withDetail = true;
+  let withAnchors = true;
   
   switch (context) {
     case 'owner':
       imgSize = 46;
       roleInfo = ` role='button'`;  // clickable
       withDetail = false;
+      withAnchors = false;
       break;
     case 'followResult':
       break;
@@ -404,8 +414,8 @@ const renderPerson = function(person, context) {
   
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
   const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
-  const preparedDisplayName = prepareDisplayText(person.DisplayName);
-  let preparedDetail = prepareDisplayText(person.Detail);
+  const preparedDisplayName = prepareDisplayText(person.DisplayName, withAnchors);
+  let preparedDetail = prepareDisplayText(person.Detail, withAnchors);
 
   if (detailReflectsFilter() === true) {
     preparedDetail = `<b>${preparedDetail}</b>`;
@@ -413,10 +423,16 @@ const renderPerson = function(person, context) {
 
   const detail = (withDetail === true && person.Detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
   
+  let renderedHandle = handle;
+  
+  if (withAnchors) {
+    renderedHandle = `<a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a>`;
+  }
+  
   return `<div class='person row striped pt-1' ${roleInfo}>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
-      <div class='personHandle'><a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a></div>
+      <div class='personHandle'>${renderedHandle}</div>
       <div class='personDisplay'>${preparedDisplayName ?? ''}</div>
       ${detail}
     </div>

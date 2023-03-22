@@ -636,23 +636,23 @@ const saveFollows = function(db, follows, cacheKeys, meta, graph) {
   const gParm = `'${graph}'`;
   
   const followSogs = follows.map(function(x) {
-    return {s: x.owner, o: x.h};
+    return {s: x.owner, o: x.handle};
   });
   
   const handleDisplaySogs = follows.map(function(x) {
-    return {s: x.h, o: x.d};
+    return {s: x.handle, o: x.displayName};
   });
   
   const handleDescriptionSogs = follows.map(function(x) {
-    return {s: x.h, o: x.description};
+    return {s: x.handle, o: x.description};
   });
 
   const imgCdnSogs = follows.map(function(x) {
-    return {s: x.h, o: x.imgCdnUrl};
+    return {s: x.handle, o: x.imgCdnUrl};
   });
 
   const img64Sogs = follows.map(function(x) {
-    return {s: x.h, o: x.img64Url};
+    return {s: x.handle, o: x.img64Url};
   });
   
   const mdonSogs = [];
@@ -661,13 +661,13 @@ const saveFollows = function(db, follows, cacheKeys, meta, graph) {
   for (let i = 0; i < follows.length; i++) {
     let follow = follows[i];
     if (follow.accounts && follow.accounts.mdons) {
-      follow.accounts.mdons.forEach(x => mdonSogs.push({s: follow.h, o: x}));
+      follow.accounts.mdons.forEach(x => mdonSogs.push({s: follow.handle, o: x}));
     }
     if (follow.accounts && follow.accounts.urls) {
-      follow.accounts.urls.forEach(x => urlSogs.push({s: follow.h, o: x}));
+      follow.accounts.urls.forEach(x => urlSogs.push({s: follow.handle, o: x}));
     }
     if (follow.accounts && follow.accounts.emails) {
-      follow.accounts.emails.forEach(x => emailSogs.push({s: follow.h, o: x}));
+      follow.accounts.emails.forEach(x => emailSogs.push({s: follow.handle, o: x}));
     }
   }
   
