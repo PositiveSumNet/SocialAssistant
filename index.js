@@ -653,14 +653,13 @@ optWithUrl.addEventListener('change', (event) => {
   networkSearch();
 })
 
-
 // searching
 const handleTypeSearch = debounce((event) => {
   resetPage();
   networkSearch();
 }, 250);
 // ... uses debounce
-followSearch.addEventListener('keydown', handleTypeSearch);
+followSearch.addEventListener('input', handleTypeSearch);
 
 // hit enter on page number
 txtPageNum.addEventListener('keydown', function(event) {

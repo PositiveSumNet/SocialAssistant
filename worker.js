@@ -5,7 +5,7 @@
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
 var _sqlite3;
-const _codeVersion = 4;
+const _codeVersion = 5;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
 // LOGGING *****************************************
@@ -231,6 +231,25 @@ const migrateDb = function(db, dbVersion) {
       `;
       
       db.exec(sql4);
+      break;
+
+    case 4:
+      // 4 => 5
+      
+      let sql5 = `
+      CREATE INDEX IF NOT EXISTS IX_FollowerOnTwitter_o ON FollowerOnTwitter(oValue);
+      CREATE INDEX IF NOT EXISTS IX_FollowingOnTwitter_o ON FollowingOnTwitter(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterDisplayName_o ON TwitterDisplayName(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterProfileDescription_o ON TwitterProfileDescription(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterImgCdnUrl_o ON TwitterImgCdnUrl(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterImg64Url_o ON TwitterImg64Url(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterProfileMastodonAccount_o ON TwitterProfileMastodonAccount(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterProfileExternalUrl_o ON TwitterProfileExternalUrl(oValue);
+      CREATE INDEX IF NOT EXISTS IX_TwitterProfileEmail_o ON TwitterProfileEmail(oValue);
+      
+      `;
+      
+      db.exec(sql5);
       break;
     default:
       break;
@@ -814,7 +833,8 @@ const networkSearch = function(request) {
   const skip = request.skip || 0;
   const take = request.take || 50;
   
-  const orderBy = (request.orderBy && request.orderBy === 'DisplayName') ? 'd.oValue' : 'f.oValue';
+  // temporarily commenting out: the order by really slows us down (despite the new '_o' indices, so avoiding it for now
+  const orderBy = ''; // (request.orderBy && request.orderBy === 'DisplayName') ? 'ORDER BY d.oValue' : 'ORDER BY f.oValue';
   
   const bind = [];
   let conjunction = 'WHERE';
@@ -881,11 +901,13 @@ const networkSearch = function(request) {
   LEFT JOIN ${tblImg64Url} img64 ON img64.sHandle = f.oValue AND img64.NamedGraph = f.NamedGraph
   ${ownerCondition}
   ${searchClauseSql}
-  ORDER BY ${orderBy}
+  ${orderBy}
   LIMIT ${take} OFFSET ${skip};
   `
   
   const bound = bindConsol(bind);
+  
+  // let dt = Date.now();
   
   const db = getDb();
   const rows = [];
@@ -902,7 +924,9 @@ const networkSearch = function(request) {
   finally {
     db.close();
   }
-
+  
+  // console.log(`search: ${request.searchText}, rows: ${rows.length} elapsed: ${Date.now() - dt}`);
+  
   // tell the ui to render these rows
   postMessage({ 
     type: 'renderFollows',
