@@ -380,6 +380,9 @@ worker.onmessage = function ({ data }) {
     case 'renderFollows':
       renderFollows(data.payload);
       break;
+    case 'renderNetworkSize':
+      renderNetworkSize(data.payload);
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
@@ -421,6 +424,7 @@ const initUi = function(owner, pageType) {
   
   if (waitForOwnerCallback === false) {
     networkSearch(owner, pageType);
+    requestTotalCount();
   }
 }
 
@@ -516,6 +520,8 @@ const renderSuggestedOwner = function(payload) {
     // we're doing a page init and so far it's empty, so let's
     resetPage();
     networkSearch();
+    // if owner or pageType change (or in this case initialized), we want to refresh the total count
+    requestTotalCount();
   }
 }
 
@@ -639,11 +645,15 @@ const confirmMdonServer = function() {
   return input;
 }
 
-const buildNetworkSearchRequestFromUi = function() {
+const getOwnerFromUi = function() {
   // trim the '@'
   let owner = getUiValue('txtFollowPivotHandle');
   owner = owner && owner.startsWith('@') ? owner.substring(1) : owner;
-  
+  return owner;
+}
+
+const buildNetworkSearchRequestFromUi = function() {
+  const owner = getOwnerFromUi();
   const pageType = getPageType();
   const pageSize = getPageSize();
   const searchText = getUiValue('txtFollowSearch');
@@ -681,6 +691,18 @@ const showNetworkSearchProgress = function(show) {
   }
 }
 
+const requestTotalCount = function() {
+  let owner = getOwnerFromUi();
+
+  if (!owner) {
+    return;
+  }
+  
+  const pageType = getPageType();
+  const msg = {actionType: 'getNetworkSize', networkOwner: owner, pageType: pageType};
+  worker.postMessage(msg);
+}
+
 const networkSearch = function() {
   const msg = buildNetworkSearchRequestFromUi();
   cachePageState(msg);
@@ -688,26 +710,43 @@ const networkSearch = function() {
   worker.postMessage(msg);
 }
 
+const setFollowLabelCaption = function(pageType, count) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+      document.getElementById('optFollowingLabel').innerHTML = `following (${count})`;
+      return;
+    case 'followersOnTwitter':
+      document.getElementById('optFollowersLabel').innerHTML = `followers (${count})`;
+      return;
+    default:
+      return;
+  }
+}
+
+const renderNetworkSize = function(payload) {
+  const uiPageType = getPageType();
+  const uiOwner = getOwnerFromUi();
+  
+  if (uiPageType != payload.request.pageType || uiOwner != payload.request.networkOwner) {
+    return; // page status has changed since request was made
+  }
+  
+  const count = payload.totalCount;
+  setFollowLabelCaption(uiPageType, count);
+}
+
 const renderFollows = function(payload) {
   const plist = document.getElementById('paginated-list');
   plist.innerHTML = '';
   
   // rows
-  let count = 0;
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    count = parseInt(row.TotalCount);
     plist.innerHTML += renderPerson(row, 'followResult');
   }
   
-  const pageSize = getPageSize();
-  const pageCount = Math.ceil(count / pageSize);
-  const pageWord = pageCount > 1 ? 'pages' : 'page';
-  const pagingTip = `${pageCount} ${pageWord} / ${count} items total`;
-  document.getElementById('nextPage').setAttribute("title", pagingTip);
-  
-  const pageGearTip = `Page size is ${pageSize}. Click to modify.`;
+  const pageGearTip = `Page size is ${getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
   
   showNetworkSearchProgress(false);
@@ -727,10 +766,14 @@ const optWithUrl = document.getElementById('optWithUrl');
 optFollowing.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
+  // if owner or pageType change, we want to refresh the total count
+  requestTotalCount();
 })
 optFollowers.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
+  // if owner or pageType change, we want to refresh the total count
+  requestTotalCount();
 })
 
 chkMutual.addEventListener('change', (event) => {
@@ -771,6 +814,8 @@ txtFollowPivotHandle.addEventListener('keydown', function(event) {
     event.preventDefault();
     resetPage();
     networkSearch();
+    // if owner or pageType change, we want to refresh the total count
+    requestTotalCount();
   }
 });
 
@@ -859,4 +904,6 @@ listFollowPivotPicker.onclick = function(event) {
   this.innerHTML = "";
   // trigger the same action as hitting "Enter"
   networkSearch();
+  // if owner or pageType change, we want to refresh the total count
+  requestTotalCount();
 };

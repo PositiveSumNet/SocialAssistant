@@ -26,11 +26,11 @@
             <div id='followDirection' class='col-sm-auto'>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing">
-                <label class="form-check-label" for="optFollowing">is following</label>
+                <label class="form-check-label" id="optFollowingLabel" for="optFollowing">following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
-                <label class="form-check-label" for="optFollowers">has followers</label>
+                <label class="form-check-label" id="optFollowersLabel" for="optFollowers">followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
               </div>
             </div>
             <div class='pt-2 col-2'>
@@ -40,7 +40,7 @@
               <div class='row input-group'>
                 <label for='txtPageNum' class='text-muted input-group-text col-sm-auto'>pg</label>
                 <input id='txtPageNum' type='text' style='min-width:50px;border-right:none;' class='form-control col-3' value='1' />
-                <a class='form-control col-2' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
+                <a class='form-control col-2' data-toggle='tooltip' title='prior page' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
                 <a class='form-control col-2' data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
                 <a class='form-control col-2' data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
               </div>

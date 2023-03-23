@@ -236,6 +236,8 @@ const migrateDb = function(db, dbVersion) {
     case 4:
       // 4 => 5
       
+      // TODO: consider eliminating these
+      
       let sql5 = `
       CREATE INDEX IF NOT EXISTS IX_FollowerOnTwitter_o ON FollowerOnTwitter(oValue);
       CREATE INDEX IF NOT EXISTS IX_FollowingOnTwitter_o ON FollowingOnTwitter(oValue);
@@ -359,6 +361,8 @@ onmessage = (evt) => {
     case 'networkSearch':
       networkSearch(evt.data);
       break;
+    case 'getNetworkSize':
+      getNetworkSize(evt.data);
     default:
       break;
   }
@@ -819,6 +823,45 @@ const searchOwners = function(data) {
   return rows;
 }
 
+const getNetworkSize = function(request) {
+  const graphFilter = request.graph || _meGraph;
+  const pageType = request.pageType;
+  const networkOwner = request.networkOwner;
+  const tblFollow = getFollowTable(pageType);
+  
+  // parameter is named $owner
+  const sql = `SELECT COUNT(*) AS TotalCount FROM ${tblFollow} f WHERE f.sHandle = $owner;`;
+  const bound = {$owner: request.networkOwner};
+
+  const db = getDb();
+  const rows = [];
+  try {
+    db.exec({
+      sql: sql, 
+      bind: bound,
+      rowMode: 'object', 
+      callback: function (row) {
+          rows.push(row);
+        }
+      });
+  } 
+  finally {
+    db.close();
+  }
+  
+  const row = rows[0];
+  const cnt = parseInt(row["TotalCount"]);
+  
+  // post back to UI
+  postMessage({ 
+    type: 'renderNetworkSize',
+    payload: { 
+      totalCount: cnt,
+      request: request
+    }
+  });  
+}
+
 const networkSearch = function(request) {
   const graphFilter = request.graph || _meGraph;
   const pageType = request.pageType;
@@ -891,8 +934,7 @@ const networkSearch = function(request) {
       d.oValue AS DisplayName, 
       ${detail} AS Detail,
       imgcdn.oValue AS ImgCdnUrl, 
-      img64.oValue AS Img64Url,
-      COUNT() OVER() AS TotalCount
+      img64.oValue AS Img64Url
   FROM ${tblFollow} f
   ${joinMutual}
   ${joinMastodon}

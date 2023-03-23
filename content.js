@@ -245,7 +245,8 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
   
   const displayName = getUnfurledText(displayNameAnchor);
   const description = getTwitterProfileDescription(displayNameAnchor);
-
+  
+  // TODO: switch to atHandle, and also for owner
   const per = {
     handle: handle,
     displayName: displayName,
@@ -256,7 +257,6 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
   };
   
   per.accounts = extractAccounts([per.displayName, per.description]);
-  
   return per;
 }
 
