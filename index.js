@@ -123,7 +123,7 @@ const renderMastodonAnchor = function(display, handle, domain) {
     }
     
     let url;
-    if (homeServer && homeServer.length > 0) {
+    if (homeServer && homeServer.length > 0 && homeServer.toLowerCase() != domain.toLowerCase()) {
       // give an url that's clickable directly into a follow (can only follow from one's own home server)
       url = `https://${homeServer}/@${handle}@${domain}`;    
     }
