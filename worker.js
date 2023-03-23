@@ -5,7 +5,7 @@
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
 var _sqlite3;
-const _codeVersion = 5;
+const _codeVersion = 6;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
 // LOGGING *****************************************
@@ -256,6 +256,27 @@ const migrateDb = function(db, dbVersion) {
       
       db.exec(sql5);
       break;
+    case 5:
+      // 5 => 6
+      
+      let sql6 = `
+        CREATE TABLE IF NOT EXISTS TwitterFavorited(
+        sHandle TEXT NOT NULL,
+        oValue datetime,
+        NamedGraph TEXT NOT NULL,
+        Timestamp datetime,
+        UNIQUE(sHandle, NamedGraph));
+        
+        CREATE INDEX IF NOT EXISTS IX_TwitterFavorited_os ON TwitterFavorited(oValue, sHandle);
+        CREATE INDEX IF NOT EXISTS IX_TwitterFavorited_Timestamp ON TwitterFavorited(Timestamp);
+        CREATE INDEX IF NOT EXISTS IX_TwitterFavorited_os ON TwitterFavorited(oValue, sHandle);
+        
+
+        /* migration version */
+        UPDATE Migration SET Version = 6 WHERE AppName = 'SocialAssistant';
+      `;
+      
+      db.exec(sql6);
     default:
       break;
   }
@@ -305,6 +326,7 @@ const start = function() {
       db.exec("drop table if exists TwitterProfileMastodonAccount;");
       db.exec("drop table if exists TwitterProfileExternalUrl;");
       db.exec("drop table if exists TwitterProfileEmail;");
+      db.exec("drop table if exists TwitterFavorited;");
     }
     
     migrateDbAsNeeded(db);
@@ -398,7 +420,7 @@ const xferCacheToDb = function(data) {
   for (let i = 0; i < groups.length; i++) {
     let group = groups[i];
     let pageType = group[0].pageType;
-    let meta = getSaveMetadata(pageType);
+    let meta = getSaveFollowsMetadata(pageType);
     let db = getDb();
     try {
       if (meta.action == 'saveFollows') {
@@ -505,7 +527,17 @@ const getProfileEmailTable = function(pageType) {
   }
 }
 
-const getSaveMetadata = function(pageType) {
+const getFavoritedTable = function(pageType) {
+  switch (pageType) {
+    case 'followingOnTwitter':
+    case 'followersOnTwitter':
+      return 'TwitterFavorited';
+    default:
+      return null;
+  }
+}
+
+const getSaveFollowsMetadata = function(pageType) {
   const tblFollow = getFollowTable(pageType);
   const tblDisplayName = getDisplayNameTable(pageType);
   const tblDescription = getDescriptionTable(pageType);
@@ -875,6 +907,7 @@ const networkSearch = function(request) {
   const tblProfileMdon = getProfileMastodonTable(pageType);
   const tblProfileExtUrl = getProfileUrlTable(pageType);
   const tblProfileEmail = getProfileEmailTable(pageType);
+  const tblFavorited = getFavoritedTable(pageType);
   
   const skip = request.skip || 0;
   const take = request.take || 50;
@@ -906,6 +939,7 @@ const networkSearch = function(request) {
   let joinMastodon = '';
   let joinEmail = '';
   let joinUrl = '';
+  
   // by default we return back the description
   // if a special report (email, url, mdon), we return that instead (to render in the same template)
   let detail = 'dx.oValue';
@@ -927,6 +961,14 @@ const networkSearch = function(request) {
     detail = 'durl.oValue';
   }
   
+  let favJoinWord = 'LEFT JOIN';
+  let favConditionSql = '';
+  if (request.favorited === true) {
+    favJoinWord = 'JOIN';
+    favConditionSql = `AND fav.oValue IS NOT NULL`;
+  }
+  const joinFavorited = `${favJoinWord} ${tblFavorited} fav ON fav.sHandle = f.oValue AND fav.NamedGraph = f.NamedGraph ${favConditionSql}`;
+  
   // possible that multiple graphs (sources) provided a display name, so need an aggregate
   const sql = `
   SELECT DISTINCT f.oValue AS Handle, 
@@ -934,12 +976,14 @@ const networkSearch = function(request) {
       d.oValue AS DisplayName, 
       ${detail} AS Detail,
       imgcdn.oValue AS ImgCdnUrl, 
-      img64.oValue AS Img64Url
+      img64.oValue AS Img64Url,
+      CASE WHEN fav.oValue IS NULL THEN 1 ELSE 0 END AS IsFavorite
   FROM ${tblFollow} f
   ${joinMutual}
   ${joinMastodon}
   ${joinEmail}
   ${joinUrl}
+  ${joinFavorited}
   LEFT JOIN ${tblDisplay} d ON d.sHandle = f.oValue AND d.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblDescription} dx ON dx.sHandle = f.oValue AND dx.NamedGraph = f.NamedGraph
   LEFT JOIN ${tblImgCdnUrl} imgcdn ON imgcdn.sHandle = f.oValue AND imgcdn.NamedGraph = f.NamedGraph
