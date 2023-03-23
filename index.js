@@ -74,7 +74,17 @@ const stripSuffixes = function(txt, suffixes) {
   return txt;
 }
 
-const looksLikeMastodonUrl = function(url) {
+const couldBeMastodonServer = function(url) {
+  if (!url) { return false; }
+  url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
+  url = stripHttpWwwPrefix(url);
+  const slashParts = url.split('/');
+  if (slashParts.length > 1) { return false; }  // there's more attached
+  const dotParts = url.split('.');
+  return dotParts.length === 2;  // toad.social
+}
+
+const looksLikeMastodonAccountUrl = function(url) {
   if (!url) { return false; }
   url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
   const parts = url.split('/');
@@ -89,7 +99,7 @@ const renderUrlAnchors = function(text) {
   if (!text) { return text; }
   
   return text.replace(_urlRexCapture, function(url) {
-    if (looksLikeMastodonUrl(url) === true) { return url; }
+    if (looksLikeMastodonAccountUrl(url) === true) { return url; }
     let display = stripHttpWwwPrefix(url);
     url = stripSuffixes(url, ['.',')','!']); // in case it attached punctuation, e.g. a sentence ending with an url
     const maxLen = 30;
@@ -106,7 +116,21 @@ const renderMastodonAnchor = function(display, handle, domain) {
     if (display.length > maxLen) {
       display = display.substring(0, maxLen) + '...';
     }
-    let url = `https://${domain}/@${handle}`;
+    
+    let homeServer = getMdonServer();
+    if (!couldBeMastodonServer(homeServer)) {
+      homeServer = '';
+    }
+    
+    let url;
+    if (homeServer && homeServer.length > 0) {
+      // give an url that's clickable directly into a follow (can only follow from one's own home server)
+      url = `https://${homeServer}/@${handle}@${domain}`;    
+    }
+    else {
+      url = `https://${domain}/@${handle}`;    
+    }
+    
     return `<a href='${url}' target='_blank'>${display}</a>`;
 }
 
@@ -512,6 +536,10 @@ const getPageType = function(direction) {
   }
 }
 
+const getMdonServer = function() {
+  return localStorage.getItem('mdonServer');
+}
+
 const getPageSize = function() {
   let size = parseInt(localStorage.getItem('pageSize'));
   if (isNaN(size)) { size = 50 };
@@ -553,6 +581,32 @@ const calcSkip = function() {
   const pageSize = getPageSize();
   const skip = (pageNum - 1) * pageSize;
   return skip;
+}
+
+// this ensures we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
+const onClickedMdonOption = function() {
+  const asked = localStorage.getItem('askedMdonServer');
+  
+  if (!asked) {
+    confirmMdonServer();
+  }
+  
+  // continue even if user cancelled the chance to input a mdon server
+  resetPage();
+  networkSearch();  
+}
+
+const confirmMdonServer = function() {
+  const mdonServer = getMdonServer() || '';
+  const input = prompt("For the best experience, input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
+  
+  if (input != null) {
+    localStorage.setItem('mdonServer', mdonServer);
+  }
+  
+  // even if they cancelled, we'll avoid showing again (they can click the gear if desired)
+  localStorage.setItem('askedMdonServer', true);
+  return input;
 }
 
 const buildNetworkSearchRequestFromUi = function() {
@@ -641,8 +695,7 @@ chkMutual.addEventListener('change', (event) => {
   networkSearch();
 })
 optWithMdon.addEventListener('change', (event) => {
-  resetPage();
-  networkSearch();
+  onClickedMdonOption();
 })
 optWithEmail.addEventListener('change', (event) => {
   resetPage();
@@ -718,12 +771,26 @@ document.getElementById('nextPage').onclick = function(event) {
 document.getElementById('pageGear').onclick = function(event) {
   const pageSize = getPageSize();
   const input = prompt("Choose page size", pageSize.toString());
-  const intVal = parseInt(input);
-  if (isNaN(intVal)) {
-    alert("Invalid input; page size unchanged");
+  
+  if (input != null) {
+    const intVal = parseInt(input);
+    if (isNaN(intVal)) {
+      alert("Invalid input; page size unchanged");
+    }
+    else {
+      localStorage.setItem('pageSize', intVal);
+      networkSearch();
+    }
   }
-  else {
-    localStorage.setItem('pageSize', intVal);
+  return false;
+};
+
+document.getElementById('mdonGear').onclick = function(event) {
+  const mdonServer = confirmMdonServer();
+  
+  if (mdonServer != null) {
+    // re-render
+    optWithMdon.checked = true;
     networkSearch();
   }
   return false;

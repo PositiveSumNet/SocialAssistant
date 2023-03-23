@@ -42,7 +42,7 @@ const stripSuffixes = function(txt, suffixes) {
 }
 
 // DRY this vs index.js
-const looksLikeMastodonUrl = function(url) {
+const looksLikeMastodonAccountUrl = function(url) {
   if (!url) { return false; }
   url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
   const parts = url.split('/');
@@ -78,7 +78,7 @@ const extractUrls = function(text) {
     let match = matches[i];
     let url = match[0];
     url = stripSuffixes(url, ['.',')','!']); // in case it attached punctuation, e.g. a sentence ending with an url
-    if (!looksLikeMastodonUrl(url)) {
+    if (!looksLikeMastodonAccountUrl(url)) {
       urls.push(url);
     }
   }
