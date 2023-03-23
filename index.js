@@ -760,16 +760,7 @@ txtFollowPivotHandle.addEventListener('keydown', function(event) {
   }
 });
 
-// typeahead for account owner
-// w3collective.com/autocomplete-search-javascript/
-txtFollowPivotHandle.oninput = function () {
-  const userInput = this.value;
-
-  if (!userInput || userInput.length === 0) {
-    listFollowPivotPicker.innerHTML = '';
-    return;
-  }
-  
+const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
   
   worker.postMessage({
@@ -778,6 +769,24 @@ txtFollowPivotHandle.oninput = function () {
     searchText: userInput,
     limit: 5
   });
+}
+
+// typeahead for account owner
+// w3collective.com/autocomplete-search-javascript/
+txtFollowPivotHandle.oninput = function () {
+  const userInput = this.value;
+
+  if (!userInput || userInput.length === 0) {
+    listFollowPivotPicker.innerHTML = '';
+  }
+  
+  suggestAccountOwner(userInput);
+};
+
+// auto-populate with a few owners on-focus (even without typing)
+txtFollowPivotHandle.onfocus = function () {
+  const userInput = this.value;
+  suggestAccountOwner(userInput);
 };
 
 // click for prior page
