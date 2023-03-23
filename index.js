@@ -167,16 +167,43 @@ const renderMastodon3Anchors = function(text) {
   });
 }
 
+// guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
+const getPersonRenderAnchorsRule = function() {
+  if (getUiValue('optWithMdon') === true) {
+    return 'mdonOnly';
+  }
+  else if (getUiValue('optWithEmail') === true) {
+    return 'emailOnly';
+  }
+  else if (getUiValue('optWithUrl') === true) {
+    return 'urlOnly';
+  }
+  else {
+    return 'all';
+  }
+}
+
 const prepareDisplayText = function(txt, withAnchors = true) {
   if (!txt) { return txt; }
   txt = injectFlagEmojis(txt);
   
   if (withAnchors) {
-    txt = renderUrlAnchors(txt);
-    txt = renderEmailAnchors(txt);
-    txt = renderMastodon1Anchors(txt);
-    txt = renderMastodon2Anchors(txt);
-    txt = renderMastodon3Anchors(txt);
+    
+    const renderRule = getPersonRenderAnchorsRule();
+    
+    if (renderRule === 'urlOnly' || renderRule === 'all') {
+      txt = renderUrlAnchors(txt);
+    }
+    
+    if (renderRule === 'emailOnly' || renderRule === 'all') {
+      txt = renderEmailAnchors(txt);
+    }
+    
+    if (renderRule === 'mdonOnly' || renderRule === 'all') {
+      txt = renderMastodon1Anchors(txt);
+      txt = renderMastodon2Anchors(txt);
+      txt = renderMastodon3Anchors(txt);
+    }
   }
   
   return txt;
@@ -440,16 +467,18 @@ const renderPerson = function(person, context) {
   const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
   const preparedDisplayName = prepareDisplayText(person.DisplayName, withAnchors);
   let preparedDetail = prepareDisplayText(person.Detail, withAnchors);
+  const filtered = detailReflectsFilter();
 
-  if (detailReflectsFilter() === true) {
+  if (filtered === true) {
     preparedDetail = `<b>${preparedDetail}</b>`;
   }
 
   const detail = (withDetail === true && person.Detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
   
   let renderedHandle = handle;
-  
-  if (withAnchors) {
+
+  // note: if we're focused on e.g. mdon, don't distract with link to twitter
+  if (withAnchors && !filtered) {
     renderedHandle = `<a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a>`;
   }
   
