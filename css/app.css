@@ -109,3 +109,20 @@ a {
 .row .striped:nth-child(odd) {
   background-color: #eef5fc;
 }
+
+a.canstar i.bi-star {
+  font-size:1.5rem;
+  color: #ced4da;
+}
+
+a.canstar:hover i.bi-star {
+  color: #ffd700;
+}
+
+a.canstar i.bi-star-fill {
+  color: #ffd700;
+}
+
+a.canstar:hover i.bi-star-fill {
+  color: #ced4da;
+}

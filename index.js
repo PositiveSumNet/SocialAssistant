@@ -483,6 +483,7 @@ const renderPerson = function(person, context) {
   }
   
   return `<div class='person row striped pt-1' ${roleInfo}>
+    <div class='col-sm-auto'><a href='#' class='canstar text-muted'><i class='bi-star'></i></a></div>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
       <div class='personHandle'>${renderedHandle}</div>
@@ -670,9 +671,20 @@ const buildNetworkSearchRequestFromUi = function() {
   return msg;
 }
 
+const showNetworkSearchProgress = function(show) {
+  const elm = document.getElementById('followListProgress');
+  if (show === true) {
+    elm.style.visibility = 'visible';
+  }
+  else {
+    elm.style.visibility = 'hidden';
+  }
+}
+
 const networkSearch = function() {
   const msg = buildNetworkSearchRequestFromUi();
   cachePageState(msg);
+  showNetworkSearchProgress(true);
   worker.postMessage(msg);
 }
 
@@ -697,6 +709,8 @@ const renderFollows = function(payload) {
   
   const pageGearTip = `Page size is ${pageSize}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
+  
+  showNetworkSearchProgress(false);
 }
 
 const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
@@ -817,6 +831,7 @@ document.getElementById('pageGear').onclick = function(event) {
     }
     else {
       localStorage.setItem('pageSize', intVal);
+      resetPage();
       networkSearch();
     }
   }

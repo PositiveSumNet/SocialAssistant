@@ -246,7 +246,10 @@ const migrateDb = function(db, dbVersion) {
       CREATE INDEX IF NOT EXISTS IX_TwitterProfileMastodonAccount_o ON TwitterProfileMastodonAccount(oValue);
       CREATE INDEX IF NOT EXISTS IX_TwitterProfileExternalUrl_o ON TwitterProfileExternalUrl(oValue);
       CREATE INDEX IF NOT EXISTS IX_TwitterProfileEmail_o ON TwitterProfileEmail(oValue);
-      
+        
+
+        /* migration version */
+        UPDATE Migration SET Version = 5 WHERE AppName = 'SocialAssistant';
       `;
       
       db.exec(sql5);
@@ -907,7 +910,7 @@ const networkSearch = function(request) {
   
   const bound = bindConsol(bind);
   
-  // let dt = Date.now();
+  let dt = Date.now();
   
   const db = getDb();
   const rows = [];
@@ -925,7 +928,7 @@ const networkSearch = function(request) {
     db.close();
   }
   
-  // console.log(`search: ${request.searchText}, rows: ${rows.length} elapsed: ${Date.now() - dt}`);
+  console.log(`search: ${request.searchText}, rows: ${rows.length} elapsed: ${Date.now() - dt}`);
   
   // tell the ui to render these rows
   postMessage({ 
