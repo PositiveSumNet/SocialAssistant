@@ -2,6 +2,9 @@
 const _starOffCls = 'bi-star';
 const _starOnCls = 'bi-star-fill'
 
+// avoid double-submit
+var _lastRenderedFollowsRequest = '';
+
 // so we can reduce how many times we ask for (expensive) total counts
 var _counterSet = new Set();
 var _counters = [];
@@ -513,8 +516,15 @@ const renderMatchedOwners = function(payload) {
   const owners = payload.owners;
   listFollowPivotPicker.innerHTML = '';
   
-  for (i = 0; i < owners.length; i++) {
-    listFollowPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
+  if (owners.length === 1) {
+    // exact match; pick it!
+    txtFollowPivotHandle.value = owners[0].Handle;
+    onChooseOwner();
+  }
+  else {
+    for (i = 0; i < owners.length; i++) {
+      listFollowPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
+    }
   }
 }
 
@@ -734,6 +744,13 @@ const requestTotalCount = function() {
 
 const networkSearch = function() {
   const msg = buildNetworkSearchRequestFromUi();
+  const requestJson = JSON.stringify(msg);
+  
+  if (_lastRenderedFollowsRequest === requestJson) {
+    // we already have this rendered; avoid double-submission
+    return;
+  }
+  
   cachePageState(msg);
   showNetworkSearchProgress(true);
   worker.postMessage(msg);
@@ -790,6 +807,8 @@ const renderFollows = function(payload) {
   showNetworkSearchProgress(false);
   onAddedFollows(plist);
   requestTotalCount();
+  
+  _lastRenderedFollowsRequest = JSON.stringify(payload.request);
 }
 
 const configureFavoriting = function(a) {
@@ -838,6 +857,7 @@ const chkMutual = document.getElementById('chkMutual');
 const optWithMdon = document.getElementById('optWithMdon');
 const optWithEmail = document.getElementById('optWithEmail');
 const optWithUrl = document.getElementById('optWithUrl');
+const optClear = document.getElementById('optClear');
 
 optFollowing.addEventListener('change', (event) => {
   resetPage();
@@ -867,6 +887,10 @@ optWithUrl.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 });
+optClear.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+});
 
 // searching
 const handleTypeSearch = debounce((event) => {
@@ -884,14 +908,6 @@ txtPageNum.addEventListener('keydown', function(event) {
   }
 });
 
-// hit enter on account owner
-txtFollowPivotHandle.addEventListener('keydown', function(event) {
-  if (event.key === 'Enter') {
-    onChooseOwner();
-    event.preventDefault();
-  }
-});
-
 const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
   
@@ -905,15 +921,16 @@ const suggestAccountOwner = function(userInput) {
 
 // typeahead for account owner
 // w3collective.com/autocomplete-search-javascript/
-txtFollowPivotHandle.oninput = function () {
-  const userInput = this.value;
+const ownerSearch = debounce((event) => {
+  const userInput = getUiValue('txtFollowPivotHandle');
 
   if (!userInput || userInput.length === 0) {
     listFollowPivotPicker.innerHTML = '';
   }
   
   suggestAccountOwner(userInput);
-};
+}, 250);
+txtFollowPivotHandle.addEventListener('input', ownerSearch);
 
 // auto-populate with a few owners on-focus (if empty)
 txtFollowPivotHandle.onfocus = function () {
