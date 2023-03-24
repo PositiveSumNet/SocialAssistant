@@ -45,12 +45,22 @@
                 <a class='form-control col-2' data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
               </div>
             </div>
-            <div id='queryOptions' class='col-3 container'>
+            <div id='queryOptions' class='col-4 container'>
               <div class='row'>
                 <div class="form-check col">
                   <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
-                  <label class="form-check-label" for="chkMutual">Mutual follows</label>
+                  <label class="form-check-label" for="chkMutual">Mutual follow</label>
                 </div>
+                <div class="form-check col">
+                  <input class="form-check-input" type="checkbox" name="chkFavorited" id="chkFavorited">
+                  <label class="form-check-label" for="chkFavorited">Favorite</label>
+                </div>
+                <div class="form-check form-check col">
+                  <input class="form-check-input" type="radio" name="optWith" id="optClear">
+                  <label class="form-check-label" for="optClear">w/ Any</label>
+                </div>
+              </div>
+              <div class='row'>
                 <div class="form-check col">
                   <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
                   <label class="form-check-label" for="optWithMdon">
@@ -58,19 +68,16 @@
                     <a data-toggle='tooltip' title='set page size' href='#' id='mdonGear'><i class="bi-gear"></i></a>
                   </label>
                 </div>
-              </div>
-              <div class='row'>
-                <div class="form-check form-check col">
-                  <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
-                  <label class="form-check-label" for="optWithEmail">w/ Email</label>
-                </div>
                 <div class="form-check form-check col">
                   <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
                   <label class="form-check-label" for="optWithUrl">w/ Url</label>
                 </div>
+                <div class="form-check form-check col">
+                  <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
+                  <label class="form-check-label" for="optWithEmail">w/ Email</label>
+                </div>
               </div>
             </div>
-            <div class='col'>...</div>
           </div>
           <div id="followListProgress" class="progress" style="height:3px;">
             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
