@@ -348,6 +348,7 @@ if (urlParams.has('sqlite3.dir')) {
 }
 // import library scripts
 importScripts(sqlite3Js);
+importScripts('/lib/shared/constants.js');
 importScripts('/lib/shared/es6lib.js');
 importScripts('/lib/shared/strlib.js');
 

@@ -15,8 +15,6 @@ var _autoScroll = false;
 var _scrollIsPending = false;
 var _countWhenScrollDoneSet;
 
-const _twitterProfileImgSrcHint = 'profile_images/';
-
 var _mutationSettings = { 
   attributes: false, 
   childList: true, 
