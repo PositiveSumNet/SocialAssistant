@@ -5,6 +5,10 @@ const _starOnCls = 'bi-star-fill'
 // avoid double-submit
 var _lastRenderedFollowsRequest = '';
 
+// improve experience of deleting in owner textbox
+var _deletingOwner = false;
+var _lastOwner = '';
+
 // so we can reduce how many times we ask for (expensive) total counts
 var _counterSet = new Set();
 var _counters = [];
@@ -516,8 +520,9 @@ const renderMatchedOwners = function(payload) {
   const owners = payload.owners;
   listFollowPivotPicker.innerHTML = '';
   
-  if (owners.length === 1) {
-    // exact match; pick it!
+  if (owners.length === 1 && !_deletingOwner) {
+    // exact match; pick it! (after an extra check that the user isn't 
+    // trying to delete, in which case auto-complete would be annoying)
     txtFollowPivotHandle.value = owners[0].Handle;
     onChooseOwner();
   }
@@ -776,7 +781,7 @@ const setFollowLabelCaption = function(pageType, count) {
 const renderNetworkSize = function(payload) {
   const uiPageType = getPageType();
   const uiOwner = getOwnerFromUi();
-  
+
   if (uiPageType != payload.request.pageType || uiOwner != payload.request.networkOwner) {
     return; // page status has changed since request was made
   }
@@ -866,14 +871,10 @@ const optClear = document.getElementById('optClear');
 optFollowing.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
-  // if owner or pageType change, we want to refresh the total count
-  requestTotalCount();
 });
 optFollowers.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
-  // if owner or pageType change, we want to refresh the total count
-  requestTotalCount();
 });
 
 chkMutual.addEventListener('change', (event) => {
@@ -948,6 +949,15 @@ txtFollowPivotHandle.onfocus = function () {
   }
 };
 
+txtFollowPivotHandle.addEventListener('keydown', function(event) {
+  if (event.key === "Backspace" || event.key === "Delete") {
+    _deletingOwner = true;
+  }
+  else {
+    _deletingOwner = false;
+  }
+});
+
 // click for prior page
 document.getElementById('priorPage').onclick = function(event) {
   const pageNum = getUiValue('txtPageNum');
@@ -1012,4 +1022,5 @@ const onChooseOwner = function() {
   listFollowPivotPicker.innerHTML = "";
   resetPage();
   networkSearch();
+  _lastOwner = getOwnerFromUi();
 }
