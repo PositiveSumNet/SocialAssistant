@@ -134,48 +134,6 @@ const prepareDisplayText = function(txt, withAnchors = true) {
   return txt;
 }
 
-// joshwcomeau.com/snippets/javascript/debounce/
-const debounce = (callback, wait) => {
-  let timeoutId = null;
-  return (...args) => {
-    window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => {
-      callback.apply(null, args);
-    }, wait);
-  };
-}
-
-const inferImageFileExt = function(url) {
-  if (!url) {
-    return 'png';
-  }
-  else if (url.endsWith('.jpg')) {
-    return 'jpg';
-  }
-  else if (url.endsWith('.jpeg')) {
-    return 'jpeg';
-  }
-  else if (url.endsWith('.gif')) {
-    return 'gif';
-  }
-  else {
-    return 'png';
-  }
-}
-
-const findUpClass = function(el, cls, selfCheck = true) {
-  if(selfCheck === true && el && el.classList.contains(cls)) { return el; }
-  while (el.parentNode) {
-    el = el.parentNode;
-    if (el.classList.contains(cls)) {
-      return el;
-    }
-  }
-  return null;
-}
-
-// html grid via webdesign.tutsplus.com/tutorials/pagination-with-vanilla-javascript--cms-41896
-
 // default (legacy) logging
 const logHtml = function (cssClass, ...args) {
   const ln = document.createElement('div');

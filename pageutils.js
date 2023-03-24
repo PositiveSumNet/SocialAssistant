@@ -33,29 +33,6 @@ const parseUrl = function(url) {
   }
 }
 
-const buildLinkedImg = function(img) {
-  if (!img) return;
-  const a = findUpTag(img, 'a');
-  if (!a) return;
-  const href = a.getAttribute('href');
-  const imgSrc = img.getAttribute('src');
-  if (!href || !imgSrc) return;
-  return {href: href, imgSrc: imgSrc};
-}
-
-// stackoverflow.com/questions/7332179/how-to-recursively-search-all-parentnodes/7333885#7333885
-// stackoverflow.com/questions/7332179/how-to-recursively-search-all-parentnodes/7333885#7333885
-const findUpTag = function(el, tag, selfCheck = true) {
-  if(selfCheck === true && el && sameText(el.tagName, tag)) { return el; }
-  while (el.parentNode) {
-    el = el.parentNode;
-    if (sameText(el.tagName, tag)) {
-      return el;
-    }
-  }
-  return null;
-}
-
 // from an element within a twitter profile list item, navigate up to the parent 'UserCell'
 const findUpTwitterUserCell = function(el) {
   while (el.parentNode) {

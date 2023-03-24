@@ -348,6 +348,7 @@ if (urlParams.has('sqlite3.dir')) {
 }
 // import library scripts
 importScripts(sqlite3Js);
+importScripts('/lib/shared/es6lib.js');
 importScripts('/lib/shared/strlib.js');
 
 self
@@ -1117,11 +1118,4 @@ const bindConsol = function(bind) {
   }
   
   return obj;
-}
-
-// stackoverflow.com/questions/21776389/javascript-object-grouping
-function groupBy(arr, prop) {
-  const map = new Map(Array.from(arr, obj => [obj[prop], []]));
-  arr.forEach(obj => map.get(obj[prop]).push(obj));
-  return Array.from(map.values());
 }
