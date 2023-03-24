@@ -557,6 +557,8 @@ const getUiValue = function(id) {
       return parseInt(txtPageNum.value);
     case 'chkMutual':
       return chkMutual.checked;
+    case 'chkFavorited':
+      return chkFavorited.checked;
     case 'optWithMdon':
       return optWithMdon.checked;
     case 'optWithEmail':
@@ -679,6 +681,7 @@ const buildNetworkSearchRequestFromUi = function() {
   const searchText = getUiValue('txtFollowSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
+  const favorited = getUiValue('chkFavorited');
   const withMdon = getUiValue('optWithMdon');
   const withEmail = getUiValue('optWithEmail');
   const withUrl = getUiValue('optWithUrl');
@@ -693,6 +696,7 @@ const buildNetworkSearchRequestFromUi = function() {
     take: pageSize,
     // filters
     mutual: mutual,
+    favorited: favorited,
     withMdon: withMdon,
     withEmail: withEmail,
     withUrl: withUrl
@@ -873,6 +877,10 @@ optFollowers.addEventListener('change', (event) => {
 });
 
 chkMutual.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+});
+chkFavorited.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 });
