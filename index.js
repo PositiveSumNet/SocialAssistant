@@ -13,55 +13,6 @@ var _lastOwner = '';
 var _counterSet = new Set();
 var _counters = [];
 
-// figured this out by analyzing a-z values from:
-// emojipedia.org/regional-indicator-symbol-letter-a/
-// console.log('🇦'.charCodeAt(1));
-// console.log('a'.charCodeAt(0));
-// console.log('🇿'.charCodeAt(1));
-// console.log('z'.charCodeAt(0));
-const unicodeRegionCharToAscii = function(u) {
-  if (u.charCodeAt(0) != 55356) {
-    return u;
-  }
-  
-  let ucc = u.charCodeAt(1);
-  if (!ucc) { return u; }
-  if (ucc < 56806 || ucc > 56831) { return u; }
-  let asciCode = ucc - 56709;     // by analyzing regional 'a' vs ascii 'a'
-  // convert it to char
-  let chr = String.fromCharCode(asciCode);
-  return chr;
-}
-
-// stackoverflow.com/questions/24531751/how-can-i-split-a-string-containing-emoji-into-an-array
-const emojiStringToArray = function (str) {
-  const split = str.split(/([\uD800-\uDBFF][\uDC00-\uDFFF])/);
-  const arr = [];
-  for (let i=0; i < split.length; i++) {
-    let char = split[i]
-    if (char !== "") {
-      arr.push(char);
-    }
-  }
-  
-  return arr;
-};
-
-// microsoft doesn't render flag emojis, so this got funky
-// unicode.org/reports/tr51/#EBNF_and_Regex
-const _flagRegexCapture = /(\p{RI}\p{RI})/ug;
-const injectFlagEmojis = function(raw) {
-  if (!raw) { return raw; }
-  
-  return raw.replace(_flagRegexCapture, function(matched) { 
-    const emojiArr = emojiStringToArray(matched);
-    const asChars = emojiArr.map(function(u) { return unicodeRegionCharToAscii(u); });
-    const concat = asChars.join('');
-    return `<i class="flag flag-${concat}"></i>`; 
-  });
-}
-
-const _emailRexCapture = /(?:^|\s|\()([A-Za-z0-9._%+-]+(@| at |\(at\))[A-Za-z0-9.-]+(\.| dot |\(dot\))[A-Za-z]{2,4})\b/g;
 const renderEmailAnchors = function(text) {
   if (!text) { return text; }
   
@@ -71,45 +22,7 @@ const renderEmailAnchors = function(text) {
   });
 }
 
-const stripHttpWwwPrefix = function(url) {
-  if (!url) { return url; }
-  return url.replace('https://','').replace('http://','').replace('www.','');
-}
-
-const stripSuffixes = function(txt, suffixes) {
-  if (!txt) { return txt; }
-  
-  for (let i = 0; i < suffixes.length; i++) {
-    let suffix = suffixes[i];
-    if (txt.endsWith(suffix)) {
-      txt = txt.substring(0, txt.length - suffix.length);
-    }
-  }
-  
-  return txt;
-}
-
-const couldBeMastodonServer = function(url) {
-  if (!url) { return false; }
-  url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
-  url = stripHttpWwwPrefix(url);
-  const slashParts = url.split('/');
-  if (slashParts.length > 1) { return false; }  // there's more attached
-  const dotParts = url.split('.');
-  return dotParts.length === 2;  // toad.social
-}
-
-const looksLikeMastodonAccountUrl = function(url) {
-  if (!url) { return false; }
-  url = stripSuffixes(url, ['/']); // trim ending slash before evaluating
-  const parts = url.split('/');
-  if (parts.length === 0) { return false; }
-  const last = parts[parts.length-1];
-  return last.startsWith('@');
-}
-
 // simple regex, but requires cleanup afterward for ending punctuation and ignore if it's a mastodon url
-const _urlRexCapture = /http[s]?:\/\/[^\s]+/g;
 const renderUrlAnchors = function(text) {
   if (!text) { return text; }
   
@@ -151,7 +64,6 @@ const renderMastodonAnchor = function(display, handle, domain) {
 
 // regex101.com/r/ac4fG5/1
 // @scafaria@toad.social
-const _mastodon1RexCapture = /(?:^|\s|\()@([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\b/g;
 const renderMastodon1Anchors = function(text) {
   if (!text) { return text; }
   
@@ -161,7 +73,6 @@ const renderMastodon1Anchors = function(text) {
 }
 
 // toad.social/@scafaria or https://toad.social/@scafaria
-const _mastodon2RexCapture = /(?:^|\s|\()(https?:\/\/)?(www\.)?([A-Za-z0-9.-]+\.[A-Za-z]{2,20})\/@([A-Za-z0-9._%+-]+)\b/g;
 const renderMastodon2Anchors = function(text) {
   if (!text) { return text; }
   
@@ -173,7 +84,6 @@ const renderMastodon2Anchors = function(text) {
 // scafaria@toad.social
 // note the missed starting @ -- and instead of trying to keep up with all the server instances
 // we simply hard-wire to detect this syntax when it's "xyz.social" (or xyz.online)
-const _mastodon3RexCapture = /(?:^|\s|\()([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.(social|online))\b/g;
 const renderMastodon3Anchors = function(text) {
   if (!text) { return text; }
   

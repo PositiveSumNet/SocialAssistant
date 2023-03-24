@@ -346,7 +346,9 @@ const urlParams = new URL(self.location.href).searchParams;
 if (urlParams.has('sqlite3.dir')) {
   sqlite3Js = urlParams.get('sqlite3.dir') + '/' + sqlite3Js;
 }
+// import library scripts
 importScripts(sqlite3Js);
+importScripts('/lib/shared/strlib.js');
 
 self
   .sqlite3InitModule({
