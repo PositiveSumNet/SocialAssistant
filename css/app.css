@@ -120,6 +120,7 @@ a.canstar:hover i.bi-star {
 }
 
 a.canstar i.bi-star-fill {
+  font-size:1.5rem;
   color: #ffd700;
 }
 

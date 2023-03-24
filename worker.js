@@ -385,6 +385,10 @@ onmessage = (evt) => {
       break;
     case 'getNetworkSize':
       getNetworkSize(evt.data);
+      break;
+    case 'setFavorite':
+      setFavorite(evt.data);
+      break;
     default:
       break;
   }
@@ -855,6 +859,26 @@ const searchOwners = function(data) {
   return rows;
 }
 
+const setFavorite = function(request) {
+  const tbl = getFavoritedTable(request.pageType);
+  const val = request.favorite === true ? `datetime('now')` : 'null';
+  const graph = request.graph || _meGraph;
+  // parameter is named $handle
+  const sql = `REPLACE INTO ${tbl}(sHandle, NamedGraph, oValue) VALUES ($handle, '${graph}', ${val});`;
+  const bound = {$handle: request.handle};
+  
+  const db = getDb();
+  try {
+    db.exec({
+      sql: sql, 
+      bind: bound
+    });
+  }
+  finally {
+    db.close();
+  }
+}
+
 const getNetworkSize = function(request) {
   const graphFilter = request.graph || _meGraph;
   const pageType = request.pageType;
@@ -977,7 +1001,7 @@ const networkSearch = function(request) {
       ${detail} AS Detail,
       imgcdn.oValue AS ImgCdnUrl, 
       img64.oValue AS Img64Url,
-      CASE WHEN fav.oValue IS NULL THEN 1 ELSE 0 END AS IsFavorite
+      CASE WHEN fav.oValue IS NOT NULL THEN 1 ELSE 0 END AS IsFavorite
   FROM ${tblFollow} f
   ${joinMutual}
   ${joinMastodon}
@@ -996,7 +1020,7 @@ const networkSearch = function(request) {
   
   const bound = bindConsol(bind);
   
-  let dt = Date.now();
+  // let dt = Date.now();
   
   const db = getDb();
   const rows = [];
@@ -1014,7 +1038,7 @@ const networkSearch = function(request) {
     db.close();
   }
   
-  console.log(`search: ${request.searchText}, rows: ${rows.length} elapsed: ${Date.now() - dt}`);
+  // console.log(`search: ${request.searchText}, rows: ${rows.length} elapsed: ${Date.now() - dt}`);
   
   // tell the ui to render these rows
   postMessage({ 

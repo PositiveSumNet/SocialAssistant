@@ -1,3 +1,7 @@
+// hollow if not favorited
+const _starOffCls = 'bi-star';
+const _starOnCls = 'bi-star-fill'
+
 // figured this out by analyzing a-z values from:
 // emojipedia.org/regional-indicator-symbol-letter-a/
 // console.log('🇦'.charCodeAt(1));
@@ -486,8 +490,13 @@ const renderPerson = function(person, context) {
     renderedHandle = `<a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a>`;
   }
   
+  let starCls = _starOffCls;
+  if (person.IsFavorite == 1) {
+    starCls = _starOnCls;
+  }
+  
   return `<div class='person row striped pt-1' ${roleInfo}>
-    <div class='col-sm-auto'><a href='#' class='canstar text-muted'><i class='bi-star'></i></a></div>
+    <div class='col-sm-auto'><a href='#' class='canstar' data-testid='${sansAt}'><i class='${starCls}'></i></a></div>
     <div class='col-sm-auto personImg'>${img}</div>
     <div class='col personLabel'>
       <div class='personHandle'>${renderedHandle}</div>
@@ -750,6 +759,43 @@ const renderFollows = function(payload) {
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
   
   showNetworkSearchProgress(false);
+  onAddedFollows(plist);
+}
+
+const configureFavoriting = function(a) {
+  a.onclick = function(event) {
+    const pageType = getPageType();
+    const handle = this.getAttribute('data-testid');
+    const iconElm = this.querySelector('i');
+    
+    const alreadyFavorited = iconElm.classList.contains(_starOnCls);
+    let favorite;
+    if (alreadyFavorited) {
+      // toggle to not-favorite
+      iconElm.classList.remove(_starOnCls)
+      iconElm.classList.add(_starOffCls);
+      favorite = false;
+    }
+    else {
+      // toggle to is-favorite
+      if (iconElm.classList.contains(_starOffCls)) {
+        iconElm.classList.remove(_starOffCls);
+      }
+      iconElm.classList.add(_starOnCls);
+      favorite = true;
+    }
+    
+    // tell the db
+    const msg = {actionType: 'setFavorite', handle: handle, favorite: favorite, pageType: pageType};
+    worker.postMessage(msg);
+
+    return false;
+  };
+}
+
+const onAddedFollows = function(container) {
+  // favoriting
+  Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
 
 const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
@@ -811,11 +857,8 @@ txtPageNum.addEventListener('keydown', function(event) {
 // hit enter on account owner
 txtFollowPivotHandle.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
+    onChooseOwner();
     event.preventDefault();
-    resetPage();
-    networkSearch();
-    // if owner or pageType change, we want to refresh the total count
-    requestTotalCount();
   }
 });
 
@@ -842,10 +885,12 @@ txtFollowPivotHandle.oninput = function () {
   suggestAccountOwner(userInput);
 };
 
-// auto-populate with a few owners on-focus (even without typing)
+// auto-populate with a few owners on-focus (if empty)
 txtFollowPivotHandle.onfocus = function () {
   const userInput = this.value;
-  suggestAccountOwner(userInput);
+  if (!userInput || userInput.length === 0) {
+    suggestAccountOwner(userInput);
+  }
 };
 
 // click for prior page
@@ -901,9 +946,16 @@ listFollowPivotPicker.onclick = function(event) {
   let handleText = handleElm.innerText;
   handleText = handleText.startsWith('@') ? handleText.substring(1) : handleText;
   txtFollowPivotHandle.value = handleText;
-  this.innerHTML = "";
-  // trigger the same action as hitting "Enter"
-  networkSearch();
-  // if owner or pageType change, we want to refresh the total count
-  requestTotalCount();
+  onChooseOwner();
 };
+
+const onChooseOwner = function() {
+  // when owner changes, we need to reset the counts and then request a refreshed count
+  // the nbsp values are to be less jarring with width changes
+  document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+  document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+  listFollowPivotPicker.innerHTML = "";
+  resetPage();
+  networkSearch();
+  requestTotalCount();
+}
