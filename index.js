@@ -2,6 +2,10 @@
 const _starOffCls = 'bi-star';
 const _starOnCls = 'bi-star-fill'
 
+// so we can reduce how many times we ask for (expensive) total counts
+var _counterSet = new Set();
+var _counters = [];
+
 // figured this out by analyzing a-z values from:
 // emojipedia.org/regional-indicator-symbol-letter-a/
 // console.log('🇦'.charCodeAt(1));
@@ -428,7 +432,6 @@ const initUi = function(owner, pageType) {
   
   if (waitForOwnerCallback === false) {
     networkSearch(owner, pageType);
-    requestTotalCount();
   }
 }
 
@@ -529,8 +532,6 @@ const renderSuggestedOwner = function(payload) {
     // we're doing a page init and so far it's empty, so let's
     resetPage();
     networkSearch();
-    // if owner or pageType change (or in this case initialized), we want to refresh the total count
-    requestTotalCount();
   }
 }
 
@@ -700,16 +701,35 @@ const showNetworkSearchProgress = function(show) {
   }
 }
 
+const makeNetworkSizeCounterKey = function(owner, pageType) {
+  return `${owner}-${pageType}`;
+}
+
 const requestTotalCount = function() {
-  let owner = getOwnerFromUi();
+  const owner = getOwnerFromUi();
 
   if (!owner) {
     return;
   }
   
   const pageType = getPageType();
+  
+  const key = makeNetworkSizeCounterKey(owner, pageType);
+  if (_counterSet.has(key)) {
+    const counter = _counters.find(function(c) { return c.key === key; });
+    if (counter && counter.value) {
+      // we already have this count cached; apply it
+      setFollowLabelCaption(pageType, counter.value);
+    }
+    // else wait for fetch to finish; either way, we're done
+    return;
+  }
+  
   const msg = {actionType: 'getNetworkSize', networkOwner: owner, pageType: pageType};
   worker.postMessage(msg);
+  // record knowledge that this count has been requested
+  _counterSet.add(key);
+  _counters.push({key: key});   // value not set yet; will be when called back
 }
 
 const networkSearch = function() {
@@ -740,7 +760,16 @@ const renderNetworkSize = function(payload) {
     return; // page status has changed since request was made
   }
   
+  const key = makeNetworkSizeCounterKey(uiOwner, uiPageType);
+  let counter = _counters.find(function(c) { return c.key === key; });
+  
+  if (!counter) {
+    counter = {key: key};
+    _counters.push(counter); // surprising
+  }
+  
   const count = payload.totalCount;
+  counter.value = count;  // cached for later
   setFollowLabelCaption(uiPageType, count);
 }
 
@@ -760,6 +789,7 @@ const renderFollows = function(payload) {
   
   showNetworkSearchProgress(false);
   onAddedFollows(plist);
+  requestTotalCount();
 }
 
 const configureFavoriting = function(a) {
@@ -814,29 +844,29 @@ optFollowing.addEventListener('change', (event) => {
   networkSearch();
   // if owner or pageType change, we want to refresh the total count
   requestTotalCount();
-})
+});
 optFollowers.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
   // if owner or pageType change, we want to refresh the total count
   requestTotalCount();
-})
+});
 
 chkMutual.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
-})
+});
 optWithMdon.addEventListener('change', (event) => {
   onClickedMdonOption();
-})
+});
 optWithEmail.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
-})
+});
 optWithUrl.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
-})
+});
 
 // searching
 const handleTypeSearch = debounce((event) => {
@@ -957,5 +987,4 @@ const onChooseOwner = function() {
   listFollowPivotPicker.innerHTML = "";
   resetPage();
   networkSearch();
-  requestTotalCount();
 }
