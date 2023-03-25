@@ -25,8 +25,8 @@ var _mutationSettings = {
 chrome.storage.local.get(['recording'], function(result) {
   if (result.recording === true) {
     // here at startup, extension is in a 'load if we can' state
-    const parsedUrl = getParsedUrl();
-    if (parsedUrl && parsedUrl.site === SITE_TWITTER) {
+    const parsedUrl = URLPARSE.getParsedUrl();
+    if (parsedUrl && parsedUrl.site === SITE.TWITTER) {
       tryStartRecordingTwitter();
     }
   }
@@ -48,10 +48,10 @@ const tryStartRecordingTwitter = function() {
 }
 
 const startRecording = function() {
-  const parsedUrl = getParsedUrl();
+  const parsedUrl = URLPARSE.getParsedUrl();
   const site = parsedUrl.site;
   
-  if (!_twitterObserver && site === SITE_TWITTER) {
+  if (!_twitterObserver && site === SITE.TWITTER) {
     // begin recording
     recordTwitter();
     // periodically check for collected items to save
@@ -66,8 +66,8 @@ chrome.runtime.onMessage.addListener(
         startRecording();
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
-          const parsedUrl = getParsedUrl();
-          const avoidScrollIfHidden = (parsedUrl.site === SITE_TWITTER);
+          const parsedUrl = URLPARSE.getParsedUrl();
+          const avoidScrollIfHidden = (parsedUrl.site === SITE.TWITTER);
           scrollAsNeeded(avoidScrollIfHidden);
         }
         

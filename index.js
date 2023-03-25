@@ -341,14 +341,14 @@ const getUiValue = function(id) {
 
 const getSite = function() {
   // the only one supported for now
-  return SITE_TWITTER;
+  return SITE.TWITTER;
 }
 
 const getPageType = function(direction) {
   direction = direction || getUiValue('optFollowDirection');
   const site = getSite();
   switch (site) {
-    case SITE_TWITTER:
+    case SITE.TWITTER:
       switch (direction) {
         case 'following':
           return 'followingOnTwitter';

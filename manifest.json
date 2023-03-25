@@ -29,7 +29,7 @@
         "lib/shared/emojilib.js", 
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
-        "pageutils.js", 
+        "lib/content/urlparsing.js", 
         "content.js"
       ],
       "matches": [

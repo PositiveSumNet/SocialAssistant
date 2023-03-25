@@ -9,7 +9,7 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   const termsSection = document.getElementById('termsSection');
   const appSection = document.getElementById('appSection');
   
-  const urlInfo = parseUrl(tab.url);
+  const urlInfo = URLPARSE.parseUrl(tab.url);
   
   if (urlInfo && urlInfo.pageType) {
     document.getElementById('runnableTwitterPageMsg').style.display = 'block';
@@ -84,7 +84,7 @@ btnReviewDb.addEventListener('click', async () => {
 const reviewDb = async function() {
   let queryString = '';
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-  const urlInfo = parseUrl(tab.url);
+  const urlInfo = URLPARSE.parseUrl(tab.url);
   if (urlInfo) {
     queryString = `?pageType=${urlInfo.pageType}&owner=${urlInfo.owner}`;
   }
