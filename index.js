@@ -16,16 +16,16 @@ var _counters = [];
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
-    return RENDER_A_MDON_ONLY;
+    return RENDER_A_RULE.MDON_ONLY;
   }
   else if (getUiValue('optWithEmail') === true) {
-    return RENDER_A_EMAIL_ONLY;
+    return RENDER_A_RULE.EMAIL_ONLY;
   }
   else if (getUiValue('optWithUrl') === true) {
-    return RENDER_A_EXTURL_ONLY;
+    return RENDER_A_RULE.EXTURL_ONLY;
   }
   else {
-    return RENDER_A_ALL;
+    return RENDER_A_RULE.ALL;
   }
 }
 

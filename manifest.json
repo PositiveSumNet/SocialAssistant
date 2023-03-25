@@ -27,6 +27,7 @@
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
         "lib/shared/emojilib.js", 
+        "lib/content/urlparsing.js", 
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
         "lib/content/urlparsing.js", 

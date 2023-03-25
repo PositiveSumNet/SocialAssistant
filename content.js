@@ -159,7 +159,7 @@ const getTwitterFollowImgs = function(scopeElem) {
   }
   else {
     // all img elms with src that starts with the tell-tale prefix
-    return Array.from(scopeElem.querySelectorAll(`img[src*="${_twitterProfileImgSrcHint}"]`));
+    return Array.from(scopeElem.querySelectorAll(`img[src*="${TPARSE.PROFILE_IMAGES_HINT}"]`));
   }
 }
 
@@ -213,7 +213,7 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
             a.innerText.toLowerCase() != atHandle.toLowerCase(); 
   });
   
-  const displayName = getUnfurledText(displayNameAnchor);
+  const displayName = ES6.getUnfurledText(displayNameAnchor);
   const description = getTwitterProfileDescription(displayNameAnchor);
   
   // TODO: switch to atHandle, and also for owner
@@ -231,7 +231,7 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
 }
 
 const processTwitterFollows = function(scopeElm) {
-  const parsedUrl = getParsedUrl();
+  const parsedUrl = URLPARSE.getParsedUrl();
   const photos = getTwitterFollowImgs(scopeElm);
   const ppl = [];
   
@@ -261,7 +261,7 @@ const getTwitterProfileDescription = function(displayNameAnchorElm) {
   if (!parentCell) { return null; }
   const descripElm = TFOLLOW.findTwitterDescriptionWithinUserCell(parentCell);
   if (!descripElm) { return null; }
-  let text = getUnfurledText(descripElm);
+  let text = ES6.getUnfurledText(descripElm);
   return text;
 }
 
