@@ -199,7 +199,7 @@ const recordTwitter = function() {
 // see comments at Mutation callback
 const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
   const imgSrc = img.getAttribute('src');
-  const imgAnchor = findUpTag(img, 'a', false);
+  const imgAnchor = ES6.findUpTag(img, 'a', false);
   const profileUrl = imgAnchor.getAttribute('href');
   const handle = profileUrl.substring(1); // trim the starting '/'
   const atHandle = twitterHandleFromProfileUrl(profileUrl); 
@@ -226,7 +226,7 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
     imgCdnUrl: imgSrc
   };
   
-  per.accounts = extractAccounts([per.displayName, per.description]);
+  per.accounts = STR.extractAccounts([per.displayName, per.description]);
   return per;
 }
 

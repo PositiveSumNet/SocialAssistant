@@ -230,7 +230,7 @@ const renderPerson = function(person, context) {
   }
   
   const imgUrl = person.Img64Url || person.ImgCdnUrl;
-  const imgType = inferImageFileExt(person.ImgCdnUrl);
+  const imgType = STR.inferImageFileExt(person.ImgCdnUrl);
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
   
   let img = '';
@@ -661,7 +661,7 @@ optClear.addEventListener('change', (event) => {
 });
 
 // searching
-const handleTypeSearch = debounce((event) => {
+const handleTypeSearch = ES6.debounce((event) => {
   resetPage();
   networkSearch();
 }, 250);
@@ -689,7 +689,7 @@ const suggestAccountOwner = function(userInput) {
 
 // typeahead for account owner
 // w3collective.com/autocomplete-search-javascript/
-const ownerSearch = debounce((event) => {
+const ownerSearch = ES6.debounce((event) => {
   const userInput = getUiValue('txtFollowPivotHandle');
 
   if (!userInput || userInput.length === 0) {
@@ -765,7 +765,7 @@ document.getElementById('mdonGear').onclick = function(event) {
 
 // choose owner from typeahead results
 listFollowPivotPicker.onclick = function(event) {
-  const personElm = findUpClass(event.target, 'person');
+  const personElm = ES6.findUpClass(event.target, 'person');
   const handleElm = personElm.querySelector('.personLabel > .personHandle');
   let handleText = handleElm.innerText;
   handleText = handleText.startsWith('@') ? handleText.substring(1) : handleText;

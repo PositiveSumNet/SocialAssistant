@@ -438,7 +438,7 @@ const xferCacheToDb = function(data) {
     items.push(...batch.val); // batch.val was the list of follows which is _savableFollows from content.js (via background.js)
   }
   
-  const groups = groupBy(items, 'pageType');
+  const groups = ES6.groupBy(items, 'pageType');
   
   for (let i = 0; i < groups.length; i++) {
     let group = groups[i];
