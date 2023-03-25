@@ -26,7 +26,7 @@ chrome.storage.local.get(['recording'], function(result) {
   if (result.recording === true) {
     // here at startup, extension is in a 'load if we can' state
     const parsedUrl = getParsedUrl();
-    if (parsedUrl && parsedUrl.site === 'twitter') {
+    if (parsedUrl && parsedUrl.site === SITE_TWITTER) {
       tryStartRecordingTwitter();
     }
   }
@@ -51,7 +51,7 @@ const startRecording = function() {
   const parsedUrl = getParsedUrl();
   const site = parsedUrl.site;
   
-  if (!_twitterObserver && site === 'twitter') {
+  if (!_twitterObserver && site === SITE_TWITTER) {
     // begin recording
     recordTwitter();
     // periodically check for collected items to save
@@ -67,7 +67,7 @@ chrome.runtime.onMessage.addListener(
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
           const parsedUrl = getParsedUrl();
-          const avoidScrollIfHidden = (parsedUrl.site === 'twitter');
+          const avoidScrollIfHidden = (parsedUrl.site === SITE_TWITTER);
           scrollAsNeeded(avoidScrollIfHidden);
         }
         
@@ -194,34 +194,6 @@ const recordTwitter = function() {
   _twitterObserver = new MutationObserver(twitterFollowMutationCallback);
   _twitterObserver.observe(mainColumn, _mutationSettings);
   processTwitterFollows(mainColumn);
-}
-
-const getTwitterMainColumn = function(warn) {
-  const elms = document.querySelectorAll('div[data-testid="primaryColumn"]');
-  
-  if (elms && elms.length === 1) {
-    return elms[0];
-  }
-  else {
-    if (warn === true) {
-      console.warn('Cannot find twitter main column; page structure may have changed.');
-    }
-  }
-}
-
-const isTwitterProfilePhoto = function(elm) {
-  const isPhoto = elm && sameText(elm.tagName, 'img') && elm.getAttribute('src').includes(_twitterProfileImgSrcHint);
-  return isPhoto;
-}
-
-const twitterHandleFromProfileUrl = function(url) {
-  let trimmed = url.startsWith('/') ? url.substring(1) : url;
-  
-  if (!trimmed.startsWith('@')) {
-    trimmed = '@' + trimmed;
-  }
-  
-  return trimmed;
 }
 
 // see comments at Mutation callback
