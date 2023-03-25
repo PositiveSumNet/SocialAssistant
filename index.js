@@ -123,7 +123,7 @@ const initialRender = function() {
   }
   
   if (!pageType) {
-    pageType = getCachedPageType();
+    pageType = SETTINGS.getCachedPageType();
   }
   
   initUi(owner, pageType);
@@ -169,7 +169,7 @@ worker.onmessage = function ({ data }) {
 
 const initUi = function(owner, pageType) {
   // pageType/direction
-  pageType = pageType || getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
+  pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
   
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWERS:
@@ -183,7 +183,7 @@ const initUi = function(owner, pageType) {
   }
 
   // set owner
-  owner = owner || getCachedOwner();
+  owner = owner || SETTINGS.getCachedOwner();
   let waitForOwnerCallback = false;
   
   if (!owner || owner.length === 0) {
@@ -363,32 +363,6 @@ const getPageType = function(direction) {
   }
 }
 
-const getPageSize = function() {
-  let size = parseInt(localStorage.getItem(SETTINGS.PAGING.PAGE_SIZE));
-  if (isNaN(size)) { size = 50 };
-  return size;
-}
-
-const getCachedOwner = function() {
-  return localStorage.getItem('networkOwner');
-}
-
-const getCachedPageType = function() {
-  return localStorage.getItem('pageType');
-}
-
-const cachePageState = function(msg) {
-  if (!msg) { return; }
-  
-  if (msg.networkOwner) {
-    localStorage.setItem('networkOwner', msg.networkOwner);
-  }
-  
-  if (msg.pageType) {
-    localStorage.setItem('pageType', msg.pageType);
-  }
-}
-
 const resetPage = function() {
   document.getElementById('txtPageNum').value = 1;
 }
@@ -401,7 +375,7 @@ const getPageNum = function() {
 
 const calcSkip = function() {
   const pageNum = getPageNum();
-  const pageSize = getPageSize();
+  const pageSize = SETTINGS.getPageSize();
   const skip = (pageNum - 1) * pageSize;
   return skip;
 }
@@ -442,7 +416,7 @@ const getOwnerFromUi = function() {
 const buildNetworkSearchRequestFromUi = function() {
   const owner = getOwnerFromUi();
   const pageType = getPageType();
-  const pageSize = getPageSize();
+  const pageSize = SETTINGS.getPageSize();
   const searchText = getUiValue('txtFollowSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
@@ -520,7 +494,7 @@ const networkSearch = function() {
     return;
   }
   
-  cachePageState(msg);
+  SETTINGS.cachePageState(msg);
   showNetworkSearchProgress(true);
   worker.postMessage(msg);
 }
@@ -570,7 +544,7 @@ const renderFollows = function(payload) {
     plist.innerHTML += renderPerson(row, 'followResult');
   }
   
-  const pageGearTip = `Page size is ${getPageSize()}. Click to modify.`;
+  const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
   
   showNetworkSearchProgress(false);
@@ -736,7 +710,7 @@ document.getElementById('nextPage').onclick = function(event) {
 };
 
 document.getElementById('pageGear').onclick = function(event) {
-  const pageSize = getPageSize();
+  const pageSize = SETTINGS.getPageSize();
   const input = prompt("Choose page size", pageSize.toString());
   
   if (input != null) {
