@@ -246,8 +246,9 @@ const renderPerson = function(person, context) {
   
   const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
   const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
-  const preparedDisplayName = prepareDisplayText(person.DisplayName, withAnchors);
-  let preparedDetail = prepareDisplayText(person.Detail, withAnchors);
+  const renderAnchorsRule = getPersonRenderAnchorsRule();
+  const preparedDisplayName = RENDER.prepareDisplayText(person.DisplayName, withAnchors, renderAnchorsRule);
+  let preparedDetail = RENDER.prepareDisplayText(person.Detail, withAnchors, renderAnchorsRule);
   const filtered = detailReflectsFilter();
 
   if (filtered === true) {
@@ -419,7 +420,7 @@ const onClickedMdonOption = function() {
 }
 
 const confirmMdonServer = function() {
-  const mdonServer = getMdonServer() || '';
+  const mdonServer = SETTINGS.getMdonServer() || '';
   const input = prompt("For the best experience, input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
   
   if (input != null) {
