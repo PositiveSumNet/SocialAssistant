@@ -216,7 +216,6 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
   const displayName = ES6.getUnfurledText(displayNameAnchor);
   const description = getTwitterProfileDescription(displayNameAnchor);
   
-  // TODO: switch to atHandle, and also for owner
   const per = {
     handle: handle,
     displayName: displayName,

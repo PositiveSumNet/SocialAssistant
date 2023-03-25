@@ -5,7 +5,7 @@ const _starOnCls = 'bi-star-fill'
 // avoid double-submit
 var _lastRenderedFollowsRequest = '';
 
-// improve experience of deleting in owner textbox
+// improves experience of deleting in owner textbox
 var _deletingOwner = false;
 var _lastOwner = '';
 
