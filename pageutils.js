@@ -12,7 +12,7 @@ const parseUrl = function(url) {
       pageType = 'followingOnTwitter';
       site = SITE_TWITTER;
     }
-    else if (url.endsWith('/followers')) { 
+    else if (url.endsWith('/followers') || url.endsWith('/followers_you_follow')) { 
       pageType = 'followersOnTwitter';
       site = SITE_TWITTER;
     }
