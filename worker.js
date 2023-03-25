@@ -28,7 +28,7 @@ const reportAppVersion = function(versionInfo) {
 
 // migration
 const getDbScriptVersion = function(db) {
-  const sql = "SELECT * FROM Migration WHERE AppName = 'SocialAssistant';";
+  const sql = `SELECT * FROM Migration WHERE AppName = '${APPNAME}';`;
   let version = 0;
   
   db.exec({
@@ -46,8 +46,8 @@ const migrateDbAsNeeded = function(db) {
   // migration prereqs
   // sqlite.org/autoinc.html
   let initSql = `CREATE TABLE IF NOT EXISTS Migration(AppName TEXT NOT NULL, Version int, UNIQUE(AppName));
-    INSERT INTO Migration(AppName, Version) SELECT 'SocialAssistant', 0 WHERE NOT EXISTS ( SELECT ROWID FROM Migration );
-    UPDATE Migration SET Version = 1 WHERE AppName = 'SocialAssistant' AND Version = 0;
+    INSERT INTO Migration(AppName, Version) SELECT '${APPNAME}', 0 WHERE NOT EXISTS ( SELECT ROWID FROM Migration );
+    UPDATE Migration SET Version = 1 WHERE AppName = '${APPNAME}' AND Version = 0;
     `;
   
   db.exec(initSql);
@@ -147,7 +147,7 @@ const migrateDb = function(db, dbVersion) {
         
 
         /* migration version */
-        UPDATE Migration SET Version = 2 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 2 WHERE AppName = '${APPNAME}';
         `;
         
       db.exec(sql2);
@@ -180,7 +180,7 @@ const migrateDb = function(db, dbVersion) {
         
 
         /* migration version */
-        UPDATE Migration SET Version = 3 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 3 WHERE AppName = '${APPNAME}';
       `;
       
       db.exec(sql3);
@@ -223,7 +223,7 @@ const migrateDb = function(db, dbVersion) {
         
 
         /* migration version */
-        UPDATE Migration SET Version = 4 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 4 WHERE AppName = '${APPNAME}';
       `;
       
       db.exec(sql4);
@@ -247,7 +247,7 @@ const migrateDb = function(db, dbVersion) {
         
 
         /* migration version */
-        UPDATE Migration SET Version = 5 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 5 WHERE AppName = '${APPNAME}';
       `;
       
       db.exec(sql5);
@@ -269,7 +269,7 @@ const migrateDb = function(db, dbVersion) {
         
 
         /* migration version */
-        UPDATE Migration SET Version = 6 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 6 WHERE AppName = '${APPNAME}';
       `;
       
       db.exec(sql6);
@@ -288,7 +288,7 @@ const migrateDb = function(db, dbVersion) {
       DROP INDEX IF EXISTS IX_TwitterProfileEmail_o;
 
         /* migration version */
-        UPDATE Migration SET Version = 7 WHERE AppName = 'SocialAssistant';
+        UPDATE Migration SET Version = 7 WHERE AppName = '${APPNAME}';
       `;
       
       db.exec(sql7);

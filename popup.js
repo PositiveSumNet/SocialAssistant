@@ -1,6 +1,6 @@
 chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   
-  chrome.storage.sync.get(['agreedToTerms'], function(result) {
+  chrome.storage.sync.get([SETTINGS.AGREED_TO_TERMS], function(result) {
     if (result.agreedToTerms == 'true') {
       activateApp();
     }
@@ -27,7 +27,7 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     }
     
     // reflect button visibility based on whether recording
-    chrome.storage.local.get(['recording'], function(result) {
+    chrome.storage.local.get([SETTINGS.RECORDING], function(result) {
       let isRecording = (result.recording === true);
       let ifRecordings = document.getElementsByClassName('ifRecording');
       for (let i = 0; i < ifRecordings.length; i++) {
@@ -106,11 +106,11 @@ const kickoffRecording = async function(record, auto) {
     let actionType = '';
     if (record === true) {
       chrome.storage.local.set({ recording: true });
-      actionType = 'startRecording';
+      actionType = ACTION_TYPE.RECORDING.START;
     }
     else {
       chrome.storage.local.remove('recording');
-      actionType = 'stopRecording';
+      actionType = ACTION_TYPE.RECORDING.STOP;
     }
     
     let response = await chrome.tabs.sendMessage(
