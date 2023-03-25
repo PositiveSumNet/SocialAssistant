@@ -34,7 +34,7 @@ chrome.storage.local.get(['recording'], function(result) {
 
 const tryStartRecordingTwitter = function() {
   const warnIfNotYetReady = false;
-  let col = getTwitterMainColumn(warnIfNotYetReady);
+  let col = TPARSE.getTwitterMainColumn(warnIfNotYetReady);
   
   if (col) {
     startRecording();
@@ -154,7 +154,7 @@ const setFollowSaveTimer = function() {
 }
 
 const getTwitterFollowImgs = function(scopeElem) {
-  if (isTwitterProfilePhoto(scopeElem)) {
+  if (TPARSE.isTwitterProfilePhoto(scopeElem)) {
     return [scopeElem];
   }
   else {
@@ -174,7 +174,7 @@ const twitterFollowMutationCallback = function(mutations) {
         // then upward to div with data-testid of UserCell.
         // The UserCell has two anchor elements (other than the img anchor), the first for DisplayName and the next with Handle (myhandle).
         // So we can grab everything using this photo node.
-        if (isTwitterProfilePhoto(node)) {
+        if (TPARSE.isTwitterProfilePhoto(node)) {
           processTwitterFollows(node);
         }
       }
@@ -184,7 +184,7 @@ const twitterFollowMutationCallback = function(mutations) {
 
 const recordTwitter = function() {
   
-  const mainColumn = getTwitterMainColumn();
+  const mainColumn = TPARSE.getTwitterMainColumn();
   if (!mainColumn) {
     return;
   }
@@ -202,8 +202,8 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
   const imgAnchor = ES6.findUpTag(img, 'a', false);
   const profileUrl = imgAnchor.getAttribute('href');
   const handle = profileUrl.substring(1); // trim the starting '/'
-  const atHandle = twitterHandleFromProfileUrl(profileUrl); 
-  const userCell = findUpTwitterUserCell(img);
+  const atHandle = TPARSE.twitterHandleFromProfileUrl(profileUrl); 
+  const userCell = TFOLLOW.findUpTwitterUserCell(img);
   // one is handle, one is description
   
   const textAnchors = Array.from(userCell.getElementsByTagName('a')).filter(function(a) { return a != imgAnchor; });
@@ -257,9 +257,9 @@ const processTwitterFollows = function(scopeElm) {
 
 const getTwitterProfileDescription = function(displayNameAnchorElm) {
   if (!displayNameAnchorElm) { return null; }
-  const parentCell = findUpTwitterUserCell(displayNameAnchorElm);
+  const parentCell = TFOLLOW.findUpTwitterUserCell(displayNameAnchorElm);
   if (!parentCell) { return null; }
-  const descripElm = findTwitterDescriptionWithinUserCell(parentCell);
+  const descripElm = TFOLLOW.findTwitterDescriptionWithinUserCell(parentCell);
   if (!descripElm) { return null; }
   let text = getUnfurledText(descripElm);
   return text;
