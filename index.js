@@ -382,7 +382,7 @@ const calcSkip = function() {
 
 // this ensures we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
 const onClickedMdonOption = function() {
-  const asked = localStorage.getItem('askedMdonServer');
+  const asked = SETTINGS.getAskedMdonServer();
   
   if (!asked) {
     confirmMdonServer();
@@ -398,11 +398,11 @@ const confirmMdonServer = function() {
   const input = prompt("For the best experience, input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
   
   if (input != null) {
-    localStorage.setItem('mdonServer', mdonServer);
+    localStorage.setItem(SETTINGS.MDON_SERVER, mdonServer);
   }
   
   // even if they cancelled, we'll avoid showing again (they can click the gear if desired)
-  localStorage.setItem('askedMdonServer', true);
+  localStorage.setItem(SETTINGS.ASKED.MDON_SERVER, true);
   return input;
 }
 

@@ -21,7 +21,7 @@ const error = (...args) => logHtml('error', ...args);
 
 // specific logging
 const reportAppVersion = function(versionInfo) {
-  postMessage({ type: 'logSqliteVersion', payload: versionInfo });
+  postMessage({ type: MSGTYPE.FROMDB.LOG.SQLITE_VERSION, payload: versionInfo });
 }
 
 // INITIALIZATION *****************************************
@@ -61,7 +61,7 @@ const migrateDbAsNeeded = function(db) {
   }
   
   // report status
-  postMessage({ type: 'logDbScriptVersion', payload: {version: dbVersion} });
+  postMessage({ type: MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION, payload: {version: dbVersion} });
 }
 
 // pass in current dbVersion
@@ -391,22 +391,22 @@ self
 onmessage = (evt) => {
   let actionType = getActionType(evt);
   switch(actionType) {
-    case 'xferCacheToDb':
+    case MSGTYPE.TODB.XFER_CACHE_TODB:
       xferCacheToDb(evt.data);
       break;
-    case 'suggestOwner':
+    case MSGTYPE.TODB.SUGGEST_OWNER:
       suggestOwner(evt.data);
       break;
-    case 'inputFollowOwner':
+    case MSGTYPE.TODB.INPUT_FOLLOW_OWNER:
       inputFollowOwner(evt.data);
       break;
-    case 'networkSearch':
+    case MSGTYPE.TODB.NETWORK_SEARCH:
       networkSearch(evt.data);
       break;
-    case 'getNetworkSize':
+    case MSGTYPE.TODB.GET_NETWORK_SIZE:
       getNetworkSize(evt.data);
       break;
-    case 'setFavorite':
+    case MSGTYPE.TODB.SET_FAVORITE:
       setFavorite(evt.data);
       break;
     default:
