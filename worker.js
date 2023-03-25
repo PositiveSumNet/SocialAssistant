@@ -5,7 +5,7 @@
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
 var _sqlite3;
-const _codeVersion = 6;
+const _codeVersion = 7;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
 // LOGGING *****************************************
@@ -24,22 +24,25 @@ const reportAppVersion = function(versionInfo) {
   postMessage({ type: 'logSqliteVersion', payload: versionInfo });
 }
 
-const reportDbScriptVersion = function(db) {
-  db.exec({
-    sql: "SELECT * FROM Migration WHERE AppName = 'SocialAssistant';",
-    rowMode: 'object',
-    callback: function (row) {
-      postMessage({ type: 'logDbScriptVersion', payload: {version: row.Version} });
-    }
-  });
-}
-
 // INITIALIZATION *****************************************
 
 // migration
+const getDbScriptVersion = function(db) {
+  const sql = "SELECT * FROM Migration WHERE AppName = 'SocialAssistant';";
+  let version = 0;
+  
+  db.exec({
+    sql: sql,
+    rowMode: 'object',
+    callback: function (row) { version = row.Version; }
+  });
+  
+  return version;
+}
+
 const migrateDbAsNeeded = function(db) {
   let dbVersion = 0;
-  
+
   // migration prereqs
   // sqlite.org/autoinc.html
   let initSql = `CREATE TABLE IF NOT EXISTS Migration(AppName TEXT NOT NULL, Version int, UNIQUE(AppName));
@@ -51,21 +54,14 @@ const migrateDbAsNeeded = function(db) {
   
   // do migration
   for (let i = 0; i < _codeVersion; i++) {
-    db.exec({
-      sql: "SELECT * FROM Migration WHERE AppName = 'SocialAssistant';",
-      rowMode: 'object',
-      callback: function (row) {
-        dbVersion = row.Version;
-        
-        if (dbVersion && dbVersion > 0 && dbVersion < _codeVersion) {
-          migrateDb(db, dbVersion);
-        }
-      }
-    });
+    dbVersion = getDbScriptVersion(db);
+    if (dbVersion < _codeVersion) {
+      migrateDb(db, dbVersion);
+    }
   }
   
   // report status
-  reportDbScriptVersion(db);
+  postMessage({ type: 'logDbScriptVersion', payload: {version: dbVersion} });
 }
 
 // pass in current dbVersion
@@ -277,6 +273,25 @@ const migrateDb = function(db, dbVersion) {
       `;
       
       db.exec(sql6);
+    case 6:
+      // 6 => 7
+      
+      let sql7 = `
+      DROP INDEX IF EXISTS IX_FollowerOnTwitter_o;
+      DROP INDEX IF EXISTS IX_FollowingOnTwitter_o;
+      DROP INDEX IF EXISTS IX_TwitterDisplayName_o;
+      DROP INDEX IF EXISTS IX_TwitterProfileDescription_o;
+      DROP INDEX IF EXISTS IX_TwitterImgCdnUrl_o;
+      DROP INDEX IF EXISTS IX_TwitterImg64Url_o;
+      DROP INDEX IF EXISTS IX_TwitterProfileMastodonAccount_o;
+      DROP INDEX IF EXISTS IX_TwitterProfileExternalUrl_o;
+      DROP INDEX IF EXISTS IX_TwitterProfileEmail_o;
+
+        /* migration version */
+        UPDATE Migration SET Version = 7 WHERE AppName = 'SocialAssistant';
+      `;
+      
+      db.exec(sql7);
     default:
       break;
   }
