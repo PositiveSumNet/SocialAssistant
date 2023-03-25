@@ -12,7 +12,7 @@ const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as op
 
 // legacy logging
 const logHtml = function (cssClass, ...args) {
-  postMessage({ type: 'log', payload: { cssClass, args } });
+  postMessage({ type: MSGTYPE.FROMDB.LOG.LEGACY, payload: { cssClass, args } });
 };
 
 const log = (...args) => logHtml('', ...args);
@@ -461,9 +461,9 @@ const xferCacheToDb = function(data) {
 
 const getFollowTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
       return 'FollowingOnTwitter';
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'FollowerOnTwitter';
     default:
       return null;
@@ -472,9 +472,9 @@ const getFollowTable = function(pageType) {
 
 const getInverseFollowTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
       return 'FollowerOnTwitter';
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'FollowingOnTwitter';
     default:
       return null;
@@ -483,8 +483,8 @@ const getInverseFollowTable = function(pageType) {
 
 const getDisplayNameTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterDisplayName';
     default:
       return null;
@@ -493,8 +493,8 @@ const getDisplayNameTable = function(pageType) {
 
 const getDescriptionTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterProfileDescription';
     default:
       return null;
@@ -503,8 +503,8 @@ const getDescriptionTable = function(pageType) {
 
 const getImgCdnUrlTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterImgCdnUrl';
     default:
       return null;
@@ -513,8 +513,8 @@ const getImgCdnUrlTable = function(pageType) {
 
 const getImg64UrlTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterImg64Url';
     default:
       return null;
@@ -523,8 +523,8 @@ const getImg64UrlTable = function(pageType) {
 
 const getProfileMastodonTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterProfileMastodonAccount';
     default:
       return null;
@@ -533,8 +533,8 @@ const getProfileMastodonTable = function(pageType) {
 
 const getProfileUrlTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterProfileExternalUrl';
     default:
       return null;
@@ -543,8 +543,8 @@ const getProfileUrlTable = function(pageType) {
 
 const getProfileEmailTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterProfileEmail';
     default:
       return null;
@@ -553,8 +553,8 @@ const getProfileEmailTable = function(pageType) {
 
 const getFavoritedTable = function(pageType) {
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       return 'TwitterFavorited';
     default:
       return null;
@@ -573,8 +573,8 @@ const getSaveFollowsMetadata = function(pageType) {
   
   let action = '';
   switch (pageType) {
-    case 'followingOnTwitter':
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.TWITTER.FOLLOWERS:
       action = 'saveFollows';
       break;
     default:

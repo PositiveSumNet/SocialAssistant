@@ -62,7 +62,7 @@ const startRecording = function() {
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     switch (request.actionType) {
-      case 'startRecording':
+      case MSGTYPE.RECORDING.START:
         startRecording();
         if (request.auto === true && _autoScroll === false) {
           _autoScroll = true;
@@ -72,7 +72,7 @@ chrome.runtime.onMessage.addListener(
         }
         
         break;
-      case 'stopRecording':
+      case MSGTYPE.RECORDING.STOP:
         stopRecording('');
         break;
       default:

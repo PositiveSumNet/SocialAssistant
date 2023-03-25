@@ -16,10 +16,10 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
     let recordTwitterBanner = document.getElementById('recordTwitterBanner');
     
     switch (urlInfo.pageType) {
-      case 'followingOnTwitter':
+      case PAGETYPE.TWITTER.FOLLOWING:
         recordTwitterBanner.innerText = 'Cache who @' + urlInfo.owner + ' is following';
         break;
-      case 'followersOnTwitter':
+      case PAGETYPE.TWITTER.FOLLOWERS:
         recordTwitterBanner.innerText = 'Cache followers of @' + urlInfo.owner;
         break;
       default:
@@ -106,11 +106,11 @@ const kickoffRecording = async function(record, auto) {
     let actionType = '';
     if (record === true) {
       chrome.storage.local.set({ recording: true });
-      actionType = ACTION_TYPE.RECORDING.START;
+      actionType = MSGTYPE.RECORDING.START;
     }
     else {
       chrome.storage.local.remove('recording');
-      actionType = ACTION_TYPE.RECORDING.STOP;
+      actionType = MSGTYPE.RECORDING.STOP;
     }
     
     let response = await chrome.tabs.sendMessage(

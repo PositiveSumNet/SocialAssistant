@@ -16,16 +16,16 @@ var _counters = [];
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
-    return RENDER_A_RULE.MDON_ONLY;
+    return RENDER_CONTEXT.ANCHORS.MDON_ONLY;
   }
   else if (getUiValue('optWithEmail') === true) {
-    return RENDER_A_RULE.EMAIL_ONLY;
+    return RENDER_CONTEXT.ANCHORS.EMAIL_ONLY;
   }
   else if (getUiValue('optWithUrl') === true) {
-    return RENDER_A_RULE.EXTURL_ONLY;
+    return RENDER_CONTEXT.ANCHORS.EXTURL_ONLY;
   }
   else {
-    return RENDER_A_RULE.ALL;
+    return RENDER_CONTEXT.ANCHORS.ALL;
   }
 }
 
@@ -90,7 +90,7 @@ const ensureCopiedToDb = async function() {
   }
   
   if (batches.length > 0) {
-    worker.postMessage( { batches: batches, actionType: 'xferCacheToDb' } );
+    worker.postMessage( { batches: batches, actionType: MSGTYPE.TODB.XFER_CACHE_TODB } );
   }
   else {
     // if we got to here, we're fully copied
@@ -133,32 +133,32 @@ const worker = new Worker('worker.js?sqlite3.dir=jswasm');
 // receive messages from worker
 worker.onmessage = function ({ data }) {
   switch (data.type) {
-    case 'log':
+    case MSGTYPE.FROMDB.LOG.LEGACY:
       // legacy + error logging
       logHtml(data.payload.cssClass, ...data.payload.args);
       break;
-    case 'logSqliteVersion':
+    case MSGTYPE.FROMDB.LOG.SQLITE_VERSION:
       logSqliteVersion(data.payload);
       break;
-    case 'logDbScriptVersion':
+    case MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION:
       logDbScriptVersion(data.payload);
       break;
-    case 'workerReady':
+    case MSGTYPE.FROMDB.WORKER_READY:
       ensureCopiedToDb();
       break;
-    case 'copiedToDb':
+    case MSGTYPE.FROMDB.COPIED_TODB:
       onCopiedToDb(data.cacheKeys);
       break;
-    case 'renderSuggestedOwner':
+    case MSGTYPE.FROMDB.RENDER.SUGGESTED_OWNER:
       renderSuggestedOwner(data.payload);
       break;
-    case 'renderMatchedOwners':
+    case MSGTYPE.FROMDB.RENDER.MATCHED_OWNERS:
       renderMatchedOwners(data.payload);
       break;
-    case 'renderFollows':
+    case MSGTYPE.FROMDB.RENDER.FOLLOWS:
       renderFollows(data.payload);
       break;
-    case 'renderNetworkSize':
+    case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       renderNetworkSize(data.payload);
       break;
     default:
@@ -169,13 +169,13 @@ worker.onmessage = function ({ data }) {
 
 const initUi = function(owner, pageType) {
   // pageType/direction
-  pageType = pageType || getCachedPageType() || 'followingOnTwitter';
+  pageType = pageType || getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
   
   switch (pageType) {
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWERS:
       document.getElementById('optFollowers').checked = true;
       break;
-    case 'followingOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
       document.getElementById('optFollowing').checked = true;
       break;
     default:
@@ -217,13 +217,13 @@ const renderPerson = function(person, context) {
   let withAnchors = true;
   
   switch (context) {
-    case 'owner':
+    case RENDER_CONTEXT.PERSON.ACCOUNT_OWNER:
       imgSize = 46;
       roleInfo = ` role='button'`;  // clickable
       withDetail = false;
       withAnchors = false;
       break;
-    case 'followResult':
+    case RENDER_CONTEXT.PERSON.FOLLOW_RESULT:
       break;
     default:
       break;
@@ -351,9 +351,9 @@ const getPageType = function(direction) {
     case SITE.TWITTER:
       switch (direction) {
         case 'following':
-          return 'followingOnTwitter';
+          return PAGETYPE.TWITTER.FOLLOWING;
         case 'followers':
-          return 'followersOnTwitter';
+          return PAGETYPE.TWITTER.FOLLOWERS;
         default:
           return undefined;
       }
@@ -364,7 +364,7 @@ const getPageType = function(direction) {
 }
 
 const getPageSize = function() {
-  let size = parseInt(localStorage.getItem('pageSize'));
+  let size = parseInt(localStorage.getItem(SETTINGS.PAGING.PAGE_SIZE));
   if (isNaN(size)) { size = 50 };
   return size;
 }
