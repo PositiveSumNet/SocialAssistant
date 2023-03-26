@@ -8,53 +8,18 @@ var _sqlite3;
 const _codeVersion = 7;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
-// LOGGING *****************************************
-
-// legacy logging
-const logHtml = function (cssClass, ...args) {
-  postMessage({ type: MSGTYPE.FROMDB.LOG.LEGACY, payload: { cssClass, args } });
-};
-
-const log = (...args) => logHtml('', ...args);
-const warn = (...args) => logHtml('warning', ...args);
-const error = (...args) => logHtml('error', ...args);
-
-// specific logging
-const reportAppVersion = function(versionInfo) {
-  postMessage({ type: MSGTYPE.FROMDB.LOG.SQLITE_VERSION, payload: versionInfo });
-}
-
 // INITIALIZATION *****************************************
 
 // migration
-const getDbScriptVersion = function(db) {
-  const sql = `SELECT * FROM Migration WHERE AppName = '${APPNAME}';`;
-  let version = 0;
-  
-  db.exec({
-    sql: sql,
-    rowMode: 'object',
-    callback: function (row) { version = row.Version; }
-  });
-  
-  return version;
-}
-
 const migrateDbAsNeeded = function(db) {
-  let dbVersion = 0;
-
-  // migration prereqs
-  // sqlite.org/autoinc.html
-  let initSql = `CREATE TABLE IF NOT EXISTS Migration(AppName TEXT NOT NULL, Version int, UNIQUE(AppName));
-    INSERT INTO Migration(AppName, Version) SELECT '${APPNAME}', 0 WHERE NOT EXISTS ( SELECT ROWID FROM Migration );
-    UPDATE Migration SET Version = 1 WHERE AppName = '${APPNAME}' AND Version = 0;
-    `;
   
-  db.exec(initSql);
+  DBORM.MIGRATION.ensureMigrationPrereqs(db);
   
   // do migration
+  let dbVersion = 0;
+
   for (let i = 0; i < _codeVersion; i++) {
-    dbVersion = getDbScriptVersion(db);
+    dbVersion = DBORM.MIGRATION.getDbScriptVersion(db);
     if (dbVersion < _codeVersion) {
       migrateDb(db, dbVersion);
     }
@@ -300,7 +265,7 @@ const migrateDb = function(db, dbVersion) {
 const getDb = function(withStartupLogging) {
   const capi = _sqlite3.capi; /*C-style API*/
   const oo = _sqlite3.oo1; /*high-level OO API*/
-  // log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
+  // DBORM.LOGGING.log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
   
   let db;
   let opfsOk;
@@ -314,7 +279,7 @@ const getDb = function(withStartupLogging) {
   }
   
   if (withStartupLogging === true) {
-    reportAppVersion( {libVersion: capi.sqlite3_libversion(), sourceId: capi.sqlite3_sourceid(), opfsOk: opfsOk } );
+    DBORM.LOGGING.reportAppVersion( {libVersion: capi.sqlite3_libversion(), sourceId: capi.sqlite3_sourceid(), opfsOk: opfsOk } );
   }
   
   return db;
@@ -354,7 +319,7 @@ const start = function() {
 };
 
 // on startup
-// log('Loading and initializing sqlite3 module...');
+// DBORM.LOGGING.log('Loading and initializing sqlite3 module...');
 
 let sqlite3Js = 'sqlite3.js';
 const urlParams = new URL(self.location.href).searchParams;
@@ -374,8 +339,8 @@ importScripts('/lib/worker/dbormlib.js');
 
 self
   .sqlite3InitModule({
-    print: log,
-    printErr: error,
+    print: DBORM.LOGGING.log,
+    printErr: DBORM.LOGGING.error,
   })
   .then(function (sqlite3) {
     // log('Done initializing. Running demo...');
@@ -385,7 +350,7 @@ self
       // tell index.js that worker is ready to receive on-startup data
       postMessage({ type: 'workerReady' });
     } catch (e) {
-      error('Exception:', e.message);
+      DBORM.LOGGING.error('Exception:', e.message);
     }
   });
 
