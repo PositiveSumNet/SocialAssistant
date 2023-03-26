@@ -565,111 +565,6 @@ const getSaveFollowsMetadata = function(pageType) {
 
 // SAVING TO DB *****************************************
 
-const clearBulkImport = function(db, arr, oneToOne, uid) {
-  if (!arr || arr.length === 0) { return; } // no work to do
-  const importTable = getImportTable(oneToOne);
-  
-  const sql = `
-  DELETE 
-  FROM ${importTable}
-  WHERE BatchUid LIKE '${uid}%';
-  `;
-  
-  db.exec(sql);
-}
-
-// we want a parameterized query with the speed of the "VALUES (...), (...), (...)" syntax
-// sqlite allows hard limit of 999 parms
-const execBulkImport = function(db, oneToOne, uid, s, o, g, sogs) {
-  if (!sogs || sogs.length == 0) {
-    // nothing to do
-    return;
-  }
-  
-  // see how many ? parms per insert
-  let qPer = 0;
-  let bindS = false;
-  let bindO = false;
-  let bindG = false;
-  if (s === '?') { 
-    qPer++;
-    bindS = true;
-  }
-  if (o === '?') { 
-    qPer++;
-    bindO = true;
-  }
-  if (g === '?') { 
-    qPer++;
-    bindG = true;
-  }
-  
-  const maxParm = 999;
-  const maxInsertsPerStep = 2000;  // bulk import of tons of values at once not worth it
-  // suppose 1000 items with 2 parms... 3 batches
-  // see how many batches we'll require
-  const numBatches = qPer === 0 ? Math.ceil(sogs.length / maxInserts) : Math.ceil((sogs.length * qPer) / maxParm);
-  const perBatch = qPer === 0 ? maxInsertsPerStep : Math.floor(sogs.length / numBatches);
-  let skip = 0;
-  
-  const importTable = getImportTable(oneToOne);
-  
-  const baseSql = `
-  INSERT INTO ${importTable} ( BatchUid, ImportTime, RdfSubject, RdfObject, NamedGraph )
-  VALUES `;
-  
-  for (let i = 0; i < numBatches; i++) {
-    // let's process the next batch
-    let batchSogs = sogs.slice(skip, skip + perBatch);
-    let sql = baseSql;
-    let bind = [];
-    let didOne = false;
-    
-    for (let j = 0; j < batchSogs.length; j++) {
-      let sog = batchSogs[j];
-      let comma = didOne === true ? ', ' : '';
-      
-      // we avoid worrying about already-exists (while batching) by appending the iteration number to the guid
-      sql = `${sql}${comma}( '${uid}-${i}-${j}', datetime('now'), ${s}, ${o}, ${g} )`;
-      
-      // build up the bound parms
-      if (bindS === true) {
-        bind.push(sog.s);
-      }
-      if (bindO === true) {
-        bind.push(sog.o);
-      }
-      if (bindG === true) {
-        bind.push(sog.g);
-      }
-      
-      didOne = true;
-    }
-    
-    sql = `${sql};`
-    // execute the batch
-    db.exec({sql: sql, bind: bind});
-  }
-}
-
-const getImportTable = function(oneToOne) {
-  return oneToOne === true ? 'RdfImport1to1' : 'RdfImport1ton';
-}
-
-const execUpsert = function(db, arr, uid, tbl, oneToOne, s = 'sHandle', o = 'oValue') {
-  if (!arr || arr.length === 0) { return; } // no work to do
-  const importTable = getImportTable(oneToOne);
-  
-  const sql = `
-  REPLACE INTO ${tbl} ( ${s}, ${o}, NamedGraph, Timestamp )
-  SELECT RdfSubject, RdfObject, NamedGraph, ImportTime
-  FROM ${importTable}
-  WHERE BatchUid LIKE '${uid}%';
-  `;
-  
-  db.exec(sql);
-}
-
 const saveFollows = function(db, follows, cacheKeys, meta, graph) {
   // guids for this batch
   const followUid = crypto.randomUUID();
@@ -723,34 +618,34 @@ const saveFollows = function(db, follows, cacheKeys, meta, graph) {
   }
   
   // bulk import
-  execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);
-  execBulkImport(db, true, handleDisplayUid, qMark, qMark, gParm, handleDisplaySogs);
-  execBulkImport(db, true, descriptionUid, qMark, qMark, gParm, handleDescriptionSogs);
-  execBulkImport(db, true, imgCdnUid, qMark, qMark, gParm, imgCdnSogs);
-  execBulkImport(db, true, img64Uid, qMark, qMark, gParm, img64Sogs);
-  execBulkImport(db, false, mdonUid, qMark, qMark, gParm, mdonSogs);
-  execBulkImport(db, false, urlUid, qMark, qMark, gParm, urlSogs);
-  execBulkImport(db, false, emailUid, qMark, qMark, gParm, emailSogs);
+  DBORM.SAVING.execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);
+  DBORM.SAVING.execBulkImport(db, true, handleDisplayUid, qMark, qMark, gParm, handleDisplaySogs);
+  DBORM.SAVING.execBulkImport(db, true, descriptionUid, qMark, qMark, gParm, handleDescriptionSogs);
+  DBORM.SAVING.execBulkImport(db, true, imgCdnUid, qMark, qMark, gParm, imgCdnSogs);
+  DBORM.SAVING.execBulkImport(db, true, img64Uid, qMark, qMark, gParm, img64Sogs);
+  DBORM.SAVING.execBulkImport(db, false, mdonUid, qMark, qMark, gParm, mdonSogs);
+  DBORM.SAVING.execBulkImport(db, false, urlUid, qMark, qMark, gParm, urlSogs);
+  DBORM.SAVING.execBulkImport(db, false, emailUid, qMark, qMark, gParm, emailSogs);
   
   // process temp into final
-  execUpsert(db, followSogs, followUid, meta.tblFollow, false);
-  execUpsert(db, handleDisplaySogs, handleDisplayUid, meta.tblDisplayName, true);
-  execUpsert(db, handleDescriptionSogs, descriptionUid, meta.tblDescription, true);
-  execUpsert(db, imgCdnSogs, imgCdnUid, meta.tblImgCdnUrl, true);
-  execUpsert(db, img64Sogs, img64Uid, meta.tblImg64Url, true);
-  execUpsert(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
-  execUpsert(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
-  execUpsert(db, emailSogs, emailUid, meta.tblProfileEmail, false);
+  DBORM.SAVING.execUpsert(db, followSogs, followUid, meta.tblFollow, false);
+  DBORM.SAVING.execUpsert(db, handleDisplaySogs, handleDisplayUid, meta.tblDisplayName, true);
+  DBORM.SAVING.execUpsert(db, handleDescriptionSogs, descriptionUid, meta.tblDescription, true);
+  DBORM.SAVING.execUpsert(db, imgCdnSogs, imgCdnUid, meta.tblImgCdnUrl, true);
+  DBORM.SAVING.execUpsert(db, img64Sogs, img64Uid, meta.tblImg64Url, true);
+  DBORM.SAVING.execUpsert(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
+  DBORM.SAVING.execUpsert(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
+  DBORM.SAVING.execUpsert(db, emailSogs, emailUid, meta.tblProfileEmail, false);
   
   // clear out import tables
-  clearBulkImport(db, followSogs, followUid, meta.tblFollow, false);
-  clearBulkImport(db, handleDisplaySogs, handleDisplayUid, meta.tblDisplayName, true);
-  clearBulkImport(db, handleDescriptionSogs, descriptionUid, meta.tblDescription, true);
-  clearBulkImport(db, imgCdnSogs, imgCdnUid, meta.tblImgCdnUrl, true);
-  clearBulkImport(db, img64Sogs, img64Uid, meta.tblImg64Url, true);
-  clearBulkImport(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
-  clearBulkImport(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
-  clearBulkImport(db, emailSogs, emailUid, meta.tblProfileEmail, false);
+  DBORM.SAVING.clearBulkImport(db, followSogs, followUid, meta.tblFollow, false);
+  DBORM.SAVING.clearBulkImport(db, handleDisplaySogs, handleDisplayUid, meta.tblDisplayName, true);
+  DBORM.SAVING.clearBulkImport(db, handleDescriptionSogs, descriptionUid, meta.tblDescription, true);
+  DBORM.SAVING.clearBulkImport(db, imgCdnSogs, imgCdnUid, meta.tblImgCdnUrl, true);
+  DBORM.SAVING.clearBulkImport(db, img64Sogs, img64Uid, meta.tblImg64Url, true);
+  DBORM.SAVING.clearBulkImport(db, mdonSogs, mdonUid, meta.tblProfileMdon, false);
+  DBORM.SAVING.clearBulkImport(db, urlSogs, urlUid, meta.tblProfileExtUrl, false);
+  DBORM.SAVING.clearBulkImport(db, emailSogs, emailUid, meta.tblProfileEmail, false);
 
   // tell caller it can clear those cache keys and send over the next ones
   postMessage({ type: 'copiedToDb', cacheKeys: cacheKeys });
@@ -798,7 +693,7 @@ const searchOwners = function(data) {
   const bind = [];
   const conjunction = 'WHERE';
   const searchCols = ['f.sHandle', 'd.oValue'];
-  const searchClause = writeSearchClause(searchCols, searchText, conjunction, bind.length);
+  const searchClause = DBORM.QUERYING.writeSearchClause(searchCols, searchText, conjunction, bind.length);
   let searchClauseSql = '';
   
   if (searchClause && searchClause.sql.length > 0) {
@@ -939,7 +834,7 @@ const networkSearch = function(request) {
   }
   
   const searchCols = ['f.oValue', 'd.oValue', 'dx.oValue'];
-  const searchClause = writeSearchClause(searchCols, request.searchText, conjunction, bind.length);
+  const searchClause = DBORM.QUERYING.writeSearchClause(searchCols, request.searchText, conjunction, bind.length);
   let searchClauseSql = '';
   
   if (searchClause) {
@@ -1037,59 +932,6 @@ const networkSearch = function(request) {
       rows: rows
     }
   });
-}
-
-// conjunction is WHERE or AND
-// returns { sql: sql, parms: bindThese }
-const writeSearchClause = function(textCols, searchText, conjunction, parmCounter) {
-  if (!searchText || searchText.length === 0 || searchText === '*') {
-    return null;
-  }
-  
-  const terms = searchText.split(' ');
-  if (terms.length === 0) {
-    return null;
-  }
-  
-  const parms = [];
-  // we'll check for a match of each keyword, appearing in at least one col
-  let sql = '';
-  let didOne = false;
-  parmCounter = parmCounter || 0;
-  for (let i = 0; i < terms.length; i++) {
-    let term = terms[i];
-    let plus = (didOne === true) ? ' +' : '';
-    
-    sql = `${sql}${plus} 
-    CASE `;
-    
-    parmCounter++;
-    let parm = {key: '$srch' + parmCounter, value: `%${term}%`};
-    parms.push(parm);
-    
-    for (let c = 0; c < textCols.length; c++) {
-      let col = textCols[c];
-      
-      sql = `${sql}
-      WHEN ${col} LIKE ${parm.key} THEN 1`;
-    }
-    
-    sql = `${sql}
-      ELSE 0 
-    END`;
-    
-    didOne = true;
-  }
-  
-  // wrap in an outer case statement
-  sql = `${conjunction} CASE 
-  WHEN 
-    ${sql} = ${terms.length} THEN 1
-  ELSE 0
-  END = 1`;
-  
-  const result = { sql: sql, parms: parms };
-  return result;
 }
 
 // from array of key/value pairs to a single object
