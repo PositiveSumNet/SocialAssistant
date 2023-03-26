@@ -414,7 +414,7 @@ const getOwnerFromUi = function() {
 }
 
 const buildNetworkSearchRequestFromUi = function() {
-  const owner = getOwnerFromUi();
+  const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
   const pageSize = SETTINGS.getPageSize();
   const searchText = getUiValue('txtFollowSearch');

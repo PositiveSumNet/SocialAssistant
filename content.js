@@ -216,12 +216,13 @@ const buildTwitterFollowFromPhoto = function(img, parsedUrl) {
   const displayName = ES6.getUnfurledText(displayNameAnchor);
   const description = getTwitterProfileDescription(displayNameAnchor);
   
+  // save with @ symbol
   const per = {
-    handle: handle,
+    handle: atHandle,
     displayName: displayName,
     description: description,
     pageType: parsedUrl.pageType,
-    owner: parsedUrl.owner,
+    owner: STR.ensurePrefix(parsedUrl.owner, '@'),
     imgCdnUrl: imgSrc
   };
   
