@@ -229,7 +229,6 @@ const renderPerson = function(person, context) {
       break;
   }
   
-  const imgUrl = person.Img64Url || person.ImgCdnUrl;
   const imgType = STR.inferImageFileExt(person.ImgCdnUrl);
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
   
