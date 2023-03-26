@@ -477,7 +477,9 @@ const requestTotalCount = function() {
     return;
   }
   
-  const msg = {actionType: 'getNetworkSize', networkOwner: owner, pageType: pageType};
+  const atOwner = STR.ensurePrefix(owner, '@'); // DB includes @ prefix
+  const msg = {actionType: 'getNetworkSize', networkOwner: atOwner, pageType: pageType};
+  
   worker.postMessage(msg);
   // record knowledge that this count has been requested
   _counterSet.add(key);
@@ -514,8 +516,10 @@ const setFollowLabelCaption = function(pageType, count) {
 const renderNetworkSize = function(payload) {
   const uiPageType = getPageType();
   const uiOwner = getOwnerFromUi();
-
-  if (uiPageType != payload.request.pageType || uiOwner != payload.request.networkOwner) {
+  
+  const dbOwnerSansPrefix = STR.stripPrefix(payload.request.networkOwner, '@');
+  
+  if (uiPageType != payload.request.pageType || uiOwner != dbOwnerSansPrefix) {
     return; // page status has changed since request was made
   }
   

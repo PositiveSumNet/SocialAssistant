@@ -877,7 +877,7 @@ const getNetworkSize = function(request) {
   // parameter is named $owner
   const sql = `SELECT COUNT(*) AS TotalCount FROM ${tblFollow} f WHERE f.sHandle = $owner;`;
   const bound = {$owner: request.networkOwner};
-
+  
   const db = getDb();
   const rows = [];
   try {
