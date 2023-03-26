@@ -13,13 +13,13 @@ const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as op
 // migration
 const migrateDbAsNeeded = function(db) {
   
-  DBORM.MIGRATION.ensureMigrationPrereqs(db);
+  DBORM.MIGRATION.ensureMigrationPrereqs(db, APPNAME);
   
   // do migration
   let dbVersion = 0;
 
   for (let i = 0; i < _codeVersion; i++) {
-    dbVersion = DBORM.MIGRATION.getDbScriptVersion(db);
+    dbVersion = DBORM.MIGRATION.getDbScriptVersion(db, APPNAME);
     if (dbVersion < _codeVersion) {
       migrateDb(db, dbVersion);
     }
@@ -724,7 +724,7 @@ const searchOwners = function(data) {
   const db = getDb();
   const rows = [];
   
-  const bound = bindConsol(bind);
+  const bound = DBORM.QUERYING.bindConsol(bind);
   
   try {
     db.exec({
@@ -902,7 +902,7 @@ const networkSearch = function(request) {
   LIMIT ${take} OFFSET ${skip};
   `
   
-  const bound = bindConsol(bind);
+  const bound = DBORM.QUERYING.bindConsol(bind);
   
   // let dt = Date.now();
   
@@ -934,16 +934,3 @@ const networkSearch = function(request) {
   });
 }
 
-// from array of key/value pairs to a single object
-// needed for the named-argument approach 
-// (which we wanted b/c of multiple usages of a particular nth parameter in search)
-// sqlite.org/wasm/doc/trunk/api-oo1.md#stmt-bind
-const bindConsol = function(bind) {
-  const obj = {};
-  for (let i = 0; i < bind.length; i++) {
-    let parm = bind[i];
-    obj[parm.key] = parm.value;
-  }
-  
-  return obj;
-}
