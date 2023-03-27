@@ -22,8 +22,26 @@ importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
 importScripts('/lib/worker/dbormlib.js');
 importScripts('/lib/worker/connsavemapper.js');
-importScripts('/lib/worker/connsaver.js');
-importScripts('/lib/worker/saverfactory.js');
+importScripts('/lib/worker/savemapperfactory.js');
+
+self
+  .sqlite3InitModule({
+    print: DBORM.LOGGING.log,
+    printErr: DBORM.LOGGING.error,
+  })
+  .then(function (sqlite3) {
+    // log('Done initializing. Running demo...');
+    try {
+      _sqlite3 = sqlite3;
+      let scripts = getMigrationScripts();
+      DBORM.start(scripts);
+      // tell index.js that worker is ready to receive on-startup data
+      postMessage({ type: 'workerReady' });
+    } catch (e) {
+      DBORM.LOGGING.error('Exception:', e.message);
+    }
+  });
+
 
 const getMigrationScripts = function() {
   const scripts = [];
@@ -53,24 +71,6 @@ const getMigrationScripts = function() {
   
   return scripts;
 }
-
-self
-  .sqlite3InitModule({
-    print: DBORM.LOGGING.log,
-    printErr: DBORM.LOGGING.error,
-  })
-  .then(function (sqlite3) {
-    // log('Done initializing. Running demo...');
-    try {
-      _sqlite3 = sqlite3;
-      let scripts = getMigrationScripts();
-      DBORM.start(scripts);
-      // tell index.js that worker is ready to receive on-startup data
-      postMessage({ type: 'workerReady' });
-    } catch (e) {
-      DBORM.LOGGING.error('Exception:', e.message);
-    }
-  });
 
 /*****************************************/
 // RECEIVE MESSAGES
