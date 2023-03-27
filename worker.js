@@ -4,7 +4,6 @@
 // sqlite.org/lang_expr.html#varparam
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
 
-var _sqlite3;
 const _codeVersion = 7;
 const _meGraph = 'me';  // special constant for NamedGraph when it's 'me' (as opposed to sourced from a 3rd party)
 
@@ -262,53 +261,12 @@ const migrateDb = function(db, dbVersion) {
   }
 }
 
-const getDb = function(withStartupLogging) {
-  const capi = _sqlite3.capi; /*C-style API*/
-  const oo = _sqlite3.oo1; /*high-level OO API*/
-  // DBORM.LOGGING.log('sqlite3 version', capi.sqlite3_libversion(), capi.sqlite3_sourceid());
-  
-  let db;
-  let opfsOk;
-  if (_sqlite3.opfs) {
-    db = new _sqlite3.opfs.OpfsDb('/mydb.sqlite3');
-    db.exec(`PRAGMA 'journal_mode=WAL';`);
-    opfsOk = true;
-  } else {
-    db = new oo.DB('/mydb.sqlite3', 'ct');
-    opfsOk = false;
-  }
-  
-  if (withStartupLogging === true) {
-    DBORM.LOGGING.reportAppVersion( {libVersion: capi.sqlite3_libversion(), sourceId: capi.sqlite3_sourceid(), opfsOk: opfsOk } );
-  }
-  
-  return db;
-}
-
 // initialization
 const start = function() {
   
-  let db = getDb(true);
+  let db = DBORM.getDb(true);
   
   try {
-    // can set to true while debugging to reset the db
-    const startOver = false;
-    if (startOver === true) {
-      db.exec("drop table if exists Migration;");
-      db.exec("drop table if exists RdfImport1to1;");
-      db.exec("drop table if exists RdfImport1ton;");
-      db.exec("drop table if exists TwitterDisplayName;");
-      db.exec("drop table if exists TwitterProfileDescription;");
-      db.exec("drop table if exists FollowingOnTwitter;");
-      db.exec("drop table if exists FollowerOnTwitter;");
-      db.exec("drop table if exists TwitterImgCdnUrl;");
-      db.exec("drop table if exists TwitterImg64Url;");
-      db.exec("drop table if exists TwitterProfileMastodonAccount;");
-      db.exec("drop table if exists TwitterProfileExternalUrl;");
-      db.exec("drop table if exists TwitterProfileEmail;");
-      db.exec("drop table if exists TwitterFavorited;");
-    }
-    
     migrateDbAsNeeded(db);
     // we could also clear out stale abandoned import table data on startup (by ImportTime), 
     // but realistically that's probably not much of a concern so not bothering for now.
@@ -320,14 +278,7 @@ const start = function() {
 
 // on startup
 // DBORM.LOGGING.log('Loading and initializing sqlite3 module...');
-
-let sqlite3Js = 'sqlite3.js';
-const urlParams = new URL(self.location.href).searchParams;
-if (urlParams.has('sqlite3.dir')) {
-  sqlite3Js = urlParams.get('sqlite3.dir') + '/' + sqlite3Js;
-}
-// import library scripts
-importScripts(sqlite3Js);
+importScripts('/jswasm/sqlite3.js');
 importScripts('/lib/shared/constants.js');
 importScripts('/lib/shared/settingslib.js');
 importScripts('/lib/shared/es6lib.js');
@@ -414,7 +365,7 @@ const xferCacheToDb = function(data) {
     let group = groups[i];
     let pageType = group[0].pageType;
     let meta = getSaveFollowsMetadata(pageType);
-    let db = getDb();
+    let db = DBORM.getDb();
     try {
       if (meta.action == 'saveFollows') {
         saveFollows(db, group, keys, meta, _meGraph);
@@ -721,7 +672,7 @@ const searchOwners = function(data) {
   LIMIT ${limit};
   `;
   
-  const db = getDb();
+  const db = DBORM.getDb();
   const rows = [];
   
   const bound = DBORM.QUERYING.bindConsol(bind);
@@ -751,7 +702,7 @@ const setFavorite = function(request) {
   const sql = `REPLACE INTO ${tbl}(sHandle, NamedGraph, oValue) VALUES ($handle, '${graph}', ${val});`;
   const bound = {$handle: request.handle};
   
-  const db = getDb();
+  const db = DBORM.getDb();
   try {
     db.exec({
       sql: sql, 
@@ -773,7 +724,7 @@ const getNetworkSize = function(request) {
   const sql = `SELECT COUNT(*) AS TotalCount FROM ${tblFollow} f WHERE f.sHandle = $owner;`;
   const bound = {$owner: request.networkOwner};
   
-  const db = getDb();
+  const db = DBORM.getDb();
   const rows = [];
   try {
     db.exec({
@@ -906,7 +857,7 @@ const networkSearch = function(request) {
   
   // let dt = Date.now();
   
-  const db = getDb();
+  const db = DBORM.getDb();
   const rows = [];
   try {
     db.exec({
