@@ -21,6 +21,9 @@ importScripts('/lib/shared/appgraphs.js');
 importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
 importScripts('/lib/worker/dbormlib.js');
+importScripts('/lib/worker/connsavemapper.js');
+importScripts('/lib/worker/connsaver.js');
+importScripts('/lib/worker/saverfactory.js');
 
 const getMigrationScripts = function() {
   const scripts = [];
