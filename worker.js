@@ -530,9 +530,6 @@ const saveFollows = function(db, follows, cacheKeys, meta, graph) {
   
   // dump values into import table
   // note: use of import table streamlines upsert scenarios and de-duping
-  const qMark = `?`;
-  const gParm = `'${graph}'`;
-  
   const followSogs = follows.map(function(x) {
     return {s: x.owner, o: x.handle};
   });
@@ -568,6 +565,9 @@ const saveFollows = function(db, follows, cacheKeys, meta, graph) {
       follow.accounts.emails.forEach(x => emailSogs.push({s: follow.handle, o: x}));
     }
   }
+  
+  const qMark = `?`;
+  const gParm = `'${graph}'`;
   
   // bulk import
   DBORM.SAVING.execBulkImport(db, false, followUid, qMark, qMark, gParm, followSogs);
