@@ -30,7 +30,6 @@
         "lib/content/urlparsing.js", 
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
-        "lib/content/urlparsing.js", 
         "content.js"
       ],
       "matches": [
