@@ -3,6 +3,7 @@
 // sql.js.org/#/?id=sqlite-compiled-to-javascript
 // sqlite.org/lang_expr.html#varparam
 // willschenk.com/articles/2021/sq_lite_in_the_browser/
+// javascript.plainenglish.io/a-beginners-guide-to-setting-up-and-using-sqlite-3-in-a-browser-based-application-9e60cefe75ce
 
 /*****************************************/
 // INITIALIZATION
@@ -12,6 +13,7 @@
 // DBORM.LOGGING.log('Loading and initializing sqlite3 module...');
 importScripts('/jswasm/sqlite3.js');
 importScripts('/lib/shared/constants.js');
+importScripts('/lib/shared/pagetypes.js');
 importScripts('/lib/shared/settingslib.js');
 importScripts('/lib/shared/es6lib.js');
 importScripts('/lib/shared/strlib.js');

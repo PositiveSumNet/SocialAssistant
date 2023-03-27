@@ -23,6 +23,7 @@
     {
       "js": [
         "lib/shared/constants.js", 
+        "lib/shared/pagetypes.js", 
         "lib/shared/settingslib.js", 
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
