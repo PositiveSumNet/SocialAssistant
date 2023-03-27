@@ -16,18 +16,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-const processSave = async function(follows) {
-  await injectImageBase64s(follows);
-  saveToTempStorage(follows);
-  return {saved: follows, success: true};
+const processSave = async function(records) {
+  await injectImageBase64s(records);
+  saveToTempStorage(records);
+  return {saved: records, success: true};
 }
 
 // TODO: Parallel tasks like one of these
 // bytelimes.com/batch-async-tasks-with-async-generators/
 // stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
-const injectImageBase64s = async function(follows) {
-  for (let i = 0; i < follows.length; i++) {
-    let item = follows[i];
+const injectImageBase64s = async function(records) {
+  for (let i = 0; i < records.length; i++) {
+    let item = records[i];
     if (item.imgCdnUrl) {
       item.img64Url = await getImageBase64(item.imgCdnUrl);
     }
@@ -35,10 +35,10 @@ const injectImageBase64s = async function(follows) {
 }
 
 // caches what we'll want to persist to the sqlitedb when we get the chance
-const saveToTempStorage = function(follows) {
+const saveToTempStorage = function(records) {
   // the 'fordb-' prefix is how we find all such pending batches
   const key = 'fordb-' + Date.now().toString();
-  chrome.storage.local.set({ [key]: follows });
+  chrome.storage.local.set({ [key]: records });
 }
 
 // stackoverflow.com/questions/57346889/how-to-return-base64-data-from-a-fetch-promise
