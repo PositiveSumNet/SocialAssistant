@@ -23,6 +23,7 @@ importScripts('/lib/shared/appschema.js');
 importScripts('/lib/worker/dbormlib.js');
 importScripts('/lib/worker/connsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
+importScripts('/lib/worker/connfetcher.js');
 
 self
   .sqlite3InitModule({
