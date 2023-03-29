@@ -155,8 +155,8 @@ worker.onmessage = function ({ data }) {
     case MSGTYPE.FROMDB.RENDER.MATCHED_OWNERS:
       renderMatchedOwners(data.payload);
       break;
-    case MSGTYPE.FROMDB.RENDER.FOLLOWS:
-      renderFollows(data.payload);
+    case MSGTYPE.FROMDB.RENDER.CONNECTIONS:
+      renderConnections(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       renderNetworkSize(data.payload);
@@ -536,7 +536,7 @@ const renderNetworkSize = function(payload) {
   setFollowLabelCaption(uiPageType, count);
 }
 
-const renderFollows = function(payload) {
+const renderConnections = function(payload) {
   const plist = document.getElementById('paginated-list');
   plist.innerHTML = '';
   
