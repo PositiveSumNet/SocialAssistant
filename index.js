@@ -564,12 +564,12 @@ const configureFavoriting = function(a) {
     const iconElm = this.querySelector('i');
     
     const alreadyFavorited = iconElm.classList.contains(_starOnCls);
-    let favorite;
+    let removeFromFavorites;
     if (alreadyFavorited) {
       // toggle to not-favorite
       iconElm.classList.remove(_starOnCls)
       iconElm.classList.add(_starOffCls);
-      favorite = false;
+      removeFromFavorites = true;
     }
     else {
       // toggle to is-favorite
@@ -577,11 +577,18 @@ const configureFavoriting = function(a) {
         iconElm.classList.remove(_starOffCls);
       }
       iconElm.classList.add(_starOnCls);
-      favorite = true;
+      removeFromFavorites = false;
     }
     
-    // tell the db
-    const msg = {actionType: 'setFavorite', handle: handle, favorite: favorite, pageType: pageType};
+    // tell the db (see DBORM.setListMember)
+    const msg = {
+      actionType: MSGTYPE.TODB.SET_LIST_MEMBER, 
+      list: LIST_FAVORITES, 
+      member: handle, 
+      pageType: pageType,
+      removal: removeFromFavorites
+    };
+    
     worker.postMessage(msg);
 
     return false;

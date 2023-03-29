@@ -1,3 +1,16 @@
 # Whosum Social Assistant + Chrome Extension
 
-Utilities to help you understand and better engage with your social network relationships.
+This is a free open source application to help you better engage with your social network relationships. Install it at the Chrome app store (coming soon) or in developer mode [like this](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
+
+Development is led by [Positive Sum Networks](https://positivesum.net), a New York based non-profit. PSN, together with the open source community, is building a suite of apps and services under the name [Whosum](https://whosum.com). Per the Whosum launch video 
+>"Who you are and who you know. We hold these WHOs to be self-evident as your property and your source of power." 
+
+This project is for "who you know". After installing, go [here](chrome://extensions/) and click Details. Then turn it on. You should see an icon with '+Σ'. Click it to get started:
+- Record lists of Twitter followers/following
+- Review and search within follow lists to find Mastodon profile links and other helpful data.
+
+Twitter is just the beginning. Our roadmap calls for helping individuals to pull network data from the other major social sites. Data is stored within a private database right there in your browser (not on a server). How cool is that! (Optional sync features coming soon.)
+
+We encourage developers to submit pull requests. We also look forward to collaborating with for-profit companies who share our vision of creating "digital robot butler" apps that *privately* leverage personal data as described [here](https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81). PSN aims to create the patterns and infrastructure that will allow [new economic models](https://prosocialcapitalism.com) to thrive, free from surveillance capitalism and manipulative business practices. 
+
+While this project is for "who you know", we invite you to also check out the Whosum ["possum passport"](https://whosum.com/prove) feature for portable identity ("who you are"). Together, these tools will allow decentralized and prosocial networking alternatives that extend experiences like Mastodon (which we also recommend!).
