@@ -198,7 +198,7 @@ const initUi = function(owner, pageType) {
     worker.postMessage(msg);
   }
   
-  txtFollowPivotHandle.value = owner || '';
+  txtFollowPivotHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
     networkSearch(owner, pageType);
@@ -264,7 +264,7 @@ const renderPerson = function(person, context) {
   }
   
   let starCls = _starOffCls;
-  if (person.IsFavorite == 1) {
+  if (person.InList == 1 && person.ListName === LIST_FAVORITES) {
     starCls = _starOnCls;
   }
   
@@ -286,7 +286,7 @@ const renderMatchedOwners = function(payload) {
   if (owners.length === 1 && !_deletingOwner) {
     // exact match; pick it! (after an extra check that the user isn't 
     // trying to delete, in which case auto-complete would be annoying)
-    txtFollowPivotHandle.value = owners[0].Handle;
+    txtFollowPivotHandle.value = STR.stripPrefix(owners[0].Handle, '@');
     onChooseOwner();
   }
   else {
@@ -298,7 +298,6 @@ const renderMatchedOwners = function(payload) {
 
 const renderSuggestedOwner = function(payload) {
   const owner = payload.owner;
-  
   if (!owner || !owner.Handle || owner.Handle.length === 0) {
     return;
   }
@@ -434,7 +433,8 @@ const buildNetworkSearchRequestFromUi = function() {
     take: pageSize,
     // filters
     mutual: mutual,
-    favorited: favorited,
+    list: LIST_FAVORITES,
+    requireList: favorited,
     withMdon: withMdon,
     withEmail: withEmail,
     withUrl: withUrl
@@ -561,6 +561,7 @@ const configureFavoriting = function(a) {
   a.onclick = function(event) {
     const pageType = getPageType();
     const handle = this.getAttribute('data-testid');
+    const atHandle = STR.ensurePrefix(handle, '@');
     const iconElm = this.querySelector('i');
     
     const alreadyFavorited = iconElm.classList.contains(_starOnCls);
@@ -584,13 +585,12 @@ const configureFavoriting = function(a) {
     const msg = {
       actionType: MSGTYPE.TODB.SET_LIST_MEMBER, 
       list: LIST_FAVORITES, 
-      member: handle, 
+      member: atHandle, 
       pageType: pageType,
       removal: removeFromFavorites
     };
     
     worker.postMessage(msg);
-
     return false;
   };
 }
@@ -665,7 +665,7 @@ const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
   
   worker.postMessage({
-    actionType: 'inputFollowOwner',
+    actionType: MSGTYPE.TODB.INPUT_FOLLOW_OWNER,
     pageType: pageType,
     searchText: userInput,
     limit: 5
@@ -753,7 +753,7 @@ listFollowPivotPicker.onclick = function(event) {
   const personElm = ES6.findUpClass(event.target, 'person');
   const handleElm = personElm.querySelector('.personLabel > .personHandle');
   let handleText = handleElm.innerText;
-  handleText = handleText.startsWith('@') ? handleText.substring(1) : handleText;
+  handleText = STR.stripPrefix(handleText, '@');
   txtFollowPivotHandle.value = handleText;
   onChooseOwner();
 };
