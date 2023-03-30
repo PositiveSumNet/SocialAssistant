@@ -9,6 +9,8 @@ This project is for "who you know". After installing, go to Chrome -> More Tools
 - Record lists of Twitter followers/following
 - Review and search within follow lists to find Mastodon profile links and other helpful data.
 
+Curious about scraping web data? [Here](cpomagazine.com/data-privacy/what-the-hiq-vs-linkedin-case-means-for-automated-web-scraping/) is a good article about the HIQ v. LinkedIn case.
+
 Twitter is just the beginning. Our roadmap calls for helping individuals to pull network data from the other major social sites. Data is stored within a private database right there in your browser (not on a server). How cool is that! (Optional sync features coming soon.)
 
 We encourage developers to submit pull requests. We also look forward to collaborating with for-profit companies who share our vision of creating "digital robot butler" apps that *privately* leverage personal data as described [here](https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81). PSN aims to create the patterns and infrastructure that will allow [new economic models](https://prosocialcapitalism.com) to thrive, free from surveillance capitalism and manipulative business practices. 
