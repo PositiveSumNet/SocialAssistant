@@ -1,6 +1,8 @@
 # Whosum Social Assistant + Chrome Extension
 
-This is a free open source application to help you better engage with your social network relationships. Install it at the Chrome app store (coming soon) or in developer mode [like this](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
+This is a free open source application to help you better engage with your social network relationships. Think of it as a DVR for caching online social networks and experiences, starting with Twitter.
+
+Install it at the Chrome app store (coming soon) or in developer mode [like this](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
 
 Development is led by [Positive Sum Networks](https://positivesum.net), a New York based non-profit. PSN, together with the open source community, is building a suite of apps and services under the name [Whosum](https://whosum.com). Per the Whosum launch video 
 >"Who you are and who you know. We hold these WHOs to be self-evident as your property and your source of power." 
