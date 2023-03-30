@@ -5,7 +5,7 @@ This is a free open source application to help you better engage with your socia
 Development is led by [Positive Sum Networks](https://positivesum.net), a New York based non-profit. PSN, together with the open source community, is building a suite of apps and services under the name [Whosum](https://whosum.com). Per the Whosum launch video 
 >"Who you are and who you know. We hold these WHOs to be self-evident as your property and your source of power." 
 
-This project is for "who you know". After installing, go [here](chrome://extensions/) and click Details. Then turn it on. You should see an icon with '+Σ'. Click it to get started:
+This project is for "who you know". After installing, go to Chrome -> More Tools -> Extensions and click Details. Then turn it on. You should see an icon with '+Σ'. Click it to get started:
 - Record lists of Twitter followers/following
 - Review and search within follow lists to find Mastodon profile links and other helpful data.
 
