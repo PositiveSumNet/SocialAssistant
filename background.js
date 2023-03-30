@@ -1,19 +1,28 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // stackoverflow.com/a/73836810
+  let returnsData = false;
+  switch (request.actionType) {
+    case 'save':
+      returnsData = true;
+      break;
+    default:
+      break;
+  }
+
   (async () => {
-    switch (request.actionType)
-    {
+    switch (request.actionType) {
       case 'save':
         const saveResponse = await processSave(request.payload);
         sendResponse(saveResponse);
-        break;
+        return returnsData;
       case 'setBadge':
         chrome.action.setBadgeText({text: request.badgeText});
-        break;
+        return returnsData;
       default:
-        return;
+        return returnsData;
     }
   })();
-  return true;
+  return returnsData;
 });
 
 const processSave = async function(records) {
