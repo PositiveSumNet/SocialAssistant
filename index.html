@@ -21,7 +21,7 @@
           Export
         </div>
       </div>
-      <div id="dbui" class="container-fluid row pb-2">
+      <div id="dbui" class="row pb-2">
         <div id='transferringMsg' style="display:none;">
           Copying recent recordings to local database...
         </div>
@@ -45,7 +45,7 @@
           <div class='pt-2 col-2'>
             <input id='txtFollowSearch' type='text' class='form-control' placeholder='search...' />
           </div>
-          <div class='pt-2 col-2 container-fluid'>
+          <div class='pt-2 col-2'>
             <div class='row input-group'>
               <label for='txtPageNum' class='text-muted input-group-text col-sm-auto'>pg</label>
               <input id='txtPageNum' type='text' style='min-width:50px;border-right:none;' class='form-control col-3' value='1' />
@@ -54,7 +54,7 @@
               <a class='form-control col-2' data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
             </div>
           </div>
-          <div id='queryOptions' class='col-4 container-fluid'>
+          <div id='queryOptions' class='col-4'>
             <div class='row'>
               <div class="form-check col">
                 <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
@@ -91,8 +91,8 @@
         <div id="followListProgress" class="progress" style="height:3px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>        
-        <div id='followList' class='row container-fluid' style='display:none;'>
-        <div id='listFollowPivotPicker' class='row container-fluid pt-2'></div>
+        <div id='followList' class='row' style='display:none;'>
+        <div id='listFollowPivotPicker' class='row pt-2'></div>
         <div class='listMain row' id='followListMain'>
           <div id='paginated-list' aria-live='polite'>
           </div>

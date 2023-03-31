@@ -125,3 +125,7 @@ a.canstar i.bi-star-fill {
 a.canstar:hover i.bi-star-fill {
   color: #ced4da;
 }
+
+.row .row {
+  padding-right: 0px;
+}
