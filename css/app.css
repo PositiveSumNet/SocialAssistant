@@ -80,10 +80,8 @@ a {
 }
 
 .bg-subheader {
+  margin-bottom: 0.5rem;
   padding: 1rem;
-}
-
-.bg-subheader {
   background-color: #216CB1;
   color: #ffffff;
 }
