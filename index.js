@@ -13,6 +13,10 @@ var _lastOwner = '';
 var _counterSet = new Set();
 var _counters = [];
 
+// for export
+var _exportPauseRequested;
+var _pausedExportMsg;
+
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -67,8 +71,10 @@ const ensureCopiedToDb = async function() {
   const filterSet = document.getElementById('listFilterSet');
   const connList = document.getElementById('connList');
   
+  // see note at bottom of method
+  initialRender();
+
   xferring.innerHTML = 'Copying ' + entries.length + ' pages to local database...';
-  
   if (entries.length > 0) {
     xferring.style.display = 'inline-block';
     //filterSet.style.display = 'none';
@@ -100,7 +106,10 @@ const ensureCopiedToDb = async function() {
     xferring.style.display = 'none';
     //filterSet.style.display = 'flex';
     //connList.style.display = 'flex';
-    initialRender();
+
+    // We had this only happening after all transfers. 
+    // But it seems like we can safely do this up front, so commenting out here.
+    //initialRender();
   }
 }
 
@@ -776,18 +785,36 @@ const onChooseOwner = function() {
   _lastOwner = getOwnerFromUi();
 }
 
-document.getElementById('exportBtn').onclick = function(event) {
+document.getElementById('startExportBtn').onclick = function(event) {
   startExport();
   return false;
 };
 
+document.getElementById('pauseExportBtn').onclick = function(event) {
+  pauseExport();
+  return false;
+};
+
 const startExport = function() {
-  const msg = {
+  
+  const msg = _pausedExportMsg || {
     actionType: MSGTYPE.TODB.EXPORT_BACKUP,
     exportTimeMs: Date.now()
   };
 
+  _exportPauseRequested = false;
+
+  document.getElementById('startExportBtn').style.display = 'none';
+  document.getElementById('pauseExportBtn').style.display = 'inline-block';
+
   worker.postMessage(msg);
+}
+
+const pauseExport = function() {
+  _exportPauseRequested = true;
+  document.getElementById('startExportBtn').innerText = 'Resume Export';
+  document.getElementById('startExportBtn').style.display = 'inline-block';
+  document.getElementById('pauseExportBtn').style.display = 'none';
 }
 
 const handleExportedResults = function(payload) {
@@ -808,9 +835,20 @@ const handleExportedResults = function(payload) {
       nextTake: payload.nextTake
     };
 
-    worker.postMessage(msg);
+    if (_exportPauseRequested) {
+      _pausedExportMsg = msg;
+    }
+    else {
+      worker.postMessage(msg);
+    }
   }
   else {
     console.log('download complete');
+    _exportPauseRequested = false;
+    _pausedExportMsg = undefined;
+
+    document.getElementById('startExportBtn').innerText = 'Export Again';
+    document.getElementById('startExportBtn').style.display = 'inline-block';
+    document.getElementById('pauseExportBtn').style.display = 'none';
   }
 }
