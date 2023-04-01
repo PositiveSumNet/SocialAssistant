@@ -785,6 +785,29 @@ const onChooseOwner = function() {
   _lastOwner = getOwnerFromUi();
 }
 
+/************************/
+// Import is via uploadlib
+/************************/
+document.getElementById('startImportBtn').onclick = function(event) {
+  document.getElementById('uploadui').style.display = 'block';
+  document.getElementById('dbui').style.display = 'none';
+  document.getElementById('startImportBtn').style.display = 'none';
+  document.getElementById('stopImportBtn').style.display = 'inline-block';
+  return false;
+};
+
+document.getElementById('stopImportBtn').onclick = function(event) {
+  document.getElementById('uploadui').style.display = 'none';
+  document.getElementById('dbui').style.display = 'flex';
+  document.getElementById('startImportBtn').style.display = 'inline-block';
+  document.getElementById('stopImportBtn').style.display = 'none';
+  return false;
+};
+
+/************************/
+// Export
+/************************/
+
 document.getElementById('startExportBtn').onclick = function(event) {
   startExport();
   return false;

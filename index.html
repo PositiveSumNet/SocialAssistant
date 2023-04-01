@@ -24,8 +24,22 @@
           <span>
             <a href="#" id="startExportBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
             <a href="#" id="pauseExportBtn" role="button" data-toggle='tooltip' title='pause file backup' style="display:none;">Pause Export</a>
+            <span>&nbsp;|&nbsp;</span>
+            <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Import</a>
+            <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
           </span>
         </div>
+      </div>
+      <div id="uploadui" class="row pb-2" style="display:none;">
+        <div id="drop-area">
+          <form class="my-form">
+            <p>Upload multiple files with the file dialog or by dragging and dropping images onto the dashed region</p>
+            <input type="file" id="fileElem" multiple">
+            <label class="button" for="fileElem">Select some files</label>
+          </form>
+          <progress id="upload-progress-bar" max=100 value=0></progress>
+          <div id="upload-gallery" /></div>
+        </div>        
       </div>
       <div id="dbui" class="row pb-2">
         <div id="listFilterSet" class='row'>
@@ -122,6 +136,7 @@
     <script src='lib/shared/appgraphs.js'></script>
     <script src='lib/shared/appschema.js'></script>
     <script src='lib/dbui/renderlib.js'></script>
+    <script src='lib/dbui/uploadlib.js'></script>
     <script src='index.js'></script>
   </body>
 </html>
