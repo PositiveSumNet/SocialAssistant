@@ -63,15 +63,11 @@ const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
   const xferring = document.getElementById('transferringMsg');
-  const filterSet = document.getElementById('listFilterSet');
-  const followList = document.getElementById('followList');
   
-  xferring.innerHTML = 'Copying ' + entries.length + ' pages of data to local database...';
+  xferring.innerHTML = 'Copying ' + entries.length + ' pages to local database...';
   
   if (entries.length > 0) {
-    xferring.style.display = 'block';
-    filterSet.style.display = 'none';
-    followList.style.display = 'none';
+    xferring.style.display = 'inline-block';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -97,8 +93,6 @@ const ensureCopiedToDb = async function() {
   else {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
-    filterSet.style.display = 'flex';
-    followList.style.display = 'flex';
     initialRender();
   }
 }

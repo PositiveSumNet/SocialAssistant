@@ -18,13 +18,15 @@
           <span class="h5 inkfree">Locally Cached Social Database</span>
         </div>
         <div class="col-sm-auto text-right">
-          <a href="#" id="exportBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
+          <span id='transferringMsg' style="display:none;">
+            Copying recent recordings to local database...  | 
+          </span>
+          <span>
+            <a href="#" id="exportBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
+          </span>
         </div>
       </div>
       <div id="dbui" class="row pb-2">
-        <div id='transferringMsg' style="display:none;">
-          Copying recent recordings to local database...
-        </div>
         <div id="listFilterSet" class='row'>
           <div class='pt-2 col-2'>
             <div class='input-group'>
@@ -91,7 +93,7 @@
         <div id="followListProgress" class="progress" style="height:3px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>        
-        <div id='followList' class='row' style='display:none;'>
+        <div id='followList' class='row'>
         <div id='listFollowPivotPicker' class='row pt-2'></div>
         <div class='listMain row' id='followListMain'>
           <div id='paginated-list' aria-live='polite'>
