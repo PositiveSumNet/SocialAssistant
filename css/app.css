@@ -129,3 +129,43 @@ a.canstar:hover i.bi-star-fill {
 .row .row {
   padding-right: 0px;
 }
+
+#drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 20px;
+  width: 480px;
+  margin: 50px auto;
+  padding: 20px;
+}
+
+#drop-area.highlight {
+  border-color: 14416A;
+}
+
+#upload-gallery {
+  margin-top: 10px;
+}
+
+#upload-gallery img {
+  width: 150px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 10px;
+  background: #ccc;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.upload-button:hover {
+  background: #ddd;
+}
+
+#fileElem {
+  display: none;
+}
