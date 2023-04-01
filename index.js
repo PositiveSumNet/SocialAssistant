@@ -63,11 +63,16 @@ const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
   const xferring = document.getElementById('transferringMsg');
+  // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
+  const filterSet = document.getElementById('listFilterSet');
+  const connList = document.getElementById('connList');
   
   xferring.innerHTML = 'Copying ' + entries.length + ' pages to local database...';
   
   if (entries.length > 0) {
     xferring.style.display = 'inline-block';
+    //filterSet.style.display = 'none';
+    //connList.style.display = 'none';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -93,6 +98,8 @@ const ensureCopiedToDb = async function() {
   else {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
+    //filterSet.style.display = 'flex';
+    //connList.style.display = 'flex';
     initialRender();
   }
 }
@@ -198,7 +205,7 @@ const initUi = function(owner, pageType) {
     worker.postMessage(msg);
   }
   
-  txtFollowPivotHandle.value = STR.stripPrefix(owner, '@') || '';
+  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
     networkSearch(owner, pageType);
@@ -281,17 +288,17 @@ const renderPerson = function(person, context) {
 
 const renderMatchedOwners = function(payload) {
   const owners = payload.owners;
-  listFollowPivotPicker.innerHTML = '';
+  listOwnerPivotPicker.innerHTML = '';
   
   if (owners.length === 1 && !_deletingOwner) {
     // exact match; pick it! (after an extra check that the user isn't 
     // trying to delete, in which case auto-complete would be annoying)
-    txtFollowPivotHandle.value = STR.stripPrefix(owners[0].Handle, '@');
+    txtOwnerHandle.value = STR.stripPrefix(owners[0].Handle, '@');
     onChooseOwner();
   }
   else {
     for (i = 0; i < owners.length; i++) {
-      listFollowPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
+      listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
     }
   }
 }
@@ -302,10 +309,10 @@ const renderSuggestedOwner = function(payload) {
     return;
   }
   
-  const value = getUiValue('txtFollowPivotHandle');
+  const value = getUiValue('txtOwnerHandle');
   
   if (!value || value.length === 0) {
-    document.getElementById('txtFollowPivotHandle').value = owner.Handle;
+    document.getElementById('txtOwnerHandle').value = owner.Handle;
     // we're doing a page init and so far it's empty, so let's
     resetPage();
     networkSearch();
@@ -314,12 +321,12 @@ const renderSuggestedOwner = function(payload) {
 
 const getUiValue = function(id) {
   switch (id) {
-    case 'txtFollowPivotHandle':
-      return txtFollowPivotHandle.value;
+    case 'txtOwnerHandle':
+      return txtOwnerHandle.value;
     case 'optFollowDirection':
       return document.getElementById('optFollowers').checked ? 'followers' : 'following';
-    case 'txtFollowSearch':
-      return txtFollowSearch.value;
+    case 'txtConnSearch':
+      return txtConnSearch.value;
     case 'txtPageNum':
       return parseInt(txtPageNum.value);
     case 'chkMutual':
@@ -406,7 +413,7 @@ const confirmMdonServer = function() {
 
 const getOwnerFromUi = function() {
   // trim the '@'
-  let owner = getUiValue('txtFollowPivotHandle');
+  let owner = getUiValue('txtOwnerHandle');
   owner = owner && owner.startsWith('@') ? owner.substring(1) : owner;
   return owner;
 }
@@ -415,7 +422,7 @@ const buildNetworkSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
   const pageSize = SETTINGS.getPageSize();
-  const searchText = getUiValue('txtFollowSearch');
+  const searchText = getUiValue('txtConnSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
@@ -444,7 +451,7 @@ const buildNetworkSearchRequestFromUi = function() {
 }
 
 const showNetworkSearchProgress = function(show) {
-  const elm = document.getElementById('followListProgress');
+  const elm = document.getElementById('connListProgress');
   if (show === true) {
     elm.style.visibility = 'visible';
   }
@@ -600,11 +607,11 @@ const onAddedFollows = function(container) {
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
 
-const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
-const listFollowPivotPicker = document.getElementById('listFollowPivotPicker');
+const txtOwnerHandle = document.getElementById('txtOwnerHandle');
+const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
 const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
-const followSearch = document.getElementById('txtFollowSearch');
+const followSearch = document.getElementById('txtConnSearch');
 const txtPageNum = document.getElementById('txtPageNum');
 const chkMutual = document.getElementById('chkMutual');
 const optWithMdon = document.getElementById('optWithMdon');
@@ -675,25 +682,25 @@ const suggestAccountOwner = function(userInput) {
 // typeahead for account owner
 // w3collective.com/autocomplete-search-javascript/
 const ownerSearch = ES6.debounce((event) => {
-  const userInput = getUiValue('txtFollowPivotHandle');
+  const userInput = getUiValue('txtOwnerHandle');
 
   if (!userInput || userInput.length === 0) {
-    listFollowPivotPicker.innerHTML = '';
+    listOwnerPivotPicker.innerHTML = '';
   }
   
   suggestAccountOwner(userInput);
 }, 250);
-txtFollowPivotHandle.addEventListener('input', ownerSearch);
+txtOwnerHandle.addEventListener('input', ownerSearch);
 
 // auto-populate with a few owners on-focus (if empty)
-txtFollowPivotHandle.onfocus = function () {
+txtOwnerHandle.onfocus = function () {
   const userInput = this.value;
   if (!userInput || userInput.length === 0) {
     suggestAccountOwner(userInput);
   }
 };
 
-txtFollowPivotHandle.addEventListener('keydown', function(event) {
+txtOwnerHandle.addEventListener('keydown', function(event) {
   if (event.key === "Backspace" || event.key === "Delete") {
     _deletingOwner = true;
   }
@@ -749,12 +756,12 @@ document.getElementById('mdonGear').onclick = function(event) {
 };
 
 // choose owner from typeahead results
-listFollowPivotPicker.onclick = function(event) {
+listOwnerPivotPicker.onclick = function(event) {
   const personElm = ES6.findUpClass(event.target, 'person');
   const handleElm = personElm.querySelector('.personLabel > .personHandle');
   let handleText = handleElm.innerText;
   handleText = STR.stripPrefix(handleText, '@');
-  txtFollowPivotHandle.value = handleText;
+  txtOwnerHandle.value = handleText;
   onChooseOwner();
 };
 
@@ -763,7 +770,7 @@ const onChooseOwner = function() {
   // the nbsp values are to be less jarring with width changes
   document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
   document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-  listFollowPivotPicker.innerHTML = "";
+  listOwnerPivotPicker.innerHTML = "";
   resetPage();
   networkSearch();
   _lastOwner = getOwnerFromUi();
@@ -787,7 +794,7 @@ const handleExportedResults = function(payload) {
   // for now, we download to json (later, we could push to user's github etc)
   const result = payload.result;
   const start = result.skip + 1;
-  const end = result.skip + result.take;
+  const end = result.skip + result.rows.length;
   const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
   const json = JSON.stringify(result, null, 2);
   RENDER.saveTextFile(json, fileName);
