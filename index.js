@@ -786,7 +786,8 @@ const onChooseOwner = function() {
 }
 
 /************************/
-// Import is via uploadlib
+// Import 
+// smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
 /************************/
 document.getElementById('startImportBtn').onclick = function(event) {
   document.getElementById('uploadui').style.display = 'block';
@@ -804,6 +805,64 @@ document.getElementById('stopImportBtn').onclick = function(event) {
   return false;
 };
 
+let _dropArea = document.getElementById("drop-area");
+let _fileElem = document.getElementById('fileElem');
+
+// Prevent default drag behaviors
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  _dropArea.addEventListener(eventName, preventDefaults, false)   
+  document.body.addEventListener(eventName, preventDefaults, false)
+});
+
+// Highlight drop area when item is dragged over it
+['dragenter', 'dragover'].forEach(eventName => {
+  _dropArea.addEventListener(eventName, highlightDropArea, false)
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  _dropArea.addEventListener(eventName, unhighlightDropArea, false)
+});
+
+// Handle dropped files
+_dropArea.addEventListener('drop', handleDrop, false);
+
+_fileElem.addEventListener('change', (event) => {
+  handleUploadFiles(event.target.files);
+});
+
+function handleUploadFiles(files) {
+  files = [...files];
+  files.forEach(processUpload);
+}
+
+function highlightDropArea(e) {
+  _dropArea.classList.add('highlightDropArea');
+}
+
+function unhighlightDropArea(e) {
+  _dropArea.classList.remove('active');
+}
+
+function handleDrop(e) {
+  var dt = e.dataTransfer;
+  var files = dt.files;
+
+  handleUploadFiles(files);
+}
+
+// stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
+function processUpload(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    console.log(e.target.result);
+  }
+  reader.readAsText(file);
+}
 /************************/
 // Export
 /************************/
