@@ -91,12 +91,12 @@ a {
   color: #ffffff;
 }
 
-.bg-header a, .fixed-bottom a {
+.bg-header a, .bg-subheader a, .fixed-bottom a {
   color: #ffffff;
 }
 
-.bg-header a:hover, .fixed-bottom a:hover {
-  color: #5991C5;
+.bg-header a:hover, .bg-subheader a:hover, .fixed-bottom a:hover {
+  color: #ffd700;
 }
 
 .row .striped {

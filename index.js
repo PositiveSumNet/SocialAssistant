@@ -164,6 +164,9 @@ worker.onmessage = function ({ data }) {
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       renderNetworkSize(data.payload);
       break;
+    case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
+      handleExportedResults(data.payload);
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
@@ -427,7 +430,7 @@ const buildNetworkSearchRequestFromUi = function() {
   const withUrl = getUiValue('optWithUrl');
   
   const msg = { 
-    actionType: 'networkSearch', 
+    actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
     pageType: pageType,
     networkOwner: owner, 
     searchText: searchText, 
@@ -487,6 +490,14 @@ const requestTotalCount = function() {
   // record knowledge that this count has been requested
   _counterSet.add(key);
   _counters.push({key: key});   // value not set yet; will be when called back
+}
+
+const startExport = function() {
+  const msg = {
+    actionType: MSGTYPE.TODB.EXPORT_BACKUP
+  };
+
+  worker.postMessage(msg);
 }
 
 const networkSearch = function() {
@@ -770,4 +781,14 @@ const onChooseOwner = function() {
   resetPage();
   networkSearch();
   _lastOwner = getOwnerFromUi();
+}
+
+document.getElementById('exportBtn').onclick = function(event) {
+  startExport();
+  return false;
+};
+
+const handleExportedResults = function(payload) {
+  // for now, we download to json (later, we could push to user's github etc)
+  
 }

@@ -43,6 +43,26 @@ self
     }
   });
 
+const _initialEntities = [
+  APPSCHEMA.SocialConnHasFollower,
+  APPSCHEMA.SocialConnIsFollowing,
+  APPSCHEMA.SocialConnection,
+  APPSCHEMA.SocialProfileDisplayName,
+  APPSCHEMA.SocialProfileDescription,
+  APPSCHEMA.SocialProfileImgSourceUrl,
+  APPSCHEMA.SocialProfileImgBinary,
+  APPSCHEMA.SocialProfileLinkMastodonAccount,
+  APPSCHEMA.SocialProfileLinkExternalUrl,
+  APPSCHEMA.SocialProfileLinkEmailAddress,
+  APPSCHEMA.SocialListMember
+];
+
+const getAllEntities = function() {
+  const arr = [];
+  // as we add more entities beyond the initial set, this array will be a superset
+  arr.push(..._initialEntities);
+  return arr;
+}
 
 const getMigrationScripts = function() {
   const scripts = [];
@@ -54,24 +74,12 @@ const getMigrationScripts = function() {
   scripts.push(DBORM.MIGRATION.newScript(sql2, 2));
   
   // create tables for the initial entities
-  const initialEntities = [
-    APPSCHEMA.SocialConnHasFollower,
-    APPSCHEMA.SocialConnIsFollowing,
-    APPSCHEMA.SocialConnection,
-    APPSCHEMA.SocialProfileDisplayName,
-    APPSCHEMA.SocialProfileDescription,
-    APPSCHEMA.SocialProfileImgSourceUrl,
-    APPSCHEMA.SocialProfileImgBinary,
-    APPSCHEMA.SocialProfileLinkMastodonAccount,
-    APPSCHEMA.SocialProfileLinkExternalUrl,
-    APPSCHEMA.SocialProfileLinkEmailAddress,
-    APPSCHEMA.SocialListMember
-  ];
   
-  const sql3 = DBORM.MIGRATION.writeEnsureEntityTablesStep(initialEntities, 3);
+  const sql3 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_initialEntities, 3);
   scripts.push(DBORM.MIGRATION.newScript(sql3, 3));
   
   // if we need to create ad-hoc sql scripts, they can come next (script 4 etc.)
+  // and be sure to update _allEntities accordingly
   
   return scripts;
 }
@@ -102,6 +110,9 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.SET_LIST_MEMBER:
       DBORM.SAVING.setListMember(evt.data);
       break;
+    case MSGTYPE.TODB.EXPORT_BACKUP:
+      DBORM.EXPORT.exportBackup(evt.data, getAllEntities());
+      break;
     default:
       break;
   }
@@ -118,4 +129,3 @@ const getActionType = function(evt) {
     return undefined;
   }
 }
-
