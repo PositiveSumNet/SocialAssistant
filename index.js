@@ -492,14 +492,6 @@ const requestTotalCount = function() {
   _counters.push({key: key});   // value not set yet; will be when called back
 }
 
-const startExport = function() {
-  const msg = {
-    actionType: MSGTYPE.TODB.EXPORT_BACKUP
-  };
-
-  worker.postMessage(msg);
-}
-
 const networkSearch = function() {
   const msg = buildNetworkSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
@@ -788,7 +780,36 @@ document.getElementById('exportBtn').onclick = function(event) {
   return false;
 };
 
+const startExport = function() {
+  const msg = {
+    actionType: MSGTYPE.TODB.EXPORT_BACKUP,
+    exportTimeMs: Date.now()
+  };
+
+  worker.postMessage(msg);
+}
+
 const handleExportedResults = function(payload) {
   // for now, we download to json (later, we could push to user's github etc)
+  const result = payload.result;
+  const start = result.skip + 1;
+  const end = result.skip + result.take;
+  const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
+  const json = JSON.stringify(result, null, 2);
+  RENDER.saveTextFile(json, fileName);
   
+  // kick off next page if appropriate
+  if (!payload.done) {
+    const msg = {
+      actionType: MSGTYPE.TODB.EXPORT_BACKUP,
+      nextEntity: payload.nextEntity,
+      nextSkip: payload.nextSkip,
+      nextTake: payload.nextTake
+    };
+
+    worker.postMessage(msg);
+  }
+  else {
+    console.log('download complete');
+  }
 }
