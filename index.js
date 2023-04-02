@@ -859,6 +859,8 @@ function handleDrop(e) {
 function processUpload(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
+    const uploadedCntElem = document.getElementById('uploadedCnt');
+    uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
     console.log(e.target.result);
   }
   reader.readAsText(file);
