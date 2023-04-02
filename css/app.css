@@ -173,3 +173,18 @@ a.canstar:hover i.bi-star-fill {
 #fileElem {
   display: none;
 }
+
+#queryOptions td {
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: top;
+}
+
+#queryOptions label {
+  white-space:nowrap!important;
+}
+
+#paging label, #paging input, #paging a {
+  white-space:nowrap!important;
+  display: inline-block;
+}

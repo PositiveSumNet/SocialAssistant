@@ -64,46 +64,60 @@
             <input id='txtConnSearch' type='text' class='form-control' placeholder='search...' >
           </div>
           <div class='pt-2 col-2'>
-            <div class='row input-group'>
-              <label for='txtPageNum' class='text-muted input-group-text col-sm-auto'>pg</label>
-              <input id='txtPageNum' type='text' style='min-width:50px;border-right:none;' class='form-control col-3' value='1' >
-              <a class='form-control col-2' data-toggle='tooltip' title='prior page' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
-              <a class='form-control col-2' data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
-              <a class='form-control col-2' data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
+            <div class='input-group'>
+              <label for='txtPageNum' class='text-muted input-group-text'>pg</label>
+              <input id='txtPageNum' type='text' style='min-width:50px;border-right:none;' class='form-control' value='1' >
+              <a class='form-control' data-toggle='tooltip' title='prior page' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
+              <a class='form-control' data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
+              <a class='form-control' data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
             </div>
           </div>
           <div id='queryOptions' class='col-4'>
-            <div class='row'>
-              <div class="form-check col">
-                <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
-                <label class="form-check-label" for="chkMutual">Mutual follow</label>
-              </div>
-              <div class="form-check col">
-                <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
-                <label class="form-check-label" for="optWithMdon">
-                  <span>Mastodon</span>
-                  <a data-toggle='tooltip' title='set page size' href='#' id='mdonGear'><i class="bi-gear"></i></a>
-                </label>
-              </div>
-              <div class="form-check form-check col">
-                <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
-                <label class="form-check-label" for="optWithEmail">w/ Email</label>
-              </div>
-            </div>
-            <div class='row'>
-              <div class="form-check col">
-                <input class="form-check-input" type="checkbox" name="chkFavorited" id="chkFavorited">
-                <label class="form-check-label" for="chkFavorited">Favorite</label>
-              </div>
-              <div class="form-check form-check col">
-                <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
-                <label class="form-check-label" for="optWithUrl">w/ Url</label>
-              </div>
-              <div class="form-check form-check col">
-                <input class="form-check-input" type="radio" name="optWith" id="optClear">
-                <label class="form-check-label" for="optClear">w/ Any</label>
-              </div>
-            </div>
+            <table>
+              <tr>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
+                    <label class="form-check-label" for="chkMutual">Mutual follow</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
+                    <label class="form-check-label" for="optWithMdon">
+                      <span>Mastodon</span>
+                      <a data-toggle='tooltip' title='set page size' href='#' id='mdonGear'><i class="bi-gear"></i></a>
+                    </label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
+                    <label class="form-check-label" for="optWithEmail">w/ Email</label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="chkFavorited" id="chkFavorited">
+                    <label class="form-check-label" for="chkFavorited">Favorite</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
+                    <label class="form-check-label" for="optWithUrl">w/ Url</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optClear">
+                    <label class="form-check-label" for="optClear">w/ Any</label>
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
         </div>
         <div id="connListProgress" class="progress" style="height:3px;">
