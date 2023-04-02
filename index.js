@@ -412,7 +412,7 @@ const confirmMdonServer = function() {
   const input = prompt("For the best experience, input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
   
   if (input != null) {
-    localStorage.setItem(SETTINGS.MDON_SERVER, mdonServer);
+    localStorage.setItem(SETTINGS.MDON_SERVER, input);
   }
   
   // even if they cancelled, we'll avoid showing again (they can click the gear if desired)
