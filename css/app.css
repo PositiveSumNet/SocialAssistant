@@ -143,7 +143,7 @@ a.canstar:hover i.bi-star-fill {
 }
 
 #drop-area.highlight {
-  border-color: 14416A;
+  border-color: #1861ac;
 }
 
 #upload-gallery {
@@ -184,7 +184,33 @@ a.canstar:hover i.bi-star-fill {
   white-space:nowrap!important;
 }
 
+#paging input {
+  border: none;
+}
+
 #paging label, #paging input, #paging a {
   white-space:nowrap!important;
   display: inline-block;
+  align-items: center;
+  text-align: center;
+  border-top: 1px solid #ced4da;
+  border-bottom: 1px solid #ced4da;
+  padding: .375rem .75rem;
+  margin-left: -4px;
+}
+
+#paging a:hover {
+  color: #216CB1;
+}
+
+#pageGear {
+  border-right: 1px solid #ced4da;
+}
+
+#paging input {
+  width: 50px;
+}
+
+#paging label {
+  background-color: #e9ecef;
 }
