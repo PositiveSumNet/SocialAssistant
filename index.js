@@ -177,6 +177,9 @@ worker.onmessage = function ({ data }) {
     case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
       handleExportedResults(data.payload);
       break;
+    case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
+      onProcessedSyncBatch();
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
@@ -798,13 +801,15 @@ document.getElementById('startImportBtn').onclick = function(event) {
   return false;
 };
 
-document.getElementById('stopImportBtn').onclick = function(event) {
-  document.getElementById('uploadui').style.display = 'none';
-  document.getElementById('dbui').style.display = 'flex';
-  document.getElementById('startImportBtn').style.display = 'inline-block';
-  document.getElementById('stopImportBtn').style.display = 'none';
-  return false;
-};
+['stopImportBtn', 'uploadDone'].forEach(function(id) {
+  document.getElementById(id).onclick = function(event) {
+    document.getElementById('uploadui').style.display = 'none';
+    document.getElementById('dbui').style.display = 'flex';
+    document.getElementById('startImportBtn').style.display = 'inline-block';
+    document.getElementById('stopImportBtn').style.display = 'none';
+    return false;
+  };  
+});
 
 let _dropArea = document.getElementById("drop-area");
 let _fileElem = document.getElementById('fileElem');
@@ -869,6 +874,12 @@ function processUpload(file) {
   }
   reader.readAsText(file);
 }
+
+function onProcessedSyncBatch() {
+  const processedCntElem = document.getElementById('syncImportProcessedCnt');
+  processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
+}
+
 /************************/
 // Export
 /************************/
