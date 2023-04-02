@@ -115,7 +115,7 @@ onmessage = (evt) => {
       DBORM.EXPORT.exportBackup(evt.data, getAllEntities());
       break;
     case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
-      DBORM.IMPORT.receiveSyncableImport(evt.data);
+      DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
     default:
       break;
   }
