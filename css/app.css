@@ -203,6 +203,10 @@ a.canstar:hover i.bi-star-fill {
   color: #216CB1;
 }
 
+#paging label {
+  border-left: 1px solid #ced4da;
+}
+
 #pageGear {
   border-right: 1px solid #ced4da;
 }
