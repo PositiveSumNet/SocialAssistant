@@ -20,6 +20,7 @@ importScripts('/lib/shared/strlib.js');
 importScripts('/lib/shared/appgraphs.js');
 importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
+importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
 importScripts('/lib/worker/connsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
@@ -113,6 +114,8 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.EXPORT_BACKUP:
       DBORM.EXPORT.exportBackup(evt.data, getAllEntities());
       break;
+    case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
+      DBORM.IMPORT.receiveSyncableImport(evt.data);
     default:
       break;
   }

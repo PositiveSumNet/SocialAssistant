@@ -249,12 +249,13 @@ const renderPerson = function(person, context) {
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
   
   let img = '';
-  if (person.Img64Url) {
+  if (person.Img64Url && person.Img64Url.length > 50) {
     img = `<img ${imgStyling} src='data:image/${imgType};base64,${person.Img64Url}'/>`;
   }
-  else if (person.ImgCdnUrl) {
-    img = `<img ${imgStyling} src='${person.ImgCdnUrl}'/>`;
-  }
+// blocked - ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep so commenting out
+//  else if (person.ImgCdnUrl && person.ImgCdnUrl.length > 0) {
+//    img = `<img ${imgStyling} src='${person.ImgCdnUrl}'/>`;
+//  }
   else {
     img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
   }
@@ -861,7 +862,10 @@ function processUpload(file) {
   reader.onload = function(e) {
     const uploadedCntElem = document.getElementById('uploadedCnt');
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
-    console.log(e.target.result);
+    worker.postMessage({
+      actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
+      json: e.target.result
+    });
   }
   reader.readAsText(file);
 }
@@ -927,7 +931,6 @@ const handleExportedResults = function(payload) {
     }
   }
   else {
-    console.log('download complete');
     _exportPauseRequested = false;
     _pausedExportMsg = undefined;
 
