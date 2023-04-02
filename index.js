@@ -801,15 +801,25 @@ document.getElementById('startImportBtn').onclick = function(event) {
   return false;
 };
 
-['stopImportBtn', 'uploadDone'].forEach(function(id) {
-  document.getElementById(id).onclick = function(event) {
-    document.getElementById('uploadui').style.display = 'none';
-    document.getElementById('dbui').style.display = 'flex';
-    document.getElementById('startImportBtn').style.display = 'inline-block';
-    document.getElementById('stopImportBtn').style.display = 'none';
-    return false;
-  };  
-});
+const finishImporting = function() {
+  document.getElementById('uploadui').style.display = 'none';
+  document.getElementById('dbui').style.display = 'flex';
+  document.getElementById('startImportBtn').style.display = 'inline-block';
+  document.getElementById('stopImportBtn').style.display = 'none';
+}
+
+document.getElementById('stopImportBtn').onclick = function(event) {
+  finishImporting();
+  return false;
+};  
+
+document.getElementById('uploadDone').onclick = function(event) {
+  finishImporting();
+  initialRender();
+  networkSearch();
+  return false;
+};  
+
 
 let _dropArea = document.getElementById("drop-area");
 let _fileElem = document.getElementById('fileElem');
