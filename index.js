@@ -748,6 +748,9 @@ document.getElementById('pageGear').onclick = function(event) {
     if (isNaN(intVal)) {
       alert("Invalid input; page size unchanged");
     }
+    else if (intVal > 100) {
+      alert("Max suggested page size is 100; leaving unchanged");
+    }
     else {
       localStorage.setItem('pageSize', intVal);
       resetPage();
@@ -798,6 +801,7 @@ document.getElementById('startImportBtn').onclick = function(event) {
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('startImportBtn').style.display = 'none';
   document.getElementById('stopImportBtn').style.display = 'inline-block';
+  updateUploadDoneBtnText();
   return false;
 };
 
@@ -807,19 +811,17 @@ const finishImporting = function() {
   document.getElementById('startImportBtn').style.display = 'inline-block';
   document.getElementById('stopImportBtn').style.display = 'none';
 }
-
+  
+// a full page refresh is in order (helps avoid disk log + redraws the full page)
 document.getElementById('stopImportBtn').onclick = function(event) {
-  finishImporting();
+  location.reload();
   return false;
 };  
-
 document.getElementById('uploadDone').onclick = function(event) {
-  finishImporting();
-  initialRender();
-  networkSearch();
+  // a full page refresh is in order
+  location.reload();
   return false;
 };  
-
 
 let _dropArea = document.getElementById("drop-area");
 let _fileElem = document.getElementById('fileElem');
@@ -877,6 +879,7 @@ function processUpload(file) {
   reader.onload = function(e) {
     const uploadedCntElem = document.getElementById('uploadedCnt');
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
+    updateUploadDoneBtnText();
     worker.postMessage({
       actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
       json: e.target.result
@@ -888,6 +891,20 @@ function processUpload(file) {
 function onProcessedSyncBatch() {
   const processedCntElem = document.getElementById('syncImportProcessedCnt');
   processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
+  updateUploadDoneBtnText();
+}
+
+function updateUploadDoneBtnText() {
+  const uploadedCnt = parseInt(document.getElementById('uploadedCnt').innerText);
+  const processedCnt = parseInt(document.getElementById('syncImportProcessedCnt').innerText);
+  const btnElem = document.getElementById('uploadDone');
+
+  if (uploadedCnt > 0 && processedCnt === uploadedCnt) {
+    btnElem.innerText = 'Done!';
+  }
+  else {
+    btnElem.innerText = 'Close';
+  }
 }
 
 /************************/
