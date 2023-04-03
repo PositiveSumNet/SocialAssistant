@@ -80,10 +80,8 @@ a {
 }
 
 .bg-subheader {
+  margin-bottom: 0.5rem;
   padding: 1rem;
-}
-
-.bg-subheader {
   background-color: #216CB1;
   color: #ffffff;
 }
@@ -93,12 +91,12 @@ a {
   color: #ffffff;
 }
 
-.bg-header a, .fixed-bottom a {
+.bg-header a, .bg-subheader a, .fixed-bottom a {
   color: #ffffff;
 }
 
-.bg-header a:hover, .fixed-bottom a:hover {
-  color: #5991C5;
+.bg-header a:hover, .bg-subheader a:hover, .fixed-bottom a:hover {
+  color: #ffd700;
 }
 
 .row .striped {
@@ -126,4 +124,97 @@ a.canstar i.bi-star-fill {
 
 a.canstar:hover i.bi-star-fill {
   color: #ced4da;
+}
+
+.row .row {
+  padding-right: 0px;
+}
+
+#uploadui {
+  width: 480px;
+  margin: 50px auto;
+  padding: 20px;
+}
+
+#drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 20px;
+  padding: 20px;
+}
+
+#drop-area.highlight {
+  border-color: #1861ac;
+}
+
+#upload-gallery {
+  margin-top: 10px;
+}
+
+#upload-gallery img {
+  width: 150px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 10px;
+  background: #ccc;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.upload-button:hover {
+  background: #ddd;
+}
+
+#fileElem {
+  display: none;
+}
+
+#queryOptions td {
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: top;
+}
+
+#queryOptions label {
+  white-space:nowrap!important;
+}
+
+#paging input {
+  border: none;
+}
+
+#paging label, #paging input, #paging a {
+  white-space:nowrap!important;
+  display: inline-block;
+  align-items: center;
+  text-align: center;
+  border-top: 1px solid #ced4da;
+  border-bottom: 1px solid #ced4da;
+  padding: .375rem .75rem;
+  margin-left: -4px;
+}
+
+#paging a:hover {
+  color: #216CB1;
+}
+
+#paging label {
+  border-left: 1px solid #ced4da;
+}
+
+#pageGear {
+  border-right: 1px solid #ced4da;
+}
+
+#paging input {
+  width: 50px;
+}
+
+#paging label {
+  background-color: #e9ecef;
 }

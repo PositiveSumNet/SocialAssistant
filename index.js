@@ -13,6 +13,10 @@ var _lastOwner = '';
 var _counterSet = new Set();
 var _counters = [];
 
+// for export
+var _exportPauseRequested;
+var _pausedExportMsg;
+
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -63,13 +67,18 @@ const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
   const xferring = document.getElementById('transferringMsg');
-  const followList = document.getElementById('followList');
+  // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
+  const filterSet = document.getElementById('listFilterSet');
+  const connList = document.getElementById('connList');
   
-  xferring.innerHTML = 'Copying ' + entries.length + ' pages of data to local database...';
-  
+  // see note at bottom of method
+  initialRender();
+
+  xferring.innerHTML = 'Copying ' + entries.length + ' pages to local database...';
   if (entries.length > 0) {
-    xferring.style.display = 'block';
-    followList.style.display = 'none';
+    xferring.style.display = 'inline-block';
+    //filterSet.style.display = 'none';
+    //connList.style.display = 'none';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -95,8 +104,12 @@ const ensureCopiedToDb = async function() {
   else {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
-    followList.style.display = 'block';
-    initialRender();
+    //filterSet.style.display = 'flex';
+    //connList.style.display = 'flex';
+
+    // We had this only happening after all transfers. 
+    // But it seems like we can safely do this up front, so commenting out here.
+    //initialRender();
   }
 }
 
@@ -161,6 +174,12 @@ worker.onmessage = function ({ data }) {
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       renderNetworkSize(data.payload);
       break;
+    case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
+      handleExportedResults(data.payload);
+      break;
+    case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
+      onProcessedSyncBatch();
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
@@ -198,7 +217,7 @@ const initUi = function(owner, pageType) {
     worker.postMessage(msg);
   }
   
-  txtFollowPivotHandle.value = STR.stripPrefix(owner, '@') || '';
+  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
     networkSearch(owner, pageType);
@@ -233,12 +252,13 @@ const renderPerson = function(person, context) {
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
   
   let img = '';
-  if (person.Img64Url) {
+  if (person.Img64Url && person.Img64Url.length > 50) {
     img = `<img ${imgStyling} src='data:image/${imgType};base64,${person.Img64Url}'/>`;
   }
-  else if (person.ImgCdnUrl) {
-    img = `<img ${imgStyling} src='${person.ImgCdnUrl}'/>`;
-  }
+// blocked - ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep so commenting out
+//  else if (person.ImgCdnUrl && person.ImgCdnUrl.length > 0) {
+//    img = `<img ${imgStyling} src='${person.ImgCdnUrl}'/>`;
+//  }
   else {
     img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
   }
@@ -281,17 +301,17 @@ const renderPerson = function(person, context) {
 
 const renderMatchedOwners = function(payload) {
   const owners = payload.owners;
-  listFollowPivotPicker.innerHTML = '';
+  listOwnerPivotPicker.innerHTML = '';
   
   if (owners.length === 1 && !_deletingOwner) {
     // exact match; pick it! (after an extra check that the user isn't 
     // trying to delete, in which case auto-complete would be annoying)
-    txtFollowPivotHandle.value = STR.stripPrefix(owners[0].Handle, '@');
+    txtOwnerHandle.value = STR.stripPrefix(owners[0].Handle, '@');
     onChooseOwner();
   }
   else {
     for (i = 0; i < owners.length; i++) {
-      listFollowPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
+      listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
     }
   }
 }
@@ -302,10 +322,10 @@ const renderSuggestedOwner = function(payload) {
     return;
   }
   
-  const value = getUiValue('txtFollowPivotHandle');
+  const value = getUiValue('txtOwnerHandle');
   
   if (!value || value.length === 0) {
-    document.getElementById('txtFollowPivotHandle').value = owner.Handle;
+    document.getElementById('txtOwnerHandle').value = owner.Handle;
     // we're doing a page init and so far it's empty, so let's
     resetPage();
     networkSearch();
@@ -314,12 +334,12 @@ const renderSuggestedOwner = function(payload) {
 
 const getUiValue = function(id) {
   switch (id) {
-    case 'txtFollowPivotHandle':
-      return txtFollowPivotHandle.value;
+    case 'txtOwnerHandle':
+      return txtOwnerHandle.value;
     case 'optFollowDirection':
       return document.getElementById('optFollowers').checked ? 'followers' : 'following';
-    case 'txtFollowSearch':
-      return txtFollowSearch.value;
+    case 'txtConnSearch':
+      return txtConnSearch.value;
     case 'txtPageNum':
       return parseInt(txtPageNum.value);
     case 'chkMutual':
@@ -406,7 +426,7 @@ const confirmMdonServer = function() {
 
 const getOwnerFromUi = function() {
   // trim the '@'
-  let owner = getUiValue('txtFollowPivotHandle');
+  let owner = getUiValue('txtOwnerHandle');
   owner = owner && owner.startsWith('@') ? owner.substring(1) : owner;
   return owner;
 }
@@ -415,7 +435,7 @@ const buildNetworkSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
   const pageSize = SETTINGS.getPageSize();
-  const searchText = getUiValue('txtFollowSearch');
+  const searchText = getUiValue('txtConnSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
@@ -424,7 +444,7 @@ const buildNetworkSearchRequestFromUi = function() {
   const withUrl = getUiValue('optWithUrl');
   
   const msg = { 
-    actionType: 'networkSearch', 
+    actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
     pageType: pageType,
     networkOwner: owner, 
     searchText: searchText, 
@@ -444,7 +464,7 @@ const buildNetworkSearchRequestFromUi = function() {
 }
 
 const showNetworkSearchProgress = function(show) {
-  const elm = document.getElementById('followListProgress');
+  const elm = document.getElementById('connListProgress');
   if (show === true) {
     elm.style.visibility = 'visible';
   }
@@ -600,11 +620,11 @@ const onAddedFollows = function(container) {
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
 
-const txtFollowPivotHandle = document.getElementById('txtFollowPivotHandle');
-const listFollowPivotPicker = document.getElementById('listFollowPivotPicker');
+const txtOwnerHandle = document.getElementById('txtOwnerHandle');
+const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
 const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
-const followSearch = document.getElementById('txtFollowSearch');
+const followSearch = document.getElementById('txtConnSearch');
 const txtPageNum = document.getElementById('txtPageNum');
 const chkMutual = document.getElementById('chkMutual');
 const optWithMdon = document.getElementById('optWithMdon');
@@ -675,25 +695,25 @@ const suggestAccountOwner = function(userInput) {
 // typeahead for account owner
 // w3collective.com/autocomplete-search-javascript/
 const ownerSearch = ES6.debounce((event) => {
-  const userInput = getUiValue('txtFollowPivotHandle');
+  const userInput = getUiValue('txtOwnerHandle');
 
   if (!userInput || userInput.length === 0) {
-    listFollowPivotPicker.innerHTML = '';
+    listOwnerPivotPicker.innerHTML = '';
   }
   
   suggestAccountOwner(userInput);
 }, 250);
-txtFollowPivotHandle.addEventListener('input', ownerSearch);
+txtOwnerHandle.addEventListener('input', ownerSearch);
 
 // auto-populate with a few owners on-focus (if empty)
-txtFollowPivotHandle.onfocus = function () {
+txtOwnerHandle.onfocus = function () {
   const userInput = this.value;
   if (!userInput || userInput.length === 0) {
     suggestAccountOwner(userInput);
   }
 };
 
-txtFollowPivotHandle.addEventListener('keydown', function(event) {
+txtOwnerHandle.addEventListener('keydown', function(event) {
   if (event.key === "Backspace" || event.key === "Delete") {
     _deletingOwner = true;
   }
@@ -728,6 +748,9 @@ document.getElementById('pageGear').onclick = function(event) {
     if (isNaN(intVal)) {
       alert("Invalid input; page size unchanged");
     }
+    else if (intVal > 100) {
+      alert("Max suggested page size is 100; leaving unchanged");
+    }
     else {
       localStorage.setItem('pageSize', intVal);
       resetPage();
@@ -749,12 +772,12 @@ document.getElementById('mdonGear').onclick = function(event) {
 };
 
 // choose owner from typeahead results
-listFollowPivotPicker.onclick = function(event) {
+listOwnerPivotPicker.onclick = function(event) {
   const personElm = ES6.findUpClass(event.target, 'person');
   const handleElm = personElm.querySelector('.personLabel > .personHandle');
   let handleText = handleElm.innerText;
   handleText = STR.stripPrefix(handleText, '@');
-  txtFollowPivotHandle.value = handleText;
+  txtOwnerHandle.value = handleText;
   onChooseOwner();
 };
 
@@ -763,8 +786,194 @@ const onChooseOwner = function() {
   // the nbsp values are to be less jarring with width changes
   document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
   document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-  listFollowPivotPicker.innerHTML = "";
+  listOwnerPivotPicker.innerHTML = "";
   resetPage();
   networkSearch();
   _lastOwner = getOwnerFromUi();
+}
+
+/************************/
+// Import 
+// smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
+/************************/
+document.getElementById('startImportBtn').onclick = function(event) {
+  document.getElementById('uploadui').style.display = 'block';
+  document.getElementById('dbui').style.display = 'none';
+  document.getElementById('startImportBtn').style.display = 'none';
+  document.getElementById('stopImportBtn').style.display = 'inline-block';
+  updateUploadDoneBtnText();
+  return false;
+};
+
+const finishImporting = function() {
+  document.getElementById('uploadui').style.display = 'none';
+  document.getElementById('dbui').style.display = 'flex';
+  document.getElementById('startImportBtn').style.display = 'inline-block';
+  document.getElementById('stopImportBtn').style.display = 'none';
+}
+  
+// a full page refresh is in order (helps avoid disk log + redraws the full page)
+document.getElementById('stopImportBtn').onclick = function(event) {
+  location.reload();
+  return false;
+};  
+document.getElementById('uploadDone').onclick = function(event) {
+  // a full page refresh is in order
+  location.reload();
+  return false;
+};  
+
+let _dropArea = document.getElementById("drop-area");
+let _fileElem = document.getElementById('fileElem');
+
+// Prevent default drag behaviors
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  _dropArea.addEventListener(eventName, preventDefaults, false)   
+  document.body.addEventListener(eventName, preventDefaults, false)
+});
+
+// Highlight drop area when item is dragged over it
+['dragenter', 'dragover'].forEach(eventName => {
+  _dropArea.addEventListener(eventName, highlightDropArea, false)
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  _dropArea.addEventListener(eventName, unhighlightDropArea, false)
+});
+
+// Handle dropped files
+_dropArea.addEventListener('drop', handleDrop, false);
+
+_fileElem.addEventListener('change', (event) => {
+  handleUploadFiles(event.target.files);
+});
+
+function handleUploadFiles(files) {
+  files = [...files];
+  files.forEach(processUpload);
+}
+
+function highlightDropArea(e) {
+  _dropArea.classList.add('highlightDropArea');
+}
+
+function unhighlightDropArea(e) {
+  _dropArea.classList.remove('active');
+}
+
+function handleDrop(e) {
+  var dt = e.dataTransfer;
+  var files = dt.files;
+
+  handleUploadFiles(files);
+}
+
+// stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
+function processUpload(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const uploadedCntElem = document.getElementById('uploadedCnt');
+    uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
+    updateUploadDoneBtnText();
+    worker.postMessage({
+      actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
+      json: e.target.result
+    });
+  }
+  reader.readAsText(file);
+}
+
+function onProcessedSyncBatch() {
+  const processedCntElem = document.getElementById('syncImportProcessedCnt');
+  processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
+  updateUploadDoneBtnText();
+}
+
+function updateUploadDoneBtnText() {
+  const uploadedCnt = parseInt(document.getElementById('uploadedCnt').innerText);
+  const processedCnt = parseInt(document.getElementById('syncImportProcessedCnt').innerText);
+  const btnElem = document.getElementById('uploadDone');
+
+  if (uploadedCnt > 0 && processedCnt === uploadedCnt) {
+    btnElem.innerText = 'Done!';
+  }
+  else {
+    btnElem.innerText = 'Close';
+  }
+}
+
+/************************/
+// Export
+/************************/
+
+document.getElementById('startExportBtn').onclick = function(event) {
+  startExport();
+  return false;
+};
+
+document.getElementById('pauseExportBtn').onclick = function(event) {
+  pauseExport();
+  return false;
+};
+
+const startExport = function() {
+  
+  const msg = _pausedExportMsg || {
+    actionType: MSGTYPE.TODB.EXPORT_BACKUP,
+    exportTimeMs: Date.now()
+  };
+
+  _exportPauseRequested = false;
+
+  document.getElementById('startExportBtn').style.display = 'none';
+  document.getElementById('pauseExportBtn').style.display = 'inline-block';
+
+  worker.postMessage(msg);
+}
+
+const pauseExport = function() {
+  _exportPauseRequested = true;
+  document.getElementById('startExportBtn').innerText = 'Resume Export';
+  document.getElementById('startExportBtn').style.display = 'inline-block';
+  document.getElementById('pauseExportBtn').style.display = 'none';
+}
+
+const handleExportedResults = function(payload) {
+  // for now, we download to json (later, we could push to user's github etc)
+  const result = payload.result;
+  const start = result.skip + 1;
+  const end = result.skip + result.rows.length;
+  const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
+  const json = JSON.stringify(result, null, 2);
+  RENDER.saveTextFile(json, fileName);
+  
+  // kick off next page if appropriate
+  if (!payload.done) {
+    const msg = {
+      actionType: MSGTYPE.TODB.EXPORT_BACKUP,
+      nextEntity: payload.nextEntity,
+      nextSkip: payload.nextSkip,
+      nextTake: payload.nextTake
+    };
+
+    if (_exportPauseRequested) {
+      _pausedExportMsg = msg;
+    }
+    else {
+      worker.postMessage(msg);
+    }
+  }
+  else {
+    _exportPauseRequested = false;
+    _pausedExportMsg = undefined;
+
+    document.getElementById('startExportBtn').innerText = 'Export Again';
+    document.getElementById('startExportBtn').style.display = 'inline-block';
+    document.getElementById('pauseExportBtn').style.display = 'none';
+  }
 }

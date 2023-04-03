@@ -1,92 +1,133 @@
 <!DOCTYPE html>
 <html lang='en'>
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
-    <link rel='shortcut icon' href='data:image/x-icon;,' type='image/x-icon' />
+    <meta charset="utf-8" >
     <title>Whosum Social Assistant</title>
-    <link href='css/bootstrap/bootstrap.min.css' rel='stylesheet' />
-    <link href='css/bootstrap/flags.css' rel='stylesheet' />
-    <link href='css/app.css' rel='stylesheet' />
-    <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' />
+    <link href="/images/favicon.ico" rel="icon" type="image/x-icon" >
+    <link href='css/bootstrap/bootstrap.min.css' rel='stylesheet' >
+    <link href='css/bootstrap/flags.css' rel='stylesheet' >
+    <link href='css/app.css' rel='stylesheet' >
+    <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' >
   </head>
   <body>
-    <div class='main'>
-      <h1 class="bg-header inkfree"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></h1>
-      <h5 class="bg-subheader inkfree">Locally Cached Social Database</h5>
-      <div id="dbui" class="pb-2 ps-4 pe-4">
-        <div id='transferringMsg' style="display:none;">Copying recent recordings to local database...</div>
-          <div class='listHeader row'>
-            <div class='listPivot pt-2 col-2'>
-              <div class='input-group'>
-                <label for='txtFollowPivotHandle' class='text-muted input-group-text'>@</label>
-                <input id='txtFollowPivotHandle' type='text' placeholder='account' class='form-control' />
-              </div>
-            </div>
-            <div id='followDirection' class='col-sm-auto'>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing">
-                <label class="form-check-label" id="optFollowingLabel" for="optFollowing">following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
-                <label class="form-check-label" id="optFollowersLabel" for="optFollowers">followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-              </div>
-            </div>
-            <div class='pt-2 col-2'>
-              <input id='txtFollowSearch' type='text' class='form-control' placeholder='search...' />
-            </div>
-            <div class='pt-2 col-2 container'>
-              <div class='row input-group'>
-                <label for='txtPageNum' class='text-muted input-group-text col-sm-auto'>pg</label>
-                <input id='txtPageNum' type='text' style='min-width:50px;border-right:none;' class='form-control col-3' value='1' />
-                <a class='form-control col-2' data-toggle='tooltip' title='prior page' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
-                <a class='form-control col-2' data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
-                <a class='form-control col-2' data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
-              </div>
-            </div>
-            <div id='queryOptions' class='col-4 container'>
-              <div class='row'>
-                <div class="form-check col">
-                  <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
-                  <label class="form-check-label" for="chkMutual">Mutual follow</label>
-                </div>
-                <div class="form-check col">
-                  <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
-                  <label class="form-check-label" for="optWithMdon">
-                    <span>w/ Mastodon</span>
-                    <a data-toggle='tooltip' title='set page size' href='#' id='mdonGear'><i class="bi-gear"></i></a>
-                  </label>
-                </div>
-                <div class="form-check form-check col">
-                  <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
-                  <label class="form-check-label" for="optWithEmail">w/ Email</label>
-                </div>
-              </div>
-              <div class='row'>
-                <div class="form-check col">
-                  <input class="form-check-input" type="checkbox" name="chkFavorited" id="chkFavorited">
-                  <label class="form-check-label" for="chkFavorited">Favorite</label>
-                </div>
-                <div class="form-check form-check col">
-                  <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
-                  <label class="form-check-label" for="optWithUrl">w/ Url</label>
-                </div>
-                <div class="form-check form-check col">
-                  <input class="form-check-input" type="radio" name="optWith" id="optClear">
-                  <label class="form-check-label" for="optClear">w/ Any</label>
-                </div>
-              </div>
+    <div class='main container-fluid'>
+      <h1 class="row bg-header inkfree"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></h1>
+      <div class="row bg-subheader">
+        <div class="col">
+          <span class="h5 inkfree">Locally Cached Social Database</span>
+        </div>
+        <div class="col-sm-auto text-right">
+          <span id='transferringMsg' style="display:none;">
+            Copying recent recordings to local database...  | 
+          </span>
+          <span>
+            <a href="#" id="startExportBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
+            <a href="#" id="pauseExportBtn" role="button" data-toggle='tooltip' title='pause file backup' style="display:none;">Pause Export</a>
+            <span>&nbsp;|&nbsp;</span>
+            <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Import</a>
+            <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
+          </span>
+        </div>
+      </div>
+      <div id="uploadui" class="row pb-2" style="display:none;">
+        <div id="drop-area">
+          <form class="my-form">
+            <p>Upload multiple files (click or drag & drop)</p>
+            <input type="file" id="fileElem" multiple>
+            <label class="upload-button" for="fileElem">Choose files</label>
+          </form>
+        </div>        
+        <div class="pt-3 ps-4">
+          <span>Uploaded: </span><span id="uploadedCnt">0</span> | 
+          <span>Processed: </span><span id="syncImportProcessedCnt">0</span>
+        </div>
+        <div class="pt-2 ps-4">
+          <a href="#" id="uploadDone" role="button" class="btn btn-primary">Done</a>
+        </div>
+      </div>
+      <div id="dbui" class="row pb-2 container-fluid">
+        <div id="listFilterSet" class='row'>
+          <div class='pt-2 col-2'>
+            <div class='input-group' style="margin-bottom:20px;">
+              <label for='txtOwnerHandle' class='text-muted input-group-text'>@</label>
+              <input id='txtOwnerHandle' type='text' placeholder='account' class='form-control' >
             </div>
           </div>
-          <div id="followListProgress" class="progress" style="height:3px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
-          </div>        
-          <div id='followList' class='container-fluid' style='display:none;'>
-          <div id='listFollowPivotPicker' class='row container pt-2'></div>
-          <div class='listMain row' id='followListMain'>
-            <div id='paginated-list' aria-live='polite'>
+          <div id='followDirection' class='col-sm-auto'>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing">
+              <label class="form-check-label" id="optFollowingLabel" for="optFollowing">following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
             </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
+              <label class="form-check-label" id="optFollowersLabel" for="optFollowers">followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+            </div>
+          </div>
+          <div class='pt-2 col-2'>
+            <input id='txtConnSearch' type='text' class='form-control' placeholder='search...' >
+          </div>
+          <div id="paging" class='pt-2 col-2' style="white-space:nowrap!important;">
+            <label for='txtPageNum' class='text-muted'>pg</label>
+            <input id='txtPageNum' type='text' style='border-right:none;' value='1' >
+            <a data-toggle='tooltip' title='prior page' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
+            <a data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
+            <a data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
+          </div>
+          <div id='queryOptions' class='col-4' style="margin-left:25px;display:block;float:right;">
+            <table>
+              <tr>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
+                    <label class="form-check-label" for="chkMutual">Mutual follow</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
+                    <label class="form-check-label" for="optWithMdon">
+                      <span>Mastodon</span>
+                      <a data-toggle='tooltip' title='set page size' href='#' id='mdonGear'><i class="bi-gear"></i></a>
+                    </label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
+                    <label class="form-check-label" for="optWithEmail">w/ Email</label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="chkFavorited" id="chkFavorited">
+                    <label class="form-check-label" for="chkFavorited">Favorite</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
+                    <label class="form-check-label" for="optWithUrl">w/ Url</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="optWith" id="optClear">
+                    <label class="form-check-label" for="optClear">w/ Any</label>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div id="connListProgress" class="progress" style="height:3px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
+        </div>
+        <div id='connList' class='row'></div>
+        <div id='listOwnerPivotPicker' class='row pt-2'></div>
+        <div class='listMain row' id='connListMain'>
+          <div id='paginated-list' aria-live='polite'>
           </div>
         </div>
       </div>
@@ -100,7 +141,7 @@
         <a href='https://whosum.com/terms' target='_blank'>Terms</a> |
         <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a>
       </span>
-    </footer>
+    </div>
     <script src='lib/shared/constants.js'></script>
     <script src='lib/shared/pagetypes.js'></script>
     <script src='lib/shared/settingslib.js'></script>
