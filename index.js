@@ -114,6 +114,9 @@ const ensureCopiedToDb = async function() {
 }
 
 const initialRender = function() {
+  // app version
+  document.getElementById('manifestVersion').textContent = chrome.runtime.getManifest().version;
+  
   const urlParams = new URLSearchParams(location.search);
   // defaults
   let owner;

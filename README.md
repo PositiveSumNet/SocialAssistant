@@ -20,3 +20,17 @@ Twitter is just the beginning. Our roadmap calls for helping individuals to pull
 We encourage developers to submit pull requests. We also look forward to collaborating with for-profit companies who share our vision of creating "digital robot butler" apps that *privately* leverage personal data as described [here](https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81). PSN aims to create the patterns and infrastructure that will allow [new economic models](https://prosocialcapitalism.com) to thrive, free from surveillance capitalism and manipulative business practices. 
 
 While this project is for "who you know", we invite you to also check out the Whosum ["possum passport"](https://whosum.com/prove) feature for portable identity ("who you are"). Together, these tools will allow decentralized and prosocial networking alternatives that extend experiences like Mastodon (which we also recommend!).
+
+>>>>>>>>>>>>>>
+
+Developer notes for converting to Firefox. Manifest requires:
+
+"background": {
+    "scripts": ["background.js"]
+},
+"browser_specific_settings": {
+  "gecko": {
+    "id": "whosumsupport@positivesum.net",
+    "strict_min_version": "109.0"
+  }
+  

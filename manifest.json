@@ -10,13 +10,7 @@
     "128": "images/icon-128.png"
   },
   "author": "whosumsupport@positivesum.net",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "whosumsupport@positivesum.net",
-      "strict_min_version": "109.0"
-    }
-  },
-    "action": {
+  "action": {
     "default_popup": "popup.html",
     "default_icon": {
       "16": "images/icon-16.png",
