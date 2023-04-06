@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Whosum Social Assistant/Positive Sum Networks",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Privately preserve your social experiences. Optionally share to foster Positive Sum Networks.",
   "icons": {
     "16": "images/icon-16.png",
@@ -10,7 +10,13 @@
     "128": "images/icon-128.png"
   },
   "author": "whosumsupport@positivesum.net",
-  "action": {
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "whosumsupport@positivesum.net",
+      "strict_min_version": "42.0"
+    }
+  },
+    "action": {
     "default_popup": "popup.html",
     "default_icon": {
       "16": "images/icon-16.png",

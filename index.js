@@ -248,33 +248,39 @@ const renderPerson = function(person, context) {
       break;
   }
   
-  const imgType = STR.inferImageFileExt(person.ImgCdnUrl);
+  let handle = person.Handle;
+  let displayName = person.DisplayName;
+  let detail = person.Detail;
+  let imgCdnUrl = person.ImgCdnUrl;
+  let img64Url = person.Img64Url;
+
+  const imgType = STR.inferImageFileExt(imgCdnUrl);
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
   
   let img = '';
-  if (person.Img64Url && person.Img64Url.length > 50) {
-    img = `<img ${imgStyling} src='data:image/${imgType};base64,${person.Img64Url}'/>`;
+  if (img64Url && img64Url.length > 50) {
+    img = `<img ${imgStyling} src='data:image/${imgType};base64,${img64Url}'/>`;
   }
 // blocked - ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep so commenting out
-//  else if (person.ImgCdnUrl && person.ImgCdnUrl.length > 0) {
-//    img = `<img ${imgStyling} src='${person.ImgCdnUrl}'/>`;
+//  else if (imgCdnUrl && imgCdnUrl.length > 0) {
+//    img = `<img ${imgStyling} src='${imgCdnUrl}'/>`;
 //  }
   else {
     img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
   }
   
-  const handle = person.Handle.startsWith('@') ? person.Handle : '@' + person.Handle;
+  handle = handle.startsWith('@') ? handle : '@' + handle;
   const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
   const renderAnchorsRule = getPersonRenderAnchorsRule();
-  const preparedDisplayName = RENDER.prepareDisplayText(person.DisplayName, withAnchors, renderAnchorsRule);
-  let preparedDetail = RENDER.prepareDisplayText(person.Detail, withAnchors, renderAnchorsRule);
+  const preparedDisplayName = RENDER.prepareDisplayText(displayName, withAnchors, renderAnchorsRule);
+  let preparedDetail = RENDER.prepareDisplayText(detail, withAnchors, renderAnchorsRule);
   const filtered = detailReflectsFilter();
 
   if (filtered === true) {
     preparedDetail = `<b>${preparedDetail}</b>`;
   }
 
-  const detail = (withDetail === true && person.Detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
+  detail = (withDetail === true && detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
   
   let renderedHandle = handle;
 
@@ -301,7 +307,7 @@ const renderPerson = function(person, context) {
 
 const renderMatchedOwners = function(payload) {
   const owners = payload.owners;
-  listOwnerPivotPicker.innerHTML = '';
+  listOwnerPivotPicker.replaceChildren();
   
   if (owners.length === 1 && !_deletingOwner) {
     // exact match; pick it! (after an extra check that the user isn't 
@@ -311,7 +317,7 @@ const renderMatchedOwners = function(payload) {
   }
   else {
     for (i = 0; i < owners.length; i++) {
-      listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
+      listOwnerPivotPicker.innerHTML += DOMPurify.sanitize(renderPerson(owners[i], 'owner'));
     }
   }
 }
@@ -558,13 +564,13 @@ const renderNetworkSize = function(payload) {
 
 const renderConnections = function(payload) {
   const plist = document.getElementById('paginated-list');
-  plist.innerHTML = '';
+  plist.replaceChildren();
   
   // rows
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    plist.innerHTML += renderPerson(row, 'followResult');
+    plist.innerHTML += DOMPurify.sanitize(renderPerson(row, 'followResult'));
   }
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
@@ -698,7 +704,7 @@ const ownerSearch = ES6.debounce((event) => {
   const userInput = getUiValue('txtOwnerHandle');
 
   if (!userInput || userInput.length === 0) {
-    listOwnerPivotPicker.innerHTML = '';
+    listOwnerPivotPicker.replaceChildren();
   }
   
   suggestAccountOwner(userInput);
@@ -784,9 +790,9 @@ listOwnerPivotPicker.onclick = function(event) {
 const onChooseOwner = function() {
   // when owner changes, we need to reset the counts and then request a refreshed count
   // the nbsp values are to be less jarring with width changes
-  document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-  document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-  listOwnerPivotPicker.innerHTML = "";
+  document.getElementById('optFollowersLabel').innerHTML = DOMPurify.sanitize(`followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
+  document.getElementById('optFollowingLabel').innerHTML = DOMPurify.sanitize(`following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
+  listOwnerPivotPicker.replaceChildren();
   resetPage();
   networkSearch();
   _lastOwner = getOwnerFromUi();
