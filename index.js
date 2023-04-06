@@ -43,13 +43,13 @@ const logHtml = function (cssClass, ...args) {
 
 // specific logging
 const logSqliteVersion = function(versionInfo) {
-  document.getElementById('sqliteVersionLib').innerHTML = versionInfo.libVersion;
-  document.getElementById('sqliteOpfsOk').innerHTML = versionInfo.opfsOk.toString();
-  //document.getElementById('sqliteSourceId').innerHTML = versionInfo.sourceId;
+  document.getElementById('sqliteVersionLib').textContent = versionInfo.libVersion;
+  document.getElementById('sqliteOpfsOk').textContent = versionInfo.opfsOk.toString();
+  //document.getElementById('sqliteSourceId').textContent = versionInfo.sourceId;
 }
 
 const logDbScriptVersion = function(versionInfo) {
-  document.getElementById('dbScriptNumber').innerHTML = versionInfo.version.toString();
+  document.getElementById('dbScriptNumber').textContent = versionInfo.version.toString();
 }
 
 const onCopiedToDb = async function(cacheKeys) {
@@ -74,7 +74,7 @@ const ensureCopiedToDb = async function() {
   // see note at bottom of method
   initialRender();
 
-  xferring.innerHTML = 'Copying ' + entries.length + ' pages to local database...';
+  xferring.textContent = 'Copying ' + entries.length + ' pages to local database...';
   if (entries.length > 0) {
     xferring.style.display = 'inline-block';
     //filterSet.style.display = 'none';
@@ -523,10 +523,10 @@ const networkSearch = function() {
 const setFollowLabelCaption = function(pageType, count) {
   switch (pageType) {
     case 'followingOnTwitter':
-      document.getElementById('optFollowingLabel').innerHTML = `following (${count})`;
+      document.getElementById('optFollowingLabel').textContent = `following (${count})`;
       return;
     case 'followersOnTwitter':
-      document.getElementById('optFollowersLabel').innerHTML = `followers (${count})`;
+      document.getElementById('optFollowersLabel').textContent = `followers (${count})`;
       return;
     default:
       return;
