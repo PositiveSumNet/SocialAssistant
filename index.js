@@ -251,11 +251,11 @@ const renderPerson = function(person, context) {
       break;
   }
   
-  let handle = person.Handle;
-  let displayName = person.DisplayName;
-  let detail = person.Detail;
-  let imgCdnUrl = person.ImgCdnUrl;
-  let img64Url = person.Img64Url;
+  let handle = DOMPurify.sanitize(person.Handle);
+  let displayName = DOMPurify.sanitize(person.DisplayName);
+  let detail = DOMPurify.sanitize(person.Detail);
+  let imgCdnUrl = DOMPurify.sanitize(person.ImgCdnUrl);
+  let img64Url = DOMPurify.sanitize(person.Img64Url);
 
   const imgType = STR.inferImageFileExt(imgCdnUrl);
   const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
@@ -320,7 +320,7 @@ const renderMatchedOwners = function(payload) {
   }
   else {
     for (i = 0; i < owners.length; i++) {
-      listOwnerPivotPicker.innerHTML += DOMPurify.sanitize(renderPerson(owners[i], 'owner'));
+      listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
     }
   }
 }
@@ -573,7 +573,7 @@ const renderConnections = function(payload) {
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    plist.innerHTML += DOMPurify.sanitize(renderPerson(row, 'followResult'));
+    plist.innerHTML += renderPerson(row, 'followResult');
   }
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
@@ -793,8 +793,8 @@ listOwnerPivotPicker.onclick = function(event) {
 const onChooseOwner = function() {
   // when owner changes, we need to reset the counts and then request a refreshed count
   // the nbsp values are to be less jarring with width changes
-  document.getElementById('optFollowersLabel').innerHTML = DOMPurify.sanitize(`followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
-  document.getElementById('optFollowingLabel').innerHTML = DOMPurify.sanitize(`following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
+  document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+  document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
   listOwnerPivotPicker.replaceChildren();
   resetPage();
   networkSearch();
