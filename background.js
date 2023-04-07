@@ -38,7 +38,11 @@ const injectImageBase64s = async function(records) {
   for (let i = 0; i < records.length; i++) {
     let item = records[i];
     if (item.imgCdnUrl) {
-      item.img64Url = await getImageBase64(item.imgCdnUrl);
+      try {
+        item.img64Url = await getImageBase64(item.imgCdnUrl);
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 }
