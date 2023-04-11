@@ -932,6 +932,12 @@ document.getElementById('pauseExportBtn').onclick = function(event) {
 
 const startExport = function() {
   
+  const userResponse = confirm("This will download a set of plain-text files (could be many). You can pause any time. To later import, browse to your PC's Downloads folder and you can import in batch.");
+
+  if (userResponse != true) {
+    return;
+  }
+
   const msg = _pausedExportMsg || {
     actionType: MSGTYPE.TODB.EXPORT_BACKUP,
     exportTimeMs: Date.now()
