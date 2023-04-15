@@ -17,6 +17,9 @@ var _counters = [];
 var _exportPauseRequested;
 var _pausedExportMsg;
 
+// for sync
+var _syncToken;
+
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -361,6 +364,8 @@ const getUiValue = function(id) {
       return optWithEmail.checked;
     case 'optWithUrl':
       return optWithUrl.checked;
+    case 'txtGithubAccessToken':
+      return txtGithubAccessToken.value;
     default:
       return undefined;
   }
@@ -810,6 +815,9 @@ document.getElementById('startImportBtn').onclick = function(event) {
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('startImportBtn').style.display = 'none';
   document.getElementById('stopImportBtn').style.display = 'inline-block';
+  document.getElementById('startExportBtn').style.display = 'none';
+  document.getElementById('configureSyncBtn').style.display = 'none';
+  showSyncSeparators(false);
   updateUploadDoneBtnText();
   return false;
 };
@@ -819,6 +827,9 @@ const finishImporting = function() {
   document.getElementById('dbui').style.display = 'flex';
   document.getElementById('startImportBtn').style.display = 'inline-block';
   document.getElementById('stopImportBtn').style.display = 'none';
+  document.getElementById('startExportBtn').style.display = 'inline-block';
+  document.getElementById('configureSyncBtn').style.display = 'inline-block';
+  showSyncSeparators(true);
 }
   
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
@@ -947,6 +958,9 @@ const startExport = function() {
 
   document.getElementById('startExportBtn').style.display = 'none';
   document.getElementById('pauseExportBtn').style.display = 'inline-block';
+  document.getElementById('startImportBtn').style.display = 'none';
+  document.getElementById('configureSyncBtn').style.display = 'none';
+  showSyncSeparators(false);
 
   worker.postMessage(msg);
 }
@@ -990,5 +1004,116 @@ const handleExportedResults = function(payload) {
     document.getElementById('startExportBtn').innerText = 'Export Again';
     document.getElementById('startExportBtn').style.display = 'inline-block';
     document.getElementById('pauseExportBtn').style.display = 'none';
+    document.getElementById('startImportBtn').style.display = 'inline-block';
+    document.getElementById('configureSyncBtn').style.display = 'inline-block';
+    showSyncSeparators(true);
   }
+}
+
+/************************/
+// Configure Sync 
+/************************/
+
+// read it out to initialize
+chrome.storage.local.get([SETTINGS.GITHUB.SYNC_TOKEN], function(result) {
+  _syncToken = result.syncToken || '';
+  txtGithubAccessToken.value = _syncToken;
+  updateCloseSyncBtnText();
+});
+
+const updateCloseSyncBtnText = function() {
+  const closeBtn = document.getElementById('btnCloseSyncSetup');
+  if (_syncToken.length > 0) {
+    closeBtn.textContent = 'Sync Now';
+  }
+  else {
+    closeBtn.textContent = 'Close';
+  }
+}
+
+const showSyncSeparators = function(show) {
+  Array.from(document.getElementsByClassName("syncsep")).forEach(function(sep) {
+    if (show === true) {
+      sep.style.display='inline-block';
+    }
+    else {
+      sep.style.display='none';
+    }
+  });
+}
+
+document.getElementById('configureSyncBtn').onclick = function(event) {
+  renderSyncConfig();
+  return false;
+};
+
+document.getElementById('cancelConfigureSyncBtn').onclick = function(event) {
+  unrenderSyncConfig();
+  return false;
+};
+
+const renderSyncConfig = function() {
+  document.getElementById('configureSyncUi').style.display = 'block';
+  document.getElementById('configureSyncBtn').style.display = 'none';
+  document.getElementById('cancelConfigureSyncBtn').style.display = 'inline-block';
+  document.getElementById('dbui').style.display = 'none';
+  document.getElementById('startExportBtn').style.display = 'none';
+  document.getElementById('startImportBtn').style.display = 'none';
+  showSyncSeparators(false);
+}
+
+const unrenderSyncConfig = function() {
+  document.getElementById('configureSyncUi').style.display = 'none';
+  document.getElementById('configureSyncBtn').style.display = 'inline-block';
+  document.getElementById('cancelConfigureSyncBtn').style.display = 'none';
+  document.getElementById('dbui').style.display = 'block';
+  document.getElementById('startExportBtn').style.display = 'inline-block';
+  document.getElementById('startImportBtn').style.display = 'inline-block';
+  showSyncSeparators(true);
+}
+
+document.getElementById('btnAdvancedSyncSetup').onclick = function(event) {
+  document.getElementById('advancedSetupUi').style.display = 'block';
+  return false;
+};
+
+document.getElementById('btnBasicSyncSetup').onclick = function(event) {
+  document.getElementById('advancedSetupUi').style.display = 'none';
+  return false;
+};
+
+const onGithubSyncTokenInput = ES6.debounce((event) => {
+  _syncToken = getUiValue('txtGithubAccessToken') || '';
+  saveGithubSyncToken(_syncToken);
+  updateCloseSyncBtnText();
+}, 250);
+txtGithubAccessToken.addEventListener('input', onGithubSyncTokenInput);
+
+const saveGithubSyncToken = function(token) {
+  chrome.storage.local.set({ syncToken: token });
+}
+
+document.getElementById('btnCloseSyncSetup').onclick = function(event) {
+  
+  _syncToken = getUiValue('txtGithubAccessToken') || '';
+  let success = false;
+
+  if (_syncToken.length > 0) {
+    success = tryGithubSync();
+  }
+
+  if (success) {
+    //unrenderSyncConfig();
+  }
+  
+  return false;
+};
+
+// returns success as boolean
+const tryGithubSync = function() {
+  // make sure repo we can hit the repo and that it's private
+  GITHUB.getUserId(_syncToken);
+
+  // success
+  return true;
 }

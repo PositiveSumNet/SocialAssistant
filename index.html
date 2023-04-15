@@ -23,11 +23,58 @@
           <span>
             <a href="#" id="startExportBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
             <a href="#" id="pauseExportBtn" role="button" data-toggle='tooltip' title='pause file backup' style="display:none;">Pause Export</a>
-            <span>&nbsp;|&nbsp;</span>
+            <span class="syncsep">&nbsp;|&nbsp;</span>
             <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Import</a>
             <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
+            <span class="syncsep">&nbsp;|&nbsp;</span>
+            <a href="#" id="configureSyncBtn" role="button" data-toggle='tooltip' title='configure automated sync'><span style="color: #ffd700;">(new!)</span> Automated Sync</a>
+            <a href="#" id="cancelConfigureSyncBtn" role="button" data-toggle='tooltip' title='cancel sync config' style="display:none;">Cancel Sync Config</a>
           </span>
         </div>
+      </div>
+      <div id="configureSyncUi" class="row p-2" style="display:none;">
+        <h3><i class="bi-github pe-2"></i>Configure Sync</h3>
+        <p>
+          Sync to a location you own and control! 
+          We've done the research and, like 100 million software developers, 
+          we put our trust in <a href="https://github.com" target="_blank">GitHub.com</a>. 
+          Don't worry, you won't need any technical skills. 
+        </p>
+        <p><a href="https://github.com/signup" class="btn btn-secondary" target="_blank" role="button">Create a GitHub account</a></p>
+        <p>Then choose one</p>
+        <p><a href="#" id="btnBasicSyncSetup" class="btn btn-primary" role="button"><i class="bi-github pe-2"></i>Basic Setup</a></p>
+        <p><a href="#" id="btnAdvancedSyncSetup" class="btn btn-secondary" role="button">Advanced Setup</a></p>
+        <div id="advancedSetupUi" style="display:none;">
+          <p>
+            Both setup methods result in granting the Whosum app (but not our servers) access to a newly created sync repository. 
+            This advanced flow avoids the interim step of granting account-level access via OAuth (leaving a couple manual steps for you instead).
+          </p>
+          <ol>
+            <li>
+              <a href="https://github.com/new" target="_blank">Click to create a <b>PRIVATE</b> repository</a> with the name <code>mywhosum</code>
+            </li>
+            <li>
+              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click to create a 'fine-grained' personal access token</a> 
+                and name it (e.g. a name like <code>mywhosumtoken1</code>)
+            </li>
+            <li>Extend the expiration as desired</li>
+            <li>Keep yourself as the resource owner</li>
+            <li>Choose 'Only select repositories' and choose the newly created <code>mywhosum</code> repository</li>
+            <li>For 'Permissions -> Repository Permissions -> Content' select 'Read and Write'</li>
+            <li>Click Generate Token</li>
+            <li>Copy the token value and paste it below</li>
+          </ol>
+          <p>
+            <div class='input-group' style="margin-bottom:20px;">
+              <label for='txtGithubAccessToken' class='text-muted input-group-text'>token</label>
+              <input id='txtGithubAccessToken' type='text' placeholder='github_pat_123456789...' class='form-control' >
+            </div>
+          </p>
+        </div>
+        <div id="syncMessage">
+
+        </div>
+        <p><a href="#" id="btnCloseSyncSetup" class="btn btn-secondary" role="button">Close</a></p>
       </div>
       <div id="uploadui" class="row pb-2" style="display:none;">
         <div id="drop-area">
@@ -153,6 +200,7 @@
     <script src='lib/shared/datatypes.js'></script>
     <script src='lib/shared/appgraphs.js'></script>
     <script src='lib/shared/appschema.js'></script>
+    <script src='lib/shared/githublib.js'></script>
     <script src='lib/dbui/renderlib.js'></script>
     <script src='index.js'></script>
   </body>
