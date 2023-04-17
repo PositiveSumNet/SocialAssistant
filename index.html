@@ -32,6 +32,15 @@
           </span>
         </div>
       </div>
+      <div id="syncStatus" class="row p-2" style="display:none;">
+        <h3><i class="bi-github pe-2"></i>Sync Status</h3>
+        <p>
+          Sync is configured. What would you like to do?
+        </p>
+        <p><a href="#" id="btnReSyncNow" class="btn btn-primary" role="button"><i class="bi-github pe-2"></i>Re-Sync Now</a></p>
+        <p><a href="#" id="btnClearSync" class="btn btn-secondary" role="button"><i class="bi-calendar-x-fill pe-2"></i>Clear Sync Configuration</a></p>
+        <p><a href="#" id="btnCancelSyncdSetup" class="btn btn-secondary" role="button">Cancel</a></p>
+      </div>
       <div id="configureSyncUi" class="row p-2" style="display:none;">
         <h3><i class="bi-github pe-2"></i>Configure Sync</h3>
         <p>
@@ -67,14 +76,13 @@
           <p>
             <div class='input-group' style="margin-bottom:20px;">
               <label for='txtGithubAccessToken' class='text-muted input-group-text'>token</label>
-              <input id='txtGithubAccessToken' type='text' placeholder='github_pat_123456789...' class='form-control' >
+              <input id='txtGithubAccessToken' type='password' placeholder='github_pat_123456789...' class='form-control' >
             </div>
           </p>
+          <p><a href="#" id="btnSaveSyncSetup" class="btn btn-primary" role="button">Save</a></p>
         </div>
-        <div id="syncMessage">
-
-        </div>
-        <p><a href="#" id="btnCloseSyncSetup" class="btn btn-secondary" role="button">Close</a></p>
+        <div id="syncConfigError" class="pb-1 text-danger"></div>
+        <p><a href="#" id="btnCancelSyncSetup" class="btn btn-secondary" role="button">Cancel</a></p>
       </div>
       <div id="uploadui" class="row pb-2" style="display:none;">
         <div id="drop-area">

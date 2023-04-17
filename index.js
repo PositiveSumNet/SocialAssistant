@@ -19,6 +19,7 @@ var _pausedExportMsg;
 
 // for sync
 var _syncToken;
+var _githubSyncUserId;
 
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
@@ -1017,19 +1018,7 @@ const handleExportedResults = function(payload) {
 // read it out to initialize
 chrome.storage.local.get([SETTINGS.GITHUB.SYNC_TOKEN], function(result) {
   _syncToken = result.syncToken || '';
-  txtGithubAccessToken.value = _syncToken;
-  updateCloseSyncBtnText();
 });
-
-const updateCloseSyncBtnText = function() {
-  const closeBtn = document.getElementById('btnCloseSyncSetup');
-  if (_syncToken.length > 0) {
-    closeBtn.textContent = 'Sync Now';
-  }
-  else {
-    closeBtn.textContent = 'Close';
-  }
-}
 
 const showSyncSeparators = function(show) {
   Array.from(document.getElementsByClassName("syncsep")).forEach(function(sep) {
@@ -1047,13 +1036,42 @@ document.getElementById('configureSyncBtn').onclick = function(event) {
   return false;
 };
 
+document.getElementById('btnClearSync').onclick = function(event) {
+  
+  const confirmed = confirm("Clear sync configuration?");
+
+  if (confirmed === true) {
+    saveGithubSyncToken('');
+    _syncToken = '';
+  }
+
+  renderSyncConfig();
+
+  return false;
+};
+
+document.getElementById('btnCancelSyncSetup').onclick = function(event) {
+  unrenderSyncConfig();
+  return false;
+};
+document.getElementById('btnCancelSyncdSetup').onclick = function(event) {
+  unrenderSyncConfig();
+  return false;
+};
 document.getElementById('cancelConfigureSyncBtn').onclick = function(event) {
   unrenderSyncConfig();
   return false;
 };
 
 const renderSyncConfig = function() {
-  document.getElementById('configureSyncUi').style.display = 'block';
+  
+  if (_syncToken && _syncToken.length > 0) {
+    document.getElementById('syncStatus').style.display = 'block';
+  }
+  else {
+    document.getElementById('configureSyncUi').style.display = 'block';
+  }
+
   document.getElementById('configureSyncBtn').style.display = 'none';
   document.getElementById('cancelConfigureSyncBtn').style.display = 'inline-block';
   document.getElementById('dbui').style.display = 'none';
@@ -1064,6 +1082,7 @@ const renderSyncConfig = function() {
 
 const unrenderSyncConfig = function() {
   document.getElementById('configureSyncUi').style.display = 'none';
+  document.getElementById('syncStatus').style.display = 'none';
   document.getElementById('configureSyncBtn').style.display = 'inline-block';
   document.getElementById('cancelConfigureSyncBtn').style.display = 'none';
   document.getElementById('dbui').style.display = 'block';
@@ -1084,8 +1103,6 @@ document.getElementById('btnBasicSyncSetup').onclick = function(event) {
 
 const onGithubSyncTokenInput = ES6.debounce((event) => {
   _syncToken = getUiValue('txtGithubAccessToken') || '';
-  saveGithubSyncToken(_syncToken);
-  updateCloseSyncBtnText();
 }, 250);
 txtGithubAccessToken.addEventListener('input', onGithubSyncTokenInput);
 
@@ -1093,27 +1110,50 @@ const saveGithubSyncToken = function(token) {
   chrome.storage.local.set({ syncToken: token });
 }
 
-document.getElementById('btnCloseSyncSetup').onclick = function(event) {
+document.getElementById('btnSaveSyncSetup').onclick = function(event) {
   
   _syncToken = getUiValue('txtGithubAccessToken') || '';
-  let success = false;
 
   if (_syncToken.length > 0) {
-    success = tryGithubSync();
-  }
-
-  if (success) {
-    //unrenderSyncConfig();
+    checkSyncToken();
   }
   
   return false;
 };
 
-// returns success as boolean
-const tryGithubSync = function() {
-  // make sure repo we can hit the repo and that it's private
-  GITHUB.getUserId(_syncToken);
+// make sure repo we can hit the repo and that it's private
+// saveGithubSyncToken(_syncToken);
+//unrenderSyncConfig();
 
-  // success
-  return true;
+/************************/
+// Do Sync 
+/************************/
+
+const clearSyncFailures = function() {
+  document.getElementById('syncConfigError').replaceChildren();
 }
+
+const onSyncFailure = function(response) {
+  const elm = document.getElementById('syncConfigError');
+  if (response.status) {
+    elm.textContent = 'Request failed with error code ' + response.status;
+  }
+  else {
+    elm.textContent = 'Failed with error: ' + response;
+  }
+}
+
+// try out the sync token, expect back userid, use it to save userid variable and then to beginSync
+const checkSyncToken = function() {
+  clearSyncFailures();
+  GITHUB.getUserId(_syncToken, beginSync, onSyncFailure);
+}
+
+const beginSync = function(userId) {
+  _githubSyncUserId = userId;
+  clearSyncFailures();
+  console.log(_githubSyncUserId);
+  // now that we have the userId, continue with rest of sync...
+  // and then update the UI to say so
+}
+
