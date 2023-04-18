@@ -1134,26 +1134,42 @@ const clearSyncFailures = function() {
 }
 
 const onSyncFailure = function(response) {
-  const elm = document.getElementById('syncConfigError');
   if (response.status) {
-    elm.textContent = 'Request failed with error code ' + response.status;
+    writeSyncFailure('Request failed with error code ' + response.status);
   }
   else {
-    elm.textContent = 'Failed with error: ' + response;
+    writeSyncFailure('Failed with error: ' + response);
   }
+}
+
+const writeSyncFailure = function(msg) {
+  const elm = document.getElementById('syncConfigError');
+  elm.textContent = msg;
 }
 
 // try out the sync token, expect back userid, use it to save userid variable and then to beginSync
 const checkSyncToken = function() {
   clearSyncFailures();
-  GITHUB.getUserId(_syncToken, beginSync, onSyncFailure);
+  GITHUB.getUserId(_syncToken, beginSyncForUser, onSyncFailure);
 }
 
-const beginSync = function(userId) {
+const beginSyncForUser = function(userId) {
   _githubSyncUserId = userId;
   clearSyncFailures();
-  console.log(_githubSyncUserId);
   // now that we have the userId, continue with rest of sync...
-  // and then update the UI to say so
+  GITHUB.getRepo(_syncToken, _githubSyncUserId, SYNC_REPO, beginSyncToRepo, onSyncFailure);
 }
 
+const beginSyncToRepo = function(repo) {
+  // now that we have the repo, verify that it's private with read/write access 
+  const isPrivate = repo.visibility === 'private';
+
+  if (!isPrivate) {
+    writeSyncFailure('The ' + SYNC_REPO + ' repository is not private! Sync is halted.');
+    return;
+  }
+
+  // and then continue with rest of sync...
+  console.log(repo);
+  // and then update the UI to say so
+}
