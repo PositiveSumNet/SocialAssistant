@@ -17,7 +17,7 @@ var _counters = [];
 var _exportPauseRequested;
 var _pausedExportMsg;
 
-var _siteTab = SITE.TWITTER;
+var _site = SITE.TWITTER;
 
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
@@ -73,14 +73,11 @@ const ensureCopiedToDb = async function() {
   const filterSet = document.getElementById('listFilterSet');
   const connList = document.getElementById('connList');
   
-  // see note at bottom of method
-  initialRender();
-
   xferring.textContent = 'Copying ' + entries.length + ' pages to local database...';
   if (entries.length > 0) {
     xferring.style.display = 'inline-block';
-    //filterSet.style.display = 'none';
-    //connList.style.display = 'none';
+    filterSet.style.display = 'none';
+    connList.style.display = 'none';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -106,12 +103,10 @@ const ensureCopiedToDb = async function() {
   else {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
-    //filterSet.style.display = 'flex';
-    //connList.style.display = 'flex';
+    filterSet.style.display = 'flex';
+    connList.style.display = 'flex';
 
-    // We had this only happening after all transfers. 
-    // But it seems like we can safely do this up front, so commenting out here.
-    //initialRender();
+    initialRender();
   }
 }
 
@@ -141,7 +136,11 @@ const initialRender = function() {
   }
   
   if (!pageType) {
-    pageType = SETTINGS.getCachedPageType();
+    _site = SETTINGS.getCachedSite();
+    pageType = SETTINGS.getCachedPageType(_site);
+  }
+  else {
+    _site = PAGETYPE.getSite(pageType);
   }
   
   initUi(owner, pageType);
@@ -193,28 +192,30 @@ worker.onmessage = function ({ data }) {
 
 const initUi = function(owner, pageType) {
   // pageType/direction
-  pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
+  pageType = pageType || SETTINGS.getCachedPageType(_site) || PAGETYPE.TWITTER.FOLLOWING;
   
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWERS:
-      document.getElementById('optFollowers').checked = true;
+    case PAGETYPE.MASTODON.FOLLOWERS:
+        document.getElementById('optFollowers').checked = true;
       break;
     case PAGETYPE.TWITTER.FOLLOWING:
-      document.getElementById('optFollowing').checked = true;
+    case PAGETYPE.MASTODON.FOLLOWING:
+        document.getElementById('optFollowing').checked = true;
       break;
     default:
       break;
   }
 
   // set owner
-  owner = owner || SETTINGS.getCachedOwner();
+  owner = owner || SETTINGS.getCachedOwner(_site);
   let waitForOwnerCallback = false;
   
   if (!owner || owner.length === 0) {
     // we'll initialize to empty string, but 
     // we'll tell the worker to call us back with the most sensible initial value
     const msg = { 
-      actionType: 'suggestOwner', 
+      actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
       pageType: pageType
     };
     
@@ -229,8 +230,23 @@ const initUi = function(owner, pageType) {
   }
 }
 
+const choiceFiltersApply = function() {
+  switch (_site) {
+    case SITE.TWITTER:
+      // only twitter renders the option buttons for the filters
+      return true;
+    default:
+      return false;
+  }
+}
+
 // the Detail returned back when we say "with" email/url/mdon is special and we'd like to bold it
 const detailReflectsFilter = function() {
+  
+  if (!choiceFiltersApply()) {
+    return false;
+  }
+  
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
 }
 
@@ -370,13 +386,23 @@ const getUiValue = function(id) {
 
 const getPageType = function(direction) {
   direction = direction || getUiValue('optFollowDirection');
-  switch (_siteTab) {
+  switch (_site) {
     case SITE.TWITTER:
       switch (direction) {
         case 'following':
           return PAGETYPE.TWITTER.FOLLOWING;
         case 'followers':
           return PAGETYPE.TWITTER.FOLLOWERS;
+        default:
+          return undefined;
+      }
+      break;
+    case SITE.MASTODON:
+      switch (direction) {
+        case 'following':
+          return PAGETYPE.MASTODON.FOLLOWING;
+        case 'followers':
+          return PAGETYPE.MASTODON.FOLLOWERS;
         default:
           return undefined;
       }
@@ -439,18 +465,22 @@ const getOwnerFromUi = function() {
 const buildNetworkSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
+  const site = PAGETYPE.getSite(pageType);
   const pageSize = SETTINGS.getPageSize();
   const searchText = getUiValue('txtConnSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
-  const withMdon = getUiValue('optWithMdon');
-  const withEmail = getUiValue('optWithEmail');
-  const withUrl = getUiValue('optWithUrl');
+
+  const canChoiceFilter = choiceFiltersApply();
+  const withMdon = canChoiceFilter ? getUiValue('optWithMdon') : false;
+  const withEmail = canChoiceFilter ? getUiValue('optWithEmail') : false;
+  const withUrl = canChoiceFilter ? getUiValue('optWithUrl') : false;
   
   const msg = { 
     actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
     pageType: pageType,
+    site: site,
     networkOwner: owner, 
     searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
@@ -463,7 +493,7 @@ const buildNetworkSearchRequestFromUi = function() {
     withMdon: withMdon,
     withEmail: withEmail,
     withUrl: withUrl
-    };
+  };
   
   return msg;
 }
@@ -994,13 +1024,13 @@ const handleExportedResults = function(payload) {
 /************************/
 
 document.getElementById('twitterLensBtn').onclick = function(event) {
-  _siteTab = SITE.TWITTER;
+  _site = SITE.TWITTER;
   updateForSite();
   return false;
 };
 
 document.getElementById('mastodonLensBtn').onclick = function(event) {
-  _siteTab = SITE.MASTODON;
+  _site = SITE.MASTODON;
   updateForSite();
   return false;
 };
@@ -1010,13 +1040,13 @@ const updateForSite = function() {
   const twitterBtn = document.getElementById('twitterLensBtn');
   const mastodonBtn = document.getElementById('mastodonLensBtn');
 
-  if (_siteTab == SITE.TWITTER) {
+  if (_site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
     mastodonBtn.classList.remove('active');
     twitterBtn.setAttribute('aria-current', 'page');
     mastodonBtn.removeAttribute('aria-current');
   }
-  else if (_siteTab == SITE.MASTODON) {
+  else if (_site == SITE.MASTODON) {
     twitterBtn.classList.remove('active');
     mastodonBtn.classList.add('active');
     twitterBtn.removeAttribute('aria-current');
@@ -1026,5 +1056,20 @@ const updateForSite = function() {
     return;
   }
 
+  setChoiceFilterVisibility();
 
+}
+
+// show/hide the filter option buttons (only used by twitter)
+const setChoiceFilterVisibility = function() {
+  const canChoiceFilter = choiceFiltersApply();
+
+  Array.from(document.getElementsByClassName("choiceFilterCell")).forEach(function(td) {
+    if (canChoiceFilter) {
+      td.style.visibility = "visible";
+    }
+    else {
+      td.style.visibility = "hidden";
+    }
+  });
 }
