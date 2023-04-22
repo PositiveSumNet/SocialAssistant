@@ -19,6 +19,23 @@ var _pausedExportMsg;
 
 var _site = SITE.TWITTER;
 
+// read out to initialize (using chrome.storage.local is more seure than localStorage)
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
+  _mdonClientId = result.mdonClientId || '';
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_SECRET], function(result) {
+  _mdonClientSecret = result.mdonClientSecret || '';
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.ACCESS_TOKEN], function(result) {
+  _mdonAccessToken = result.mdonAccessToken || '';
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.AUTH_TOKEN], function(result) {
+  _mdonAuthToken = result.mdonAuthToken || '';
+});
+
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -431,20 +448,24 @@ const calcSkip = function() {
 
 // this ensures we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
 const onClickedMdonOption = function() {
-  const asked = SETTINGS.getAskedMdonServer();
-  
-  if (!asked) {
-    confirmMdonServer();
-  }
+  ensureAskedMdonServer();
   
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
   networkSearch();  
 }
 
+const ensureAskedMdonServer = function() {
+  const asked = SETTINGS.getAskedMdonServer();
+  
+  if (!asked) {
+    confirmMdonServer();
+  }
+}
+
 const confirmMdonServer = function() {
   const mdonServer = SETTINGS.getMdonServer() || '';
-  const input = prompt("For the best experience, input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
+  const input = prompt("First, please input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
   
   if (input != null) {
     localStorage.setItem(SETTINGS.MDON_SERVER, input);
@@ -1040,6 +1061,8 @@ const updateForSite = function() {
   const twitterBtn = document.getElementById('twitterLensBtn');
   const mastodonBtn = document.getElementById('mastodonLensBtn');
 
+  setChoiceFilterVisibility();
+  
   if (_site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
     mastodonBtn.classList.remove('active');
@@ -1051,13 +1074,20 @@ const updateForSite = function() {
     mastodonBtn.classList.add('active');
     twitterBtn.removeAttribute('aria-current');
     mastodonBtn.setAttribute('aria-current', 'page');
+    
+    ensureAskedMdonServer();
+    const mdonServer = SETTINGS.getMdonServer() || '';
+
+    if (mdonServer.length > 0) {
+      MASTODON.ensureConfigured(mdonServer);
+    }
+
   }
   else {
     return;
   }
 
-  setChoiceFilterVisibility();
-
+  // TODO: render the list!
 }
 
 // show/hide the filter option buttons (only used by twitter)
