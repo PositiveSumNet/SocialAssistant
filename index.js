@@ -17,6 +17,8 @@ var _counters = [];
 var _exportPauseRequested;
 var _pausedExportMsg;
 
+var _siteTab = SITE.TWITTER;
+
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -366,15 +368,9 @@ const getUiValue = function(id) {
   }
 }
 
-const getSite = function() {
-  // the only one supported for now
-  return SITE.TWITTER;
-}
-
 const getPageType = function(direction) {
   direction = direction || getUiValue('optFollowDirection');
-  const site = getSite();
-  switch (site) {
+  switch (_siteTab) {
     case SITE.TWITTER:
       switch (direction) {
         case 'following':
@@ -991,4 +987,44 @@ const handleExportedResults = function(payload) {
     document.getElementById('startExportBtn').style.display = 'inline-block';
     document.getElementById('pauseExportBtn').style.display = 'none';
   }
+}
+
+/************************/
+// Multi-tab
+/************************/
+
+document.getElementById('twitterLensBtn').onclick = function(event) {
+  _siteTab = SITE.TWITTER;
+  updateForSite();
+  return false;
+};
+
+document.getElementById('mastodonLensBtn').onclick = function(event) {
+  _siteTab = SITE.MASTODON;
+  updateForSite();
+  return false;
+};
+
+const updateForSite = function() {
+
+  const twitterBtn = document.getElementById('twitterLensBtn');
+  const mastodonBtn = document.getElementById('mastodonLensBtn');
+
+  if (_siteTab == SITE.TWITTER) {
+    twitterBtn.classList.add('active');
+    mastodonBtn.classList.remove('active');
+    twitterBtn.setAttribute('aria-current', 'page');
+    mastodonBtn.removeAttribute('aria-current');
+  }
+  else if (_siteTab == SITE.MASTODON) {
+    twitterBtn.classList.remove('active');
+    mastodonBtn.classList.add('active');
+    twitterBtn.removeAttribute('aria-current');
+    mastodonBtn.setAttribute('aria-current', 'page');
+  }
+  else {
+    return;
+  }
+
+
 }
