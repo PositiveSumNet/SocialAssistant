@@ -11,10 +11,28 @@
   </head>
   <body>
     <div class='main container-fluid'>
-      <h1 class="row bg-header inkfree"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></h1>
+      <div class="row bg-header inkfree">
+        <div class="col">
+          <span class="h1"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></span>
+        </div>
+        <div class="col-sm-auto my-auto">
+          <span class="h5 inkfree text-right my-auto">Locally Cached Social Database</span>
+        </div>
+      </div>
       <div class="row bg-subheader">
         <div class="col">
-          <span class="h5 inkfree">Locally Cached Social Database</span>
+          <ul class="nav nav-tabs" style="border-bottom:none;">
+            <li class="nav-item">
+              <a id="twitterLensBtn" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Focus on Twitter networks'>
+                <i class="bi-twitter"></i>
+                Twitter</a>
+            </li>
+            <li class="nav-item">
+              <a id="twitterLensBtn" class="nav-link" aria-current="page" href="#" data-toggle='tooltip' title='Focus on Twitter networks'>
+                <i class="bi-mastodon"></i>
+                Mastodon</a>
+            </li>
+          </ul>
         </div>
         <div class="col-sm-auto text-right">
           <span id='transferringMsg' style="display:none;">

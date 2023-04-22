@@ -81,7 +81,10 @@ a {
 
 .bg-subheader {
   margin-bottom: 0.5rem;
-  padding: 1rem;
+  padding-top: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 0.5rem;
   background-color: #216CB1;
   color: #ffffff;
 }
@@ -217,4 +220,8 @@ a.canstar:hover i.bi-star-fill {
 
 #paging label {
   background-color: #e9ecef;
+}
+
+.nav-item {
+  border-bottom:#ced4da solid 1px;
 }
