@@ -251,7 +251,7 @@ input.textinput:focus {
 
 #mdonDownloadConnsUi {
   padding-bottom: 20px;
-  border-bottom: solid 2px #216CB1;
+  border-bottom: solid 1px #216CB1;
 }
 
 #mdonOAuthUi, .authing #mdonConnError, .authing #mdonReconnecting, .authing #mdonDownloadConnsUi {
