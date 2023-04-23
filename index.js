@@ -88,13 +88,11 @@ const ensureCopiedToDb = async function() {
   const xferring = document.getElementById('transferringMsg');
   // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
   const filterSet = document.getElementById('listFilterSet');
-  const connList = document.getElementById('connList');
   
   xferring.textContent = 'Copying ' + entries.length + ' pages to local database...';
   if (entries.length > 0) {
     xferring.style.display = 'inline-block';
     filterSet.style.display = 'none';
-    connList.style.display = 'none';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -121,7 +119,6 @@ const ensureCopiedToDb = async function() {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
     filterSet.style.display = 'flex';
-    connList.style.display = 'flex';
 
     initialRender();
   }
