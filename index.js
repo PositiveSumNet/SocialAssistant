@@ -36,8 +36,8 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.ACCESS_TOKEN], function(resul
   _mdonAccessToken = result.mdonAccessToken || '';
 });
 
-chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.AUTH_TOKEN], function(result) {
-  _mdonAuthToken = result.mdonAuthToken || '';
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(result) {
+  _mdonUserAuthToken = result.mdonUserAuthToken || '';
 });
 
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
@@ -1084,7 +1084,11 @@ const updateForSite = function() {
   
   if (_site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
-    mastodonBtn.classList.remove('active');
+    
+    if (mastodonBtn.classList.contains('active')) {
+      mastodonBtn.classList.remove('active');
+    }
+    
     twitterBtn.setAttribute('aria-current', 'page');
     mastodonBtn.removeAttribute('aria-current');
     mastodonApiUi.style.display = 'none';
@@ -1095,7 +1099,11 @@ const updateForSite = function() {
     networkSearch();
   }
   else if (_site == SITE.MASTODON) {
-    twitterBtn.classList.remove('active');
+    
+    if (twitterBtn.classList.contains('active')) {
+      twitterBtn.classList.remove('active');
+    }
+
     mastodonBtn.classList.add('active');
     twitterBtn.removeAttribute('aria-current');
     mastodonBtn.setAttribute('aria-current', 'page');
@@ -1131,5 +1139,10 @@ const setChoiceFilterVisibility = function() {
 
 document.getElementById('mdonLaunchAuthBtn').onclick = function(event) {
   MASTODON.launchAuth();
+  return false;
+};
+
+document.getElementById('mdonAcceptAuthBtn').onclick = function(event) {
+  MASTODON.userSubmittedAuthCode();
   return false;
 };

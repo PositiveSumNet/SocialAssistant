@@ -236,7 +236,7 @@ label.inputlabel {
 }
 
 input.textinput {
-  margin-left: -4px;
+  margin-left: -5px;
   padding: 0.375rem 0.75rem;
   border: 1px solid #ced4da;
   box-sizing: border-box;
@@ -252,4 +252,12 @@ input.textinput:focus {
 #mdonDownloadConnsUi {
   padding-bottom: 20px;
   border-bottom: solid 2px #216CB1;
+}
+
+#mdonOAuthUi, .authing #mdonConnError, .authing #mdonReconnecting, .authing #mdonDownloadConnsUi {
+  margin: 20px;
+}
+
+#mdonReconnecting {
+  padding: 10px 0px;
 }
