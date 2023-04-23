@@ -222,6 +222,10 @@ a.canstar:hover i.bi-star-fill {
   background-color: #e9ecef;
 }
 
+#dbui {
+  padding-top: 10px;
+}
+
 .nav-item {
   border-bottom:#ced4da solid 1px;
 }

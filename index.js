@@ -20,6 +20,10 @@ var _pausedExportMsg;
 var _site = SITE.TWITTER;
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_ACCOUNT], function(result) {
+  _mdonUserAccount = result.mdonUserAccount || '';
+});
+
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
   _mdonClientId = result.mdonClientId || '';
 });
@@ -609,9 +613,15 @@ const renderNetworkSize = function(payload) {
   setFollowLabelCaption(uiPageType, count);
 }
 
-const renderConnections = function(payload) {
+const clearConnections = function() {
   const plist = document.getElementById('paginated-list');
   plist.replaceChildren();
+}
+
+const renderConnections = function(payload) {
+  clearConnections();
+  
+  const plist = document.getElementById('paginated-list');
   
   // rows
   const rows = payload.rows;
@@ -1042,21 +1052,33 @@ const handleExportedResults = function(payload) {
 /************************/
 
 document.getElementById('twitterLensBtn').onclick = function(event) {
-  _site = SITE.TWITTER;
-  updateForSite();
+  
+  if (_site != SITE.TWITTER) {
+    _site = SITE.TWITTER;
+    updateForSite();
+  }
+
   return false;
 };
 
 document.getElementById('mastodonLensBtn').onclick = function(event) {
-  _site = SITE.MASTODON;
-  updateForSite();
+  
+  if (_site != SITE.MASTODON) {
+    _site = SITE.MASTODON;
+    updateForSite();
+  }
+
   return false;
 };
 
 const updateForSite = function() {
+  // clear what's there now
+  clearConnections();
+  _lastRenderedFollowsRequest = '';
 
   const twitterBtn = document.getElementById('twitterLensBtn');
   const mastodonBtn = document.getElementById('mastodonLensBtn');
+  const mastodonApiUi = document.getElementById('mdonApiUi');
 
   setChoiceFilterVisibility();
   
@@ -1065,6 +1087,12 @@ const updateForSite = function() {
     mastodonBtn.classList.remove('active');
     twitterBtn.setAttribute('aria-current', 'page');
     mastodonBtn.removeAttribute('aria-current');
+    mastodonApiUi.style.display = 'none';
+
+    // render list
+    document.getElementById('dbui').style.display = 'flex';
+    resetPage();
+    networkSearch();
   }
   else if (_site == SITE.MASTODON) {
     twitterBtn.classList.remove('active');
@@ -1072,13 +1100,9 @@ const updateForSite = function() {
     twitterBtn.removeAttribute('aria-current');
     mastodonBtn.setAttribute('aria-current', 'page');
     
-    ensureAskedMdonServer();
-    const mdonServer = SETTINGS.getMdonServer() || '';
+    MASTODON.render();
 
-    if (mdonServer.length > 0) {
-      MASTODON.ensureConfigured(mdonServer);
-    }
-
+    mastodonApiUi.style.display = 'block';
   }
   else {
     return;
@@ -1100,3 +1124,12 @@ const setChoiceFilterVisibility = function() {
     }
   });
 }
+
+/************************/
+// Mastodon events
+/************************/
+
+document.getElementById('mdonLaunchAuthBtn').onclick = function(event) {
+  MASTODON.launchAuth();
+  return false;
+};
