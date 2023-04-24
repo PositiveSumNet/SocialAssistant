@@ -20,12 +20,8 @@ var _pausedExportMsg;
 var _site = SITE.TWITTER;
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
-chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_ID], function(result) {
-  _mdonUserId = result.mdonUserId || '';
-});
-
-chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_ACCOUNT], function(result) {
-  _mdonUserAccount = result.mdonUserAccount || '';
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
+  _mdonUser = result.mdonUserAccount || {};
 });
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
