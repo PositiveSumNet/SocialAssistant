@@ -269,81 +269,9 @@ const detailReflectsFilter = function() {
 }
 
 const renderPerson = function(person, context) {
-  let roleInfo = '';
-  let imgSize = 92;
-  let withDetail = true;
-  let withAnchors = true;
-  
-  switch (context) {
-    case RENDER_CONTEXT.PERSON.AUTHD_USER:
-      // TODO
-      break;
-    case RENDER_CONTEXT.PERSON.ACCOUNT_OWNER:
-      imgSize = 46;
-      roleInfo = ` role='button'`;  // clickable
-      withDetail = false;
-      withAnchors = false;
-      break;
-    case RENDER_CONTEXT.PERSON.FOLLOW_RESULT:
-      break;
-    default:
-      break;
-  }
-  
-  let handle = DOMPurify.sanitize(person.Handle);
-  let displayName = DOMPurify.sanitize(person.DisplayName);
-  let detail = DOMPurify.sanitize(person.Detail);
-  let imgCdnUrl = DOMPurify.sanitize(person.ImgCdnUrl);
-  let img64Url = DOMPurify.sanitize(person.Img64Url);
-
-  const imgType = STR.inferImageFileExt(imgCdnUrl);
-  const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
-  
-  let img = '';
-  if (img64Url && img64Url.length > 50) {
-    img = `<img ${imgStyling} src='data:image/${imgType};base64,${img64Url}'/>`;
-  }
-  else if (imgCdnUrl && imgCdnUrl.length > 0 && !STR.looksLikeCdnRestrictedImg(imgCdnUrl)) {
-   img = `<img ${imgStyling} src='${imgCdnUrl}'/>`;
- }
-  else {
-    img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
-  }
-  
-  handle = handle.startsWith('@') ? handle : '@' + handle;
-  const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
   const renderAnchorsRule = getPersonRenderAnchorsRule();
-  const preparedDisplayName = RENDER.prepareDisplayText(displayName, withAnchors, renderAnchorsRule);
-  let preparedDetail = RENDER.prepareDisplayText(detail, withAnchors, renderAnchorsRule);
   const filtered = detailReflectsFilter();
-
-  if (filtered === true) {
-    preparedDetail = `<b>${preparedDetail}</b>`;
-  }
-
-  detail = (withDetail === true && detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
-  
-  let renderedHandle = handle;
-
-  // note: if we're focused on e.g. mdon, don't distract with link to twitter
-  if (withAnchors && !filtered) {
-    renderedHandle = `<a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a>`;
-  }
-  
-  let starCls = _starOffCls;
-  if (person.InList == 1 && person.ListName === LIST_FAVORITES) {
-    starCls = _starOnCls;
-  }
-  
-  return `<div class='person row striped pt-1' ${roleInfo}>
-    <div class='col-sm-auto'><a href='#' class='canstar' data-testid='${sansAt}'><i class='${starCls}'></i></a></div>
-    <div class='col-sm-auto personImg'>${img}</div>
-    <div class='col personLabel'>
-      <div class='personHandle'>${renderedHandle}</div>
-      <div class='personDisplay'>${preparedDisplayName ?? ''}</div>
-      ${detail}
-    </div>
-  </div>`;
+  return RENDER.renderPerson(person, context, renderAnchorsRule, filtered);
 }
 
 const renderMatchedOwners = function(payload) {
@@ -358,6 +286,7 @@ const renderMatchedOwners = function(payload) {
   }
   else {
     for (i = 0; i < owners.length; i++) {
+      // renderPerson uses DOMPurify.sanitize
       listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
     }
   }
@@ -581,10 +510,10 @@ const networkSearch = function() {
 
 const setFollowLabelCaption = function(pageType, count) {
   switch (pageType) {
-    case 'followingOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
       document.getElementById('optFollowingLabel').textContent = `following (${count})`;
       return;
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWERS:
       document.getElementById('optFollowersLabel').textContent = `followers (${count})`;
       return;
     default:
@@ -629,7 +558,8 @@ const renderConnections = function(payload) {
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    plist.innerHTML += renderPerson(row, 'followResult');
+      // renderPerson uses DOMPurify.sanitize
+      plist.innerHTML += renderPerson(row, 'followResult');
   }
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
