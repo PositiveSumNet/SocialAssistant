@@ -20,6 +20,10 @@ var _pausedExportMsg;
 var _site = SITE.TWITTER;
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_ID], function(result) {
+  _mdonUserId = result.mdonUserId || '';
+});
+
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_ACCOUNT], function(result) {
   _mdonUserAccount = result.mdonUserAccount || '';
 });
@@ -694,6 +698,8 @@ const optWithMdon = document.getElementById('optWithMdon');
 const optWithEmail = document.getElementById('optWithEmail');
 const optWithUrl = document.getElementById('optWithUrl');
 const optClear = document.getElementById('optClear');
+// mastodon account typeahead hitting api
+const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
 
 optFollowing.addEventListener('change', (event) => {
   resetPage();
@@ -1146,3 +1152,32 @@ document.getElementById('mdonAcceptAuthBtn').onclick = function(event) {
   MASTODON.userSubmittedAuthCode();
   return false;
 };
+
+document.getElementById('mdonDisconnect').onclick = function(event) {
+  MASTODON.disconnect();
+  return false;
+};
+document.getElementById('mdonDisconnect2').onclick = function(event) {
+  MASTODON.disconnect();
+  return false;
+};
+
+document.getElementById('mdonDownloadConnectionsBtn').onclick = function(event) {
+  MASTODON.downloadConnections();
+  return false;
+};
+
+/*
+const mdonAccountRemoteSearch = ES6.debounce((event) => {
+  const userInput = txtRemoteMdon.value || '';
+
+  if (!userInput || userInput.length === 0) {
+    //listOwnerPivotPicker.replaceChildren();
+    mdonRemoteAccountPivotPicker.replaceChildren();
+  }
+  
+  suggestAccountOwner(userInput);
+}, 250);
+// ... uses debounce
+txtRemoteMdon.addEventListener('input', mdonAccountRemoteSearch);
+*/
