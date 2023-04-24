@@ -21,7 +21,7 @@ var _site = SITE.TWITTER;
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
-  _mdonUser = result.mdonUserAccount || {};
+  _mdonUser = result.mdonUser || {};
 });
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
@@ -275,6 +275,9 @@ const renderPerson = function(person, context) {
   let withAnchors = true;
   
   switch (context) {
+    case RENDER_CONTEXT.PERSON.AUTHD_USER:
+      // TODO
+      break;
     case RENDER_CONTEXT.PERSON.ACCOUNT_OWNER:
       imgSize = 46;
       roleInfo = ` role='button'`;  // clickable
@@ -300,10 +303,9 @@ const renderPerson = function(person, context) {
   if (img64Url && img64Url.length > 50) {
     img = `<img ${imgStyling} src='data:image/${imgType};base64,${img64Url}'/>`;
   }
-// blocked - ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep so commenting out
-//  else if (imgCdnUrl && imgCdnUrl.length > 0) {
-//    img = `<img ${imgStyling} src='${imgCdnUrl}'/>`;
-//  }
+  else if (imgCdnUrl && imgCdnUrl.length > 0 && !STR.looksLikeCdnRestrictedImg(imgCdnUrl)) {
+   img = `<img ${imgStyling} src='${imgCdnUrl}'/>`;
+ }
   else {
     img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
   }
