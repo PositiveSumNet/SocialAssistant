@@ -21,7 +21,7 @@ var _site = SITE.TWITTER;
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
-  _mdonUser = result.mdonUser || {};
+  _mdonRememberedUser = result.mdonUser || {};
 });
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
