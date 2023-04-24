@@ -386,7 +386,7 @@ const getUiValue = function(id) {
     case 'txtOwnerHandle':
       return txtOwnerHandle.value;
     case 'optFollowDirection':
-      return document.getElementById('optFollowers').checked ? 'followers' : 'following';
+      return document.getElementById('optFollowers').checked ? CONN_DIRECTION.FOLLOWERS : CONN_DIRECTION.FOLLOWING;
     case 'txtConnSearch':
       return txtConnSearch.value;
     case 'txtPageNum':
@@ -411,9 +411,9 @@ const getPageType = function(direction) {
   switch (_site) {
     case SITE.TWITTER:
       switch (direction) {
-        case 'following':
+        case CONN_DIRECTION.FOLLOWING:
           return PAGETYPE.TWITTER.FOLLOWING;
-        case 'followers':
+        case CONN_DIRECTION.FOLLOWERS:
           return PAGETYPE.TWITTER.FOLLOWERS;
         default:
           return undefined;
@@ -421,9 +421,9 @@ const getPageType = function(direction) {
       break;
     case SITE.MASTODON:
       switch (direction) {
-        case 'following':
+        case CONN_DIRECTION.FOLLOWING:
           return PAGETYPE.MASTODON.FOLLOWING;
-        case 'followers':
+        case CONN_DIRECTION.FOLLOWERS:
           return PAGETYPE.MASTODON.FOLLOWERS;
         default:
           return undefined;
@@ -1162,8 +1162,13 @@ document.getElementById('mdonDisconnect2').onclick = function(event) {
   return false;
 };
 
-document.getElementById('mdonDownloadConnectionsBtn').onclick = function(event) {
-  MASTODON.downloadConnections();
+document.getElementById('mdonDownloadFollowingListBtn').onclick = function(event) {
+  MASTODON.downloadConnections(CONN_DIRECTION.FOLLOWING);
+  return false;
+};
+
+document.getElementById('mdonDownloadFollowersListBtn').onclick = function(event) {
+  MASTODON.downloadConnections(CONN_DIRECTION.FOLLOWERS);
   return false;
 };
 
