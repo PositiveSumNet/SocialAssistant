@@ -231,7 +231,8 @@ a.canstar:hover i.bi-star-fill {
 }
 
 label.inputlabel {
-  border-radius: 0;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
   padding: 0.5rem 0.75rem;
 }
 
