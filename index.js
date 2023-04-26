@@ -335,30 +335,7 @@ const getUiValue = function(id) {
 
 const getPageType = function(direction) {
   direction = direction || getUiValue('optFollowDirection');
-  switch (_site) {
-    case SITE.TWITTER:
-      switch (direction) {
-        case CONN_DIRECTION.FOLLOWING:
-          return PAGETYPE.TWITTER.FOLLOWING;
-        case CONN_DIRECTION.FOLLOWERS:
-          return PAGETYPE.TWITTER.FOLLOWERS;
-        default:
-          return undefined;
-      }
-      break;
-    case SITE.MASTODON:
-      switch (direction) {
-        case CONN_DIRECTION.FOLLOWING:
-          return PAGETYPE.MASTODON.FOLLOWING;
-        case CONN_DIRECTION.FOLLOWERS:
-          return PAGETYPE.MASTODON.FOLLOWERS;
-        default:
-          return undefined;
-      }
-      break;
-    default:
-      return undefined;
-  }
+  return PAGETYPE.getPageType(_site, direction);
 }
 
 const resetPage = function() {
