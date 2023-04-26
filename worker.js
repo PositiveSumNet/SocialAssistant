@@ -59,10 +59,17 @@ const _initialEntities = [
   APPSCHEMA.SocialListMember
 ];
 
+const _script4Entities = [
+  APPSCHEMA.SocialFollowerCount,
+  APPSCHEMA.SocialFollowingCount,
+  APPSCHEMA.SocialSourceIdentifier
+];
+
 const getAllEntities = function() {
   const arr = [];
   // as we add more entities beyond the initial set, this array will be a superset
   arr.push(..._initialEntities);
+  arr.push(..._script4Entities);
   return arr;
 }
 
@@ -80,8 +87,8 @@ const getMigrationScripts = function() {
   const sql3 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_initialEntities, 3);
   scripts.push(DBORM.MIGRATION.newScript(sql3, 3));
   
-  // if we need to create ad-hoc sql scripts, they can come next (script 4 etc.)
-  // and be sure to update _allEntities accordingly
+  const sql4 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script4Entities, 4);
+  scripts.push(DBORM.MIGRATION.newScript(sql4, 4));
   
   return scripts;
 }
