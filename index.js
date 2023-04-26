@@ -1100,6 +1100,11 @@ document.getElementById('mdonDownloadFollowersListBtn').onclick = function(event
   return false;
 };
 
+document.getElementById('mdonStopDownloadBtn').onclick = function(event) {
+  MASTODON.abortPaging();
+  return false;
+};
+
 /*
 const mdonAccountRemoteSearch = ES6.debounce((event) => {
   const userInput = txtRemoteMdon.value || '';
