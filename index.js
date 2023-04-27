@@ -676,7 +676,7 @@ txtPageNum.addEventListener('keydown', function(event) {
 
 const handleFromClickedOwner = function(event) {
   const personElm = ES6.findUpClass(event.target, 'person');
-  const handleElm = personElm.querySelector('.personLabel > .personHandle');
+  const handleElm = personElm.querySelector('.personLabel .personHandle');
   let handleText = handleElm.innerText;
   handleText = STR.stripPrefix(handleText, '@');
   return handleText;
