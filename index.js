@@ -86,6 +86,21 @@ const onCopiedToDb = async function(cacheKeys) {
   await ensureCopiedToDb();
 }
 
+const onGotSavedCount = function(count, pageType, metadata) {
+  const site = PAGETYPE.getSite(pageType);
+  
+  switch (site) {
+    case SITE.MASTODON:
+      MASTODON.incrementSavedCounter(count, metadata.ownerAccountId, MASTODON.getFollowDirectionFromPageType(pageType));
+      return;
+    case SITE.TWITTER:
+    default:
+      // no rendering planned
+      console.log('Saved ' + count);
+      break;
+  }
+}
+
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
@@ -201,6 +216,9 @@ worker.onmessage = function ({ data }) {
       break;
     case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
       onProcessedSyncBatch();
+      break;
+    case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
+      onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
     default:
       logHtml('error', 'Unhandled message:', data.type);

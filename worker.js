@@ -124,13 +124,27 @@ onmessage = (evt) => {
       break;
     case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
       DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
+      break;
     case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
-        DBORM.SAVING.saveRecords(evt.data);
-        break;
-      default:
+      savePageRecords(evt.data)
+      break;
+    default:
       break;
   }
 };
+
+const savePageRecords = function(data) {
+  const recordCount = DBORM.SAVING.saveRecords(data);
+  console.log('saved ' + recordCount);
+  if (data.onSuccessCountMsg) {
+    // tell the listener how many were saved
+    postMessage({ 
+      type: MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT, 
+      count: recordCount, 
+      pageType: data.pageType,
+      metadata: data.metadata });
+  }
+}
 
 const getActionType = function(evt) {
   if (evt.data && evt.data.actionType) {
