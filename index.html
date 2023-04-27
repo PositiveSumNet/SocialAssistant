@@ -104,7 +104,7 @@
           <a href="#" class="btn btn-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowersListBtn">Get Followers</a>
           <a href="#" class="btn btn-outline-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDisconnect">Disconnect</a>
           <span class="text-secondary" style="margin-left:10px;display:inline;">
-            <i id="mastodonDownloadDoneIcon" class="bi-check-circle-fill text-success" style="display:none;" data-toggle='tooltip' title='Download complete!'></i>
+            <i id="mastodonDownloadDoneIcon" class="bi-check-circle-fill" style="display:none;" data-toggle='tooltip' title='Download complete!'></i>
             <i id="mastodonDownloadingIcon" class="bi-cloud-download-fill" style="display:none;" data-toggle='tooltip' title='Download status'></i>
             <span id='mastodonDownloadStatus' data-toggle='tooltip' title='Download status'></span>
           </span>
@@ -194,6 +194,7 @@
         <div id="connListProgress" class="progress" style="height:3px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>
+        <div id='remoteOwnerPivotPicker' class='row pt-2'></div>
         <div id='listOwnerPivotPicker' class='row pt-2'></div>
         <div class='listMain row' id='connListMain'>
           <div id='paginated-list' aria-live='polite'>
