@@ -111,6 +111,14 @@ a {
   background-color: #eef5fc;
 }
 
+.row .striped:hover {
+  background-color: #fcfcfb;
+}
+
+.row .striped:nth-child(odd):hover {
+  background-color: #f6fafe;
+}
+
 a.canstar i.bi-star {
   font-size:1.5rem;
   color: #ced4da;
