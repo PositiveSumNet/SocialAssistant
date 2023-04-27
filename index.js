@@ -7,7 +7,7 @@ var _lastRenderedFollowsRequest = '';
 
 // improves experience of deleting in owner textbox
 var _deletingOwner = false;
-var _lastOwner = '';
+var _deletingMdonRemoteOwner = false;
 
 // so we can reduce how many times we ask for (expensive) total counts
 var _counterSet = new Set();
@@ -91,7 +91,7 @@ const onGotSavedCount = function(count, pageType, metadata) {
   
   switch (site) {
     case SITE.MASTODON:
-      MASTODON.incrementSavedCounter(count, metadata.ownerAccountId, MASTODON.getFollowDirectionFromPageType(pageType));
+      MASTODON.onGotSavedCount(count, metadata.ownerAccountId, MASTODON.getFollowDirectionFromPageType(pageType));
       return;
     case SITE.TWITTER:
     default:
@@ -623,6 +623,7 @@ const optWithUrl = document.getElementById('optWithUrl');
 const optClear = document.getElementById('optClear');
 // mastodon account typeahead hitting api
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
+const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
 
 optFollowing.addEventListener('change', (event) => {
   resetPage();
@@ -672,6 +673,14 @@ txtPageNum.addEventListener('keydown', function(event) {
     networkSearch();
   }
 });
+
+const handleFromClickedOwner = function(event) {
+  const personElm = ES6.findUpClass(event.target, 'person');
+  const handleElm = personElm.querySelector('.personLabel > .personHandle');
+  let handleText = handleElm.innerText;
+  handleText = STR.stripPrefix(handleText, '@');
+  return handleText;
+}
 
 const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
@@ -765,11 +774,7 @@ document.getElementById('mdonGear').onclick = function(event) {
 
 // choose owner from typeahead results
 listOwnerPivotPicker.onclick = function(event) {
-  const personElm = ES6.findUpClass(event.target, 'person');
-  const handleElm = personElm.querySelector('.personLabel > .personHandle');
-  let handleText = handleElm.innerText;
-  handleText = STR.stripPrefix(handleText, '@');
-  txtOwnerHandle.value = handleText;
+  txtOwnerHandle.value = handleFromClickedOwner(event);
   onChooseOwner();
 };
 
@@ -781,7 +786,6 @@ const onChooseOwner = function() {
   listOwnerPivotPicker.replaceChildren();
   resetPage();
   networkSearch();
-  _lastOwner = getOwnerFromUi();
 }
 
 /************************/
@@ -1100,17 +1104,30 @@ document.getElementById('mdonStopDownloadBtn').onclick = function(event) {
   return false;
 };
 
-/*
+txtRemoteMdon.addEventListener('keydown', function(event) {
+  if (event.key === "Backspace" || event.key === "Delete") {
+    _deletingMdonRemoteOwner = true;
+  }
+  else {
+    _deletingMdonRemoteOwner = false;
+  }
+});
+
 const mdonAccountRemoteSearch = ES6.debounce((event) => {
   const userInput = txtRemoteMdon.value || '';
 
-  if (!userInput || userInput.length === 0) {
-    //listOwnerPivotPicker.replaceChildren();
-    mdonRemoteAccountPivotPicker.replaceChildren();
+  // min 5 characters to search
+  if (!userInput || userInput.length < 5) {
+    mdonRemoteOwnerPivotPicker.replaceChildren();
   }
   
-  suggestAccountOwner(userInput);
+  MASTODON.suggestRemoteAccountOwner(userInput);
 }, 250);
 // ... uses debounce
 txtRemoteMdon.addEventListener('input', mdonAccountRemoteSearch);
-*/
+
+// choose owner from typeahead results
+mdonRemoteOwnerPivotPicker.onclick = function(event) {
+  txtRemoteMdon.value = handleFromClickedOwner(event);
+  MASTODON.onChooseRemoteOwner();
+};
