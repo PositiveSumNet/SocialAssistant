@@ -1080,10 +1080,10 @@ const setChoiceFilterVisibility = function() {
 
   Array.from(document.getElementsByClassName("choiceFilterCell")).forEach(function(td) {
     if (canChoiceFilter) {
-      td.style.visibility = "visible";
+      td.style.display = "table-cell";
     }
     else {
-      td.style.visibility = "hidden";
+      td.style.display = "none";
     }
   });
 }
