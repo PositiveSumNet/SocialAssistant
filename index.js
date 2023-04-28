@@ -1046,7 +1046,6 @@ const updateForSite = function() {
     mastodonBtn.setAttribute('aria-current', 'page');
     
     MASTODON.render();
-
     mastodonApiUi.style.display = 'block';
   }
   else {
