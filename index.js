@@ -26,18 +26,22 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
   _mdonClientId = result.mdonClientId || '';
+  // console.log('clientid: ' + _mdonClientId);
 });
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_SECRET], function(result) {
   _mdonClientSecret = result.mdonClientSecret || '';
+  // console.log('secret: ' + _mdonClientSecret);
 });
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.ACCESS_TOKEN], function(result) {
   _mdonAccessToken = result.mdonAccessToken || '';
+  // console.log('access: ' + _mdonAccessToken);
 });
 
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(result) {
   _mdonUserAuthToken = result.mdonUserAuthToken || '';
+  // console.log('userauth: ' + _mdonUserAuthToken);
 });
 
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
