@@ -17,8 +17,6 @@ var _counters = [];
 var _exportPauseRequested;
 var _pausedExportMsg;
 
-var _site = SITE.TWITTER;
-
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
   _mdonRememberedUser = result.mdonUser || {};
@@ -173,11 +171,7 @@ const initialRender = function() {
   }
   
   if (!pageType) {
-    _site = SETTINGS.getCachedSite();
-    pageType = SETTINGS.getCachedPageType(_site);
-  }
-  else {
-    _site = PAGETYPE.getSite(pageType);
+    pageType = SETTINGS.getCachedPageType();
   }
   
   initUi(owner, pageType);
@@ -230,9 +224,20 @@ worker.onmessage = function ({ data }) {
   }
 };
 
+// handles optionally passing in query string parameters
 const initUi = function(owner, pageType) {
+  let site;
+  if (pageType) {
+    site = PAGETYPE.getSite(pageType);
+    SETTINGS.cacheSite(site);
+  }
+  else {
+    site = SETTINGS.getCachedSite();
+  }
+
+  updateForSite();
   // pageType/direction
-  pageType = pageType || SETTINGS.getCachedPageType(_site) || PAGETYPE.TWITTER.FOLLOWING;
+  pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
   
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWERS:
@@ -248,7 +253,7 @@ const initUi = function(owner, pageType) {
   }
 
   // set owner
-  owner = owner || SETTINGS.getCachedOwner(_site);
+  owner = owner || SETTINGS.getCachedOwner();
   let waitForOwnerCallback = false;
   
   if (!owner || owner.length === 0) {
@@ -271,7 +276,9 @@ const initUi = function(owner, pageType) {
 }
 
 const choiceFiltersApply = function() {
-  switch (_site) {
+  const site = SETTINGS.getCachedSite();
+
+  switch (site) {
     case SITE.TWITTER:
       // only twitter renders the option buttons for the filters
       return true;
@@ -357,7 +364,8 @@ const getUiValue = function(id) {
 
 const getPageType = function(direction) {
   direction = direction || getUiValue('optFollowDirection');
-  return PAGETYPE.getPageType(_site, direction);
+  const site = SETTINGS.getCachedSite();
+  return PAGETYPE.getPageType(site, direction);
 }
 
 const resetPage = function() {
@@ -543,13 +551,14 @@ const renderNetworkSize = function(payload) {
   setFollowLabelCaption(uiPageType, count);
 }
 
-const clearConnections = function() {
-  const plist = document.getElementById('paginated-list');
-  plist.replaceChildren();
+const clearConnectionUiElms = function() {
+  document.getElementById('paginated-list').replaceChildren();
+  document.getElementById('listOwnerPivotPicker').replaceChildren();
+  clearFollowCounters();
 }
 
 const renderConnections = function(payload) {
-  clearConnections();
+  clearConnectionUiElms();
   
   const plist = document.getElementById('paginated-list');
   
@@ -782,11 +791,15 @@ listOwnerPivotPicker.onclick = function(event) {
   onChooseOwner();
 };
 
-const onChooseOwner = function() {
-  // when owner changes, we need to reset the counts and then request a refreshed count
+const clearFollowCounters = function() {
   // the nbsp values are to be less jarring with width changes
   document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
   document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+}
+
+const onChooseOwner = function() {
+  // when owner changes, we need to reset the counts and then request a refreshed count
+  clearFollowCounters();
   listOwnerPivotPicker.replaceChildren();
   resetPage();
   networkSearch();
@@ -989,9 +1002,10 @@ const handleExportedResults = function(payload) {
 /************************/
 
 document.getElementById('twitterLensBtn').onclick = function(event) {
-  
-  if (_site != SITE.TWITTER) {
-    _site = SITE.TWITTER;
+  const site = SETTINGS.getCachedSite();
+
+  if (site != SITE.TWITTER) {
+    SETTINGS.cacheSite(SITE.TWITTER);
     updateForSite();
   }
 
@@ -999,9 +1013,10 @@ document.getElementById('twitterLensBtn').onclick = function(event) {
 };
 
 document.getElementById('mastodonLensBtn').onclick = function(event) {
-  
-  if (_site != SITE.MASTODON) {
-    _site = SITE.MASTODON;
+  const site = SETTINGS.getCachedSite();
+
+  if (site != SITE.MASTODON) {
+    SETTINGS.cacheSite(SITE.MASTODON);
     updateForSite();
   }
 
@@ -1009,17 +1024,22 @@ document.getElementById('mastodonLensBtn').onclick = function(event) {
 };
 
 const updateForSite = function() {
+  const site = SETTINGS.getCachedSite();
+  SETTINGS.cacheSite(site);
   // clear what's there now
-  clearConnections();
+  clearConnectionUiElms();
   _lastRenderedFollowsRequest = '';
-
+  
+  const owner = SETTINGS.getCachedOwner(site);
+  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
+  
   const twitterBtn = document.getElementById('twitterLensBtn');
   const mastodonBtn = document.getElementById('mastodonLensBtn');
   const mastodonApiUi = document.getElementById('mdonApiUi');
 
   setChoiceFilterVisibility();
   
-  if (_site == SITE.TWITTER) {
+  if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
     
     if (mastodonBtn.classList.contains('active')) {
@@ -1032,10 +1052,8 @@ const updateForSite = function() {
 
     // render list
     document.getElementById('dbui').style.display = 'flex';
-    resetPage();
-    networkSearch();
   }
-  else if (_site == SITE.MASTODON) {
+  else if (site == SITE.MASTODON) {
     
     if (twitterBtn.classList.contains('active')) {
       twitterBtn.classList.remove('active');
@@ -1052,7 +1070,8 @@ const updateForSite = function() {
     return;
   }
 
-  // TODO: render the list!
+  resetPage();
+  networkSearch();
 }
 
 // show/hide the filter option buttons (only used by twitter)
