@@ -1018,6 +1018,7 @@ document.getElementById('twitterLensBtn').onclick = function(event) {
   if (site != SITE.TWITTER) {
     SETTINGS.cacheSite(SITE.TWITTER);
     updateForSite();
+    networkSearch();
   }
 
   return false;
@@ -1029,6 +1030,7 @@ document.getElementById('mastodonLensBtn').onclick = function(event) {
   if (site != SITE.MASTODON) {
     SETTINGS.cacheSite(SITE.MASTODON);
     updateForSite();
+    networkSearch();
   }
 
   return false;
@@ -1083,7 +1085,6 @@ const updateForSite = function() {
 
   resetPage();
   resetFilters();
-  networkSearch();
 }
 
 // show/hide the filter option buttons (only used by twitter)
