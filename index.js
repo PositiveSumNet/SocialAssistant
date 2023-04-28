@@ -318,6 +318,8 @@ const renderMatchedOwners = function(payload) {
       // renderPerson uses DOMPurify.sanitize
       listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
     }
+    
+    IMAGE.resolveDeferredLoadImages(listOwnerPivotPicker);
   }
 }
 
@@ -569,6 +571,8 @@ const renderConnections = function(payload) {
       // renderPerson uses DOMPurify.sanitize
       plist.innerHTML += renderPerson(row, 'followResult');
   }
+
+  IMAGE.resolveDeferredLoadImages(plist);
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
