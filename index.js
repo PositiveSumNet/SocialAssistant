@@ -267,7 +267,7 @@ const initUi = function(owner, pageType) {
     waitForOwnerCallback = true;
     worker.postMessage(msg);
   }
-  
+
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
@@ -372,6 +372,12 @@ const getPageType = function(direction) {
 
 const resetPage = function() {
   document.getElementById('txtPageNum').value = 1;
+}
+
+const resetFilters = function() {
+  chkMutual.checked = false;
+  chkFavorited.checked = false;
+  optClear.checked = true;
 }
 
 const getPageNum = function() {
@@ -507,12 +513,13 @@ const networkSearch = function() {
   const msg = buildNetworkSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
   
+  SETTINGS.cachePageState(msg);
+
   if (_lastRenderedFollowsRequest === requestJson) {
     // we already have this rendered; avoid double-submission
     return;
   }
   
-  SETTINGS.cachePageState(msg);
   showNetworkSearchProgress(true);
   worker.postMessage(msg);
 }
@@ -1075,6 +1082,7 @@ const updateForSite = function() {
   }
 
   resetPage();
+  resetFilters();
   networkSearch();
 }
 
@@ -1144,7 +1152,7 @@ const mdonAccountRemoteSearch = ES6.debounce((event) => {
 
   // min 5 characters to search
   if (!userInput || userInput.length < 5) {
-    mdonRemoteOwnerPivotPicker.replaceChildren();
+    MASTODON.initRemoteOwnerPivotPicker(true);
   }
   
   MASTODON.suggestRemoteAccountOwner(userInput);
