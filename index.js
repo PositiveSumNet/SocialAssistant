@@ -482,7 +482,6 @@ const makeNetworkSizeCounterKey = function(owner, pageType) {
 
 const requestTotalCount = function() {
   const owner = getOwnerFromUi();
-
   if (!owner) {
     return;
   }
@@ -501,7 +500,7 @@ const requestTotalCount = function() {
   }
   
   const atOwner = STR.ensurePrefix(owner, '@'); // DB includes @ prefix
-  const msg = {actionType: 'getNetworkSize', networkOwner: atOwner, pageType: pageType};
+  const msg = {actionType: MSGTYPE.TODB.GET_NETWORK_SIZE, networkOwner: atOwner, pageType: pageType};
   
   worker.postMessage(msg);
   // record knowledge that this count has been requested
@@ -527,9 +526,11 @@ const networkSearch = function() {
 const setFollowLabelCaption = function(pageType, count) {
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.MASTODON.FOLLOWING:
       document.getElementById('optFollowingLabel').textContent = `following (${count})`;
       return;
     case PAGETYPE.TWITTER.FOLLOWERS:
+    case PAGETYPE.MASTODON.FOLLOWERS:
       document.getElementById('optFollowersLabel').textContent = `followers (${count})`;
       return;
     default:
@@ -540,7 +541,6 @@ const setFollowLabelCaption = function(pageType, count) {
 const renderNetworkSize = function(payload) {
   const uiPageType = getPageType();
   const uiOwner = getOwnerFromUi();
-  
   const dbOwnerSansPrefix = STR.stripPrefix(payload.request.networkOwner, '@');
   
   if (uiPageType != payload.request.pageType || uiOwner != dbOwnerSansPrefix) {
