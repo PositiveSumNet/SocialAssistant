@@ -439,6 +439,8 @@ const buildNetworkSearchRequestFromUi = function() {
   const withMdon = canChoiceFilter ? getUiValue('optWithMdon') : false;
   const withEmail = canChoiceFilter ? getUiValue('optWithEmail') : false;
   
+  const myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
+
   const msg = { 
     actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
     pageType: pageType,
@@ -454,7 +456,8 @@ const buildNetworkSearchRequestFromUi = function() {
     requireList: favorited,
     withMdon: withMdon,
     withEmail: withEmail,
-    withUrl: withUrl
+    withUrl: withUrl,
+    myMastodonHandle: myMastodonHandle
   };
   
   return msg;
