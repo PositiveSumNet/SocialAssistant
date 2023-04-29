@@ -287,13 +287,7 @@ const choiceFiltersApply = function() {
   }
 }
 
-// the Detail returned back when we say "with" email/url/mdon is special and we'd like to bold it
 const detailReflectsFilter = function() {
-  
-  if (!choiceFiltersApply()) {
-    return false;
-  }
-  
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
 }
 
@@ -440,10 +434,10 @@ const buildNetworkSearchRequestFromUi = function() {
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
 
+  const withUrl = getUiValue('optWithUrl');
   const canChoiceFilter = choiceFiltersApply();
   const withMdon = canChoiceFilter ? getUiValue('optWithMdon') : false;
   const withEmail = canChoiceFilter ? getUiValue('optWithEmail') : false;
-  const withUrl = canChoiceFilter ? getUiValue('optWithUrl') : false;
   
   const msg = { 
     actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
