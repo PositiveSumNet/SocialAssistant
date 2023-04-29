@@ -270,3 +270,7 @@ input.textinput:focus {
 #mdonReconnecting {
   padding: 10px 0px;
 }
+
+.personDisplay {
+  font-weight: bold;
+}
