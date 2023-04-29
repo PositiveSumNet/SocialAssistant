@@ -474,6 +474,20 @@ const makeNetworkSizeCounterKey = function(owner, pageType) {
   return `${owner}-${pageType}`;
 }
 
+const clearCachedCountForCurrentRequest = function() {
+  const owner = getOwnerFromUi();
+  const pageType = getPageType();
+
+  if (!owner || !pageType) {
+    return;
+  }
+
+  const key = makeNetworkSizeCounterKey(owner, pageType);
+  if (_counterSet.has(key)) {
+    _counterSet.delete(key);
+  }
+}
+
 const requestTotalCount = function() {
   const owner = getOwnerFromUi();
   if (!owner) {
@@ -502,17 +516,22 @@ const requestTotalCount = function() {
   _counters.push({key: key});   // value not set yet; will be when called back
 }
 
-const networkSearch = function() {
+const networkSearch = function(forceRefresh) {
   const msg = buildNetworkSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
   
   SETTINGS.cachePageState(msg);
 
-  if (_lastRenderedFollowsRequest === requestJson) {
+  if (!forceRefresh && _lastRenderedFollowsRequest === requestJson) {
     // we already have this rendered; avoid double-submission
     return;
   }
   
+  if (forceRefresh) {
+    // ensure that the follow count is re-requested
+    clearCachedCountForCurrentRequest();
+  }
+
   showNetworkSearchProgress(true);
   worker.postMessage(msg);
 }
