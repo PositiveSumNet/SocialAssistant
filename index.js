@@ -381,8 +381,6 @@ const onClickedMdonOption = function() {
   ensureAskedMdonServer();
   
   setOptionVisibility();
-  const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
-  ES6.TRISTATE.setValue(chkMdonImFollowing, false);
 
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
@@ -705,6 +703,7 @@ optWithEmail.addEventListener('change', (event) => {
   networkSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
+  setOptionVisibility();
   resetPage();
   networkSearch();
 });
@@ -1120,6 +1119,10 @@ const updateForSite = function() {
 }
 
 const setOptionVisibility = function() {
+  // default to undefined (no filter applied) for the tri-state
+  const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
+  ES6.TRISTATE.setValue(chkMdonImFollowing, undefined);
+
   const pageType = getPageType();
   const site = PAGETYPE.getSite(pageType);
   const mdonMode = getUiValue('optWithMdon');
