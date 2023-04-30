@@ -434,6 +434,8 @@ const buildNetworkSearchRequestFromUi = function() {
   let myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
   myMastodonHandle = myMastodonHandle || (_mdonRememberedUser ? _mdonRememberedUser.Handle : undefined);
 
+  const mdonFollowing = ES6.TRISTATE.getValue(chkMdonImFollowing);
+  
   const msg = { 
     actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
     pageType: pageType,
@@ -450,7 +452,8 @@ const buildNetworkSearchRequestFromUi = function() {
     withMdon: withMdon,
     withEmail: withEmail,
     withUrl: withUrl,
-    myMastodonHandle: myMastodonHandle
+    myMastodonHandle: myMastodonHandle,
+    mdonFollowing: mdonFollowing
   };
   
   return msg;
