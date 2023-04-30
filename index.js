@@ -707,6 +707,10 @@ optWithUrl.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 });
+chkMdonImFollowing.addEventListener('change', (event) => {
+  resetPage();
+  networkSearch();
+});
 optClear.addEventListener('change', (event) => {
   setOptionVisibility();
   resetPage();
@@ -1056,6 +1060,11 @@ document.getElementById('twitterLensBtn').onclick = function(event) {
 };
 
 document.getElementById('mastodonLensBtn').onclick = function(event) {
+  activateMastodonTab();
+  return false;
+};
+
+const activateMastodonTab = function() {
   const site = SETTINGS.getCachedSite();
 
   if (site != SITE.MASTODON) {
@@ -1063,9 +1072,7 @@ document.getElementById('mastodonLensBtn').onclick = function(event) {
     updateForSite();
     networkSearch();
   }
-
-  return false;
-};
+}
 
 const updateForSite = function() {
   const site = SETTINGS.getCachedSite();
@@ -1183,6 +1190,17 @@ document.getElementById('mdonDownloadFollowersListBtn').onclick = function(event
 
 document.getElementById('mdonStopDownloadBtn').onclick = function(event) {
   MASTODON.abortPaging();
+  return false;
+};
+
+btnFollowAllOnMastodon.onclick = function(event) {
+  if (!_mdonRememberedUser || !_mdonRememberedUser.Handle) {
+    activateMastodonTab();
+  }
+  else {
+    MASTODON.followAllVisibleMastodonAccounts();
+  }
+
   return false;
 };
 
