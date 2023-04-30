@@ -275,18 +275,6 @@ const initUi = function(owner, pageType) {
   }
 }
 
-const choiceFiltersApply = function() {
-  const site = SETTINGS.getCachedSite();
-
-  switch (site) {
-    case SITE.TWITTER:
-      // only twitter renders the option buttons for the filters
-      return true;
-    default:
-      return false;
-  }
-}
-
 const detailReflectsFilter = function() {
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
 }
@@ -387,10 +375,15 @@ const calcSkip = function() {
   return skip;
 }
 
-// this ensures we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
+// site tab is twitter and clicked to filter to mastodon
 const onClickedMdonOption = function() {
+  // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
   ensureAskedMdonServer();
   
+  setOptionVisibility();
+  const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
+  ES6.TRISTATE.setValue(chkMdonImFollowing, false);
+
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
   networkSearch();  
@@ -434,10 +427,10 @@ const buildNetworkSearchRequestFromUi = function() {
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
 
-  const withUrl = getUiValue('optWithUrl');
-  const canChoiceFilter = choiceFiltersApply();
-  const withMdon = canChoiceFilter ? getUiValue('optWithMdon') : false;
-  const withEmail = canChoiceFilter ? getUiValue('optWithEmail') : false;
+  // conditional filters
+  let withUrl = getUiValue('optWithUrl');
+  let withMdon = site == SITE.TWITTER ? getUiValue('optWithMdon') : false;
+  let withEmail = site == SITE.TWITTER ? getUiValue('optWithEmail') : false;
   
   const myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
 
@@ -650,17 +643,39 @@ const onAddedFollows = function(container) {
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
 
+// public variables for filter elements that we'll attach events to etc.
+ES6.TRISTATE.initAll();
+
 const txtOwnerHandle = document.getElementById('txtOwnerHandle');
 const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
 const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtConnSearch');
 const txtPageNum = document.getElementById('txtPageNum');
+
+// FILTERS
+// cell (1,1)
 const chkMutual = document.getElementById('chkMutual');
+
+// cell (1,2) conditional
+// twitter shows Mastodon radio button until it's clicked (then swaps it for I'm following on Mastodon tri-state checkbox)
 const optWithMdon = document.getElementById('optWithMdon');
+// mastodon always shows the tri-state checkbox
+const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
+
+// cell (1,3) conditional
+// twitter shows email option until Mastodon is clicked (then swaps it for Follow on Mastodon! button)
 const optWithEmail = document.getElementById('optWithEmail');
+// mastodon always shows this button
+const btnFollowAllOnMastodon =document.getElementById('btnFollowAllOnMastodon');
+
+// cell (2,1)
+const chkFavorited = document.getElementById('chkFavorited');
+// cell (2,2)
 const optWithUrl = document.getElementById('optWithUrl');
+// cell (2,3)
 const optClear = document.getElementById('optClear');
+
 // mastodon account typeahead hitting api
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
 const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
@@ -694,6 +709,7 @@ optWithUrl.addEventListener('change', (event) => {
   networkSearch();
 });
 optClear.addEventListener('change', (event) => {
+  setOptionVisibility();
   resetPage();
   networkSearch();
 });
@@ -1066,7 +1082,7 @@ const updateForSite = function() {
   const mastodonBtn = document.getElementById('mastodonLensBtn');
   const mastodonApiUi = document.getElementById('mdonApiUi');
 
-  setChoiceFilterVisibility();
+  setOptionVisibility();
   
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
@@ -1103,18 +1119,30 @@ const updateForSite = function() {
   resetFilters();
 }
 
-// show/hide the filter option buttons (only used by twitter)
-const setChoiceFilterVisibility = function() {
-  const canChoiceFilter = choiceFiltersApply();
+const setOptionVisibility = function() {
+  const pageType = getPageType();
+  const site = PAGETYPE.getSite(pageType);
+  const mdonMode = getUiValue('optWithMdon');
 
-  Array.from(document.getElementsByClassName("choiceFilterCell")).forEach(function(td) {
-    if (canChoiceFilter) {
-      td.style.display = "table-cell";
-    }
-    else {
-      td.style.display = "none";
-    }
-  });
+  const filterTwitterWithMdonLink = document.getElementById('filterTwitterWithMdonLink');
+  const filterMdonImFollowing = document.getElementById('filterMdonImFollowing');
+  const filterWithEmail = document.getElementById('filterWithEmail');
+  const btnFollowAllOnMastodon = document.getElementById('btnFollowAllOnMastodon');
+
+  if (site === SITE.MASTODON || mdonMode === true) {
+    // cell (1,2) switches from the Mastodon radio button (which is already true) to the 'Where I'm following' filter
+    filterTwitterWithMdonLink.style.display = 'none';
+    filterMdonImFollowing.style.display = 'block';
+    // cell (1,3) switches from 'w/ Email' to the 'Follow on Mastodon!' button
+    filterWithEmail.style.display = 'none';
+    btnFollowAllOnMastodon.style.display = 'inline-block';
+  }
+  else {
+    filterTwitterWithMdonLink.style.display = 'block';
+    filterMdonImFollowing.style.display = 'none';
+    filterWithEmail.style.display = 'block';
+    btnFollowAllOnMastodon.style.display = 'none';
+  }
 }
 
 /************************/

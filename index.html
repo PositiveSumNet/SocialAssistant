@@ -95,23 +95,31 @@
             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
           </div>
         </div>
-        <div id="mdonDownloadConnsUi">
-          <span id='loggedInMastodonUser'></span>
-          <label for='txtMdonDownloadConnsFor' style="margin-left:10px;width:300px;display:inline;" class='inputlabel text-muted input-group-text'>@</label>
-          <input class="textinput" id='txtMdonDownloadConnsFor' style="max-width:300px;display:inline;" name='txtMdonDownloadConnsFor' type='text' placeholder="account to analyze" >
-          <a href="#" class="btn btn-outline-danger p-2" style="margin-left:10px;display:none;" role="button" id="mdonStopDownloadBtn">Stop</a>
-          <a href="#" class="btn btn-primary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowingListBtn">Save Following List</a>
-          <a href="#" class="btn btn-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowersListBtn">Save Followers</a>
-          <a href="#" class="btn btn-outline-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDisconnect">Disconnect</a>
-          <span class="text-secondary" style="margin-left:10px;display:inline;">
-            <i id="mastodonDownloadingIcon" class="bi-cloud-download-fill" style="display:none;" data-toggle='tooltip' title='Download status'></i>
-            <span id='mastodonDownloadStatus' data-toggle='tooltip' title='Download status'></span>
-          </span>
-          <span class="text-secondary" style="margin-left:10px;display:inline;">
-            <i id="mastodonSavingDoneIcon" class="bi-check-circle-fill text-success" style="display:none;" data-toggle='tooltip' title='Save complete!'></i>
-            <i id="mastodonSavingIcon" class="bi-save-fill" style="display:none;" data-toggle='tooltip' title='Save status'></i>
-            <span id='mastodonSavingStatus' data-toggle='tooltip' title='Save status'></span>
-          </span>
+        <div id="mdonDownloadConnsUi" class="card">
+          <div class="card-header inkfree small" style="padding:0px;background:none;border:none;">
+            Download connections of any Mastodon account...
+          </div>
+          <div class="card-body">
+            <span id='loggedInMastodonUser'></span>
+            <label for='txtMdonDownloadConnsFor' style="margin-left:10px;width:300px;display:inline;" class='inputlabel text-muted input-group-text'>@</label>
+            <input class="textinput" id='txtMdonDownloadConnsFor' style="max-width:300px;display:inline;" name='txtMdonDownloadConnsFor' type='text' placeholder="account to analyze" >
+            <a href="#" class="btn btn-outline-danger p-2" style="margin-left:10px;display:none;" role="button" id="mdonStopDownloadBtn">Stop</a>
+            <a href="#" class="btn btn-primary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowingListBtn">Save Following List</a>
+            <a href="#" class="btn btn-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowersListBtn">Save Followers</a>
+            <a href="#" class="btn btn-outline-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDisconnect">Disconnect</a>
+            <span class="text-secondary" style="margin-left:10px;display:inline;">
+              <i id="mastodonDownloadingIcon" class="bi-cloud-download-fill" style="display:none;" data-toggle='tooltip' title='Download status'></i>
+              <span id='mastodonDownloadStatus' data-toggle='tooltip' title='Download status'></span>
+            </span>
+            <span class="text-secondary" style="margin-left:10px;display:inline;">
+              <i id="mastodonSavingDoneIcon" class="bi-check-circle-fill text-success" style="display:none;" data-toggle='tooltip' title='Save complete!'></i>
+              <i id="mastodonSavingIcon" class="bi-save-fill" style="display:none;" data-toggle='tooltip' title='Save status'></i>
+              <span id='mastodonSavingStatus' data-toggle='tooltip' title='Save status'></span>
+            </span>
+          </div>
+          <div class="card-footer inkfree small" style="padding:0px;background:none;border:none;">
+            Then explore what you've saved and follow interesting accounts!
+          </div>
         </div>
         <div id='mdonRemoteOwnerPivotPicker' class='pt-2' style="display:none;"></div>
       </div>
@@ -148,24 +156,29 @@
               <tr>
                 <td>
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
-                    <label class="form-check-label" for="chkMutual">Mutual follow</label>
+                    <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual" data-toggle='tooltip' title='Where mutually followed by the selected person'>
+                    <label class="form-check-label" for="chkMutual" data-toggle='tooltip' title='Where mutually followed by the selected person'>Mutual follow</label>
                   </div>
                 </td>
-                <td class="choiceFilterCell">
-                  <div class="form-check">
+                <td>
+                  <div class="form-check" id="filterTwitterWithMdonLink">
                     <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
                     <label class="form-check-label" for="optWithMdon">
                       <span>Mastodon</span>
                       <a data-toggle='tooltip' title='For the best experience, enter the server where you have an account, e.g. toad.social' href='#' id='mdonGear'><i class="bi-gear"></i></a>
                     </label>
                   </div>
+                  <div class="form-check" style="display:none;" id="filterMdonImFollowing">
+                    <input class="form-check-input chk-tristate" type="checkbox" name="chkMdonImFollowing" id="chkMdonImFollowing" title='Where I follow them on Mastodon - true/false/unfiltered'>
+                    <label class="form-check-label" for="chkMdonImFollowing" data-toggle='tooltip' title='Where I follow them on Mastodon - true/false/unfiltered'><i class="bi-mastodon"></i> I follow</label>
+                  </div>
                 </td>
                 <td>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
-                    <label class="form-check-label" for="optWithUrl">w/ Url</label>
+                  <div class="form-check" id="filterWithEmail">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithEmail" data-toggle='tooltip' title='Where an email address is available'>
+                    <label class="form-check-label" for="optWithEmail" data-toggle='tooltip' title='Where an email address is available'>w/ Email</label>
                   </div>
+                  <a id="btnFollowAllOnMastodon" href="#" class="btn btn-primary mb-1" style="display:none;margin-top:-2px;" data-toggle='tooltip' title='Follow these accounts on Mastodon!'><i class="bi-mastodon"></i> Follow!</a>
                 </td>
               </tr>
               <tr>
@@ -175,16 +188,16 @@
                     <label class="form-check-label" for="chkFavorited">Favorite</label>
                   </div>
                 </td>
-                <td class="choiceFilterCell">
+                <td>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
-                    <label class="form-check-label" for="optWithEmail">w/ Email</label>
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithUrl" data-toggle='tooltip' title='Where a URL is available'>
+                    <label class="form-check-label" for="optWithUrl" data-toggle='tooltip' title='Where a URL is available'>w/ Url</label>
                   </div>
                 </td>
                 <td>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="optWith" id="optClear">
-                    <label class="form-check-label" for="optClear">w/ Any</label>
+                    <input class="form-check-input" type="radio" name="optWith" id="optClear" data-toggle='tooltip' title='Remove filters'>
+                    <label class="form-check-label" for="optClear" data-toggle='tooltip' title='Remove filters'>w/ Any</label>
                   </div>
                 </td>
               </tr>
