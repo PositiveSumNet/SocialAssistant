@@ -592,7 +592,7 @@ const renderConnections = function(payload) {
   }
 
   IMAGE.resolveDeferredLoadImages(plist);
-  MASTODON.listenToFollow(plist);
+  MASTODON.listenForFollowButtonClick(plist);
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
