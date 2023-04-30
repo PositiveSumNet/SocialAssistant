@@ -273,3 +273,7 @@ input.textinput:focus {
 .personDisplay {
   font-weight: bold;
 }
+
+.text-mastodon {
+ color: #595aff
+}
