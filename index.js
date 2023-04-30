@@ -430,7 +430,9 @@ const buildNetworkSearchRequestFromUi = function() {
   let withMdon = site == SITE.TWITTER ? getUiValue('optWithMdon') : false;
   let withEmail = site == SITE.TWITTER ? getUiValue('optWithEmail') : false;
   
-  const myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
+  // if haven't yet clicked to the mastodon tab, we might still only have the cached mdon user
+  let myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
+  myMastodonHandle = myMastodonHandle || (_mdonRememberedUser ? _mdonRememberedUser.Handle : undefined);
 
   const msg = { 
     actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
