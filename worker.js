@@ -76,6 +76,8 @@ const getAllEntities = function() {
 const getMigrationScripts = function() {
   const scripts = [];
   
+  const negationTime = DBORM.getNowTime(true);  // true is to semantically negate (see comment at top of DBORM)
+
   // note: script 1 was the initialization script that established the Migration table
 
   // create import tables
@@ -90,6 +92,12 @@ const getMigrationScripts = function() {
   const sql4 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script4Entities, 4);
   scripts.push(DBORM.MIGRATION.newScript(sql4, 4));
   
+  // script 5 is because we sometimes mistook post.news as mastodon
+  const sql5 = `UPDATE SocialProfileLinkMastodonAccount SET Timestamp = ${negationTime} WHERE oValue LIKE '%post.news%';
+    ${DBORM.MIGRATION.writeUpdateMigrationVersionSql(5)}`;
+
+  scripts.push(DBORM.MIGRATION.newScript(sql5, 5));
+
   return scripts;
 }
 
