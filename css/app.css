@@ -277,3 +277,11 @@ input.textinput:focus {
 .text-mastodon {
  color: #595aff
 }
+
+.following-awaits-response-mdon, a.following-awaits-response-mdon {
+  color: #8DBAFB;
+}
+
+.following-likely-mdon, a.following-likely-mdon {
+  color: #198754
+}
