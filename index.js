@@ -670,8 +670,6 @@ const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
 // cell (1,3) conditional
 // twitter shows email option until Mastodon is clicked (then swaps it for Follow on Mastodon! button)
 const optWithEmail = document.getElementById('optWithEmail');
-// mastodon always shows this button
-const btnFollowAllOnMastodon =document.getElementById('btnFollowAllOnMastodon');
 
 // cell (2,1)
 const chkFavorited = document.getElementById('chkFavorited');
@@ -1199,7 +1197,7 @@ document.getElementById('mdonStopDownloadBtn').onclick = function(event) {
   return false;
 };
 
-btnFollowAllOnMastodon.onclick = function(event) {
+document.getElementById('btnFollowAllOnMastodon').onclick = function(event) {
   if (!_mdonRememberedUser || !_mdonRememberedUser.Handle) {
     activateMastodonTab();
   }
