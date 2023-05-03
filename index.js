@@ -578,6 +578,12 @@ const clearConnectionUiElms = function() {
   clearFollowCounters();
 }
 
+const canRenderMastodonFollowOneButtons = function() {
+  const site = SETTINGS.getCachedSite();
+  const mdonMode = getUiValue('optWithMdon');
+  return site === SITE.MASTODON || mdonMode === true;
+}
+
 const renderConnections = function(payload) {
   clearConnectionUiElms();
   
@@ -592,7 +598,10 @@ const renderConnections = function(payload) {
   }
 
   IMAGE.resolveDeferredLoadImages(plist);
-  MASTODON.listenForFollowButtonClick(plist);
+
+  if (canRenderMastodonFollowOneButtons() === true) {
+    MASTODON.renderFollowOnMastodonButtons(plist);
+  }
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);

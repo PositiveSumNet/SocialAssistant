@@ -98,6 +98,117 @@ const getMigrationScripts = function() {
 
   scripts.push(DBORM.MIGRATION.newScript(sql5, 5));
 
+  // script 6 is because tables were case-sensitive before and should be case inensitive
+  scripts.push(...writeScriptsToMakeTablesCaseInsensitive(6));
+
+  return scripts;
+}
+
+const migrateToCaseInsensitiveSql = function(entity) {
+  let renameToOldSql = `ALTER TABLE ${entity.Name} RENAME TO ${entity.Name}_Old;`;
+  // create table statement using case insensitive
+  let cleanCreateSql = DBORM.MIGRATION.writeEnsureEntityTableSql(entity);
+  
+  const oDataType = DBORM.getSqliteDataType(entity.ObjectType);
+  const oIsText = oDataType.toUpperCase() === 'TEXT';
+  const oCollate = oIsText ? ' COLLATE NOCASE' : '';
+
+  let insertSql = `INSERT INTO ${entity.Name} (
+    ${entity.SubjectCol},
+    ${entity.ObjectCol},
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph},
+    ${SCHEMA_CONSTANTS.COLUMNS.Timestamp}
+    )`;
+
+  let selectSql = '';
+  let groupBySql = '';
+  if (entity.OneToOne === true) {
+    // unique by subject|graph
+    selectSql = `SELECT 
+    ${entity.SubjectCol},
+    MAX(${entity.ObjectCol}),
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph},
+    MAX(${SCHEMA_CONSTANTS.COLUMNS.Timestamp})
+    `;
+
+    groupBySql = `GROUP BY 
+    ${entity.SubjectCol} COLLATE NOCASE,
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} COLLATE NOCASE
+    `;
+  }
+  else {
+    // unique by subject|object|graph 
+    selectSql = `SELECT 
+    ${entity.SubjectCol},
+    ${entity.ObjectCol},
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph},
+    MAX(${SCHEMA_CONSTANTS.COLUMNS.Timestamp})
+    `;
+
+    groupBySql = `GROUP BY 
+    ${entity.SubjectCol} COLLATE NOCASE,
+    ${entity.ObjectCol}${oCollate},
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} COLLATE NOCASE
+    `;
+  }
+
+  const dropOldSql = `DROP TABLE ${entity.Name}_Old;`;
+
+  const sql = `
+  ${renameToOldSql}
+
+  ${cleanCreateSql}
+
+  ${insertSql}
+  ${selectSql}
+  FROM ${entity.Name}
+  ${groupBySql};
+
+  ${dropOldSql}
+  `;
+
+  return sql;
+}
+
+const writeScriptsToMakeTablesCaseInsensitive = function(nextScriptNumber) {
+  const entities = getAllEntities();
+
+  let scripts = [];
+
+  // a) first, rename to _Old
+  let renameSql = '';
+  let deleteOldSql = '';
+  for (let i = 0; i < entities.length; i++) {
+    let entity = entities[i];
+    
+    renameSql = `${renameSql}
+    ALTER TABLE ${entity.Name} RENAME TO ${entity.Name}_Old;
+    `;
+
+    deleteOldSql = `${deleteOldSql}
+    DROP TABLE ${entity.Name}_Old;
+    `;
+  }
+  scripts.push(DBORM.MIGRATION.newScript(renameSql, nextScriptNumber));
+  nextScriptNumber++;
+
+  // b) next, copy over the data
+  let copyOverSql = '';
+  for (let i = 0; i < entities.length; i++) {
+    let entity = entities[i];
+    // table creation/DDL is now case insensitive (but it wasn't before)
+    let entitySql = migrateToCaseInsensitiveSql(entity);
+    copyOverSql = `${copyOverSql}
+    
+    ${entitySql}
+    `;
+  }
+  scripts.push(DBORM.MIGRATION.newScript(copyOverSql, nextScriptNumber));
+  nextScriptNumber++;
+
+  // c) finally, delete the _Old
+  scripts.push(DBORM.MIGRATION.newScript(deleteOldSql, nextScriptNumber));
+
   return scripts;
 }
 

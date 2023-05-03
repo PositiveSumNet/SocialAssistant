@@ -274,7 +274,7 @@ input.textinput:focus {
   font-weight: bold;
 }
 
-.text-mastodon {
+.text-mastodon, .mastodon-follow-one {
  color: #595aff
 }
 
