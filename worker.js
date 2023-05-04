@@ -104,6 +104,9 @@ const getMigrationScripts = function() {
 
   scripts.push(DBORM.MIGRATION.newScript(sql6, 6));
 
+  // script 7 is because import tables were case-sensitive before and should be case insensitive
+  scripts.push(DBORM.MIGRATION.writeEnsureImportTablesScript(7, APPNAME, true));
+
   return scripts;
 }
 
