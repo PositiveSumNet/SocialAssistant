@@ -99,7 +99,10 @@ const getMigrationScripts = function() {
   scripts.push(DBORM.MIGRATION.newScript(sql5, 5));
 
   // script 6 is because tables were case-sensitive before and should be case inensitive
-  scripts.push(...writeScriptsToMakeTablesCaseInsensitive(6));
+  const sql6 = `${writeMakeTablesCaseInsensitiveSql()}
+    ${DBORM.MIGRATION.writeUpdateMigrationVersionSql(6)}`;
+
+  scripts.push(DBORM.MIGRATION.newScript(sql6, 6));
 
   return scripts;
 }
@@ -161,7 +164,7 @@ const migrateToCaseInsensitiveSql = function(entity) {
 
   ${insertSql}
   ${selectSql}
-  FROM ${entity.Name}
+  FROM ${entity.Name}_Old
   ${groupBySql};
 
   ${dropOldSql}
@@ -170,46 +173,19 @@ const migrateToCaseInsensitiveSql = function(entity) {
   return sql;
 }
 
-const writeScriptsToMakeTablesCaseInsensitive = function(nextScriptNumber) {
+const writeMakeTablesCaseInsensitiveSql = function() {
   const entities = getAllEntities();
 
-  let scripts = [];
-
-  // a) first, rename to _Old
-  let renameSql = '';
-  let deleteOldSql = '';
+  let sql = '';
   for (let i = 0; i < entities.length; i++) {
     let entity = entities[i];
     
-    renameSql = `${renameSql}
-    ALTER TABLE ${entity.Name} RENAME TO ${entity.Name}_Old;
-    `;
+    sql = `${sql}
 
-    deleteOldSql = `${deleteOldSql}
-    DROP TABLE ${entity.Name}_Old;
+    ${migrateToCaseInsensitiveSql(entity)}
     `;
   }
-  scripts.push(DBORM.MIGRATION.newScript(renameSql, nextScriptNumber));
-  nextScriptNumber++;
-
-  // b) next, copy over the data
-  let copyOverSql = '';
-  for (let i = 0; i < entities.length; i++) {
-    let entity = entities[i];
-    // table creation/DDL is now case insensitive (but it wasn't before)
-    let entitySql = migrateToCaseInsensitiveSql(entity);
-    copyOverSql = `${copyOverSql}
-    
-    ${entitySql}
-    `;
-  }
-  scripts.push(DBORM.MIGRATION.newScript(copyOverSql, nextScriptNumber));
-  nextScriptNumber++;
-
-  // c) finally, delete the _Old
-  scripts.push(DBORM.MIGRATION.newScript(deleteOldSql, nextScriptNumber));
-
-  return scripts;
+  return sql;
 }
 
 /*****************************************/
