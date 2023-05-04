@@ -11,10 +11,28 @@
   </head>
   <body>
     <div class='main container-fluid'>
-      <h1 class="row bg-header inkfree"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></h1>
+      <div class="row bg-header inkfree">
+        <div class="col">
+          <span class="h1"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></span>
+        </div>
+        <div class="col-sm-auto my-auto">
+          <span class="h5 inkfree text-right my-auto">Locally Cached Social Database</span>
+        </div>
+      </div>
       <div class="row bg-subheader">
         <div class="col">
-          <span class="h5 inkfree">Locally Cached Social Database</span>
+          <ul class="nav nav-tabs" style="border-bottom:none;">
+            <li class="nav-item">
+              <a id="twitterLensBtn" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Focus on Twitter networks'>
+                <i class="bi-twitter"></i>
+                Twitter</a>
+            </li>
+            <li class="nav-item">
+              <a id="mastodonLensBtn" class="nav-link" href="#" data-toggle='tooltip' title='Focus on Mastodon networks'>
+                <i class="bi-mastodon"></i>
+                Mastodon</a>
+            </li>
+          </ul>
         </div>
         <div class="col-sm-auto text-right">
           <span id='transferringMsg' style="display:none;">
@@ -44,6 +62,66 @@
         <div class="pt-2 ps-4">
           <a href="#" id="uploadDone" role="button" class="btn btn-primary">Done</a>
         </div>
+      </div>
+      <div id='mdonApiUi' class='row' style="display:none;padding:10px 20px;">
+        <div id="mdonOAuthUi">
+          <h5><i class="bi-mastodon"></i> Connect to Mastodon</h5>
+          <div id="mdonConnectStep1">
+            <p>This does NOT share data with our servers. The app runs directly on your device.</p>
+            <div class='input-group'>
+              <label for='txtMdonServer' class='text-muted input-group-text'>Mastodon server</label>
+              <input id='txtMdonServer' style="max-width:250px;" name='txtMdonServer' type='text' placeholder='e.g. mastodon.online' class='form-control' >
+            </div>
+            <br>
+            <p>Click to launch a separate tab to authorize. Then return here.</p>
+            <p><a href="#" class="btn btn-primary" role="button" id="mdonLaunchAuthBtn">Connect</a></p>
+          </div>
+          <div id="mdonConnectStep2">
+            <p>Paste the authorization code (from the Mastodon tab that was launched).</p>
+            <div class='input-group'>
+              <label for='txtMdonAuthCode' class='text-muted input-group-text'>Auth Code</label>
+              <input id='txtMdonAuthCode' name='txtMdonAuthCode' type='password' class='form-control' style="max-width:400px;" >
+            </div>
+            <br>
+            <p><a href="#" class="btn btn-primary" role="button" id="mdonAcceptAuthBtn">Test Connection</a></p>
+          </div>
+        </div>
+        <div id="mdonConnError" class="text-danger"></div>
+        <div id="mdonReconnecting" style="display:none;">
+          <i class="bi-arrow-down-up"></i>
+          <span id="mdonReconnectingAs"></span>
+          <a href="#" class="btn btn-outline-secondary" style="margin-left:10px;display:inline;" role="button" id="mdonDisconnect2">Disconnect</a>
+          <div class="progress mt-3" style="height:3px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div id="mdonDownloadConnsUi" class="card">
+          <div class="card-header inkfree small" style="padding:0px;background:none;border:none;">
+            Download connections of any Mastodon account...
+          </div>
+          <div class="card-body">
+            <span id='loggedInMastodonUser'></span>
+            <label for='txtMdonDownloadConnsFor' style="margin-left:10px;width:300px;display:inline;" class='inputlabel text-muted input-group-text'>@</label>
+            <input class="textinput" id='txtMdonDownloadConnsFor' style="max-width:300px;display:inline;" name='txtMdonDownloadConnsFor' type='text' placeholder="account to analyze" >
+            <a href="#" class="btn btn-outline-danger p-2" style="margin-left:10px;display:none;" role="button" id="mdonStopDownloadBtn">Stop</a>
+            <a href="#" class="btn btn-primary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowingListBtn">Save Following List</a>
+            <a href="#" class="btn btn-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDownloadFollowersListBtn">Save Followers</a>
+            <a href="#" class="btn btn-outline-secondary p-2" style="margin-left:10px;display:inline;" role="button" id="mdonDisconnect">Disconnect</a>
+            <span class="text-secondary" style="margin-left:10px;display:inline;">
+              <i id="mastodonDownloadingIcon" class="bi-cloud-download-fill" style="display:none;" data-toggle='tooltip' title='Download status'></i>
+              <span id='mastodonDownloadStatus' data-toggle='tooltip' title='Download status'></span>
+            </span>
+            <span class="text-secondary" style="margin-left:10px;display:inline;">
+              <i id="mastodonSavingDoneIcon" class="bi-check-circle-fill text-success" style="display:none;" data-toggle='tooltip' title='Save complete!'></i>
+              <i id="mastodonSavingIcon" class="bi-save-fill" style="display:none;" data-toggle='tooltip' title='Save status'></i>
+              <span id='mastodonSavingStatus' data-toggle='tooltip' title='Save status'></span>
+            </span>
+          </div>
+          <div class="card-footer inkfree small" style="padding:0px;background:none;border:none;">
+            Then explore what you've saved and follow interesting people!
+          </div>
+        </div>
+        <div id='mdonRemoteOwnerPivotPicker' class='pt-2' style="display:none;"></div>
       </div>
       <div id="dbui" class="row pb-2 container-fluid">
         <div id="listFilterSet" class='row'>
@@ -78,24 +156,29 @@
               <tr>
                 <td>
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual">
-                    <label class="form-check-label" for="chkMutual">Mutual follow</label>
+                    <input class="form-check-input" type="checkbox" name="chkMutual" id="chkMutual" data-toggle='tooltip' title='Where mutually followed by the selected person'>
+                    <label class="form-check-label" for="chkMutual" data-toggle='tooltip' title='Where mutually followed by the selected person'>Mutual follow</label>
                   </div>
                 </td>
                 <td>
-                  <div class="form-check">
+                  <div class="form-check" id="filterTwitterWithMdonLink">
                     <input class="form-check-input" type="radio" name="optWith" id="optWithMdon">
                     <label class="form-check-label" for="optWithMdon">
                       <span>Mastodon</span>
                       <a data-toggle='tooltip' title='For the best experience, enter the server where you have an account, e.g. toad.social' href='#' id='mdonGear'><i class="bi-gear"></i></a>
                     </label>
                   </div>
+                  <div class="form-check" style="display:none;" id="filterMdonImFollowing">
+                    <input class="form-check-input chk-tristate" type="checkbox" name="chkMdonImFollowing" id="chkMdonImFollowing" title='Where I follow them on Mastodon - true/false/unfiltered'>
+                    <label class="form-check-label" for="chkMdonImFollowing" data-toggle='tooltip' title='Where I follow them on Mastodon - true/false/unfiltered'><i class="bi-mastodon text-mastodon"></i> I follow</label>
+                  </div>
                 </td>
                 <td>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="optWith" id="optWithEmail">
-                    <label class="form-check-label" for="optWithEmail">w/ Email</label>
+                  <div class="form-check" id="filterWithEmail">
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithEmail" data-toggle='tooltip' title='Where an email address is available'>
+                    <label class="form-check-label" for="optWithEmail" data-toggle='tooltip' title='Where an email address is available'>w/ Email</label>
                   </div>
+                  <a id="btnFollowAllOnMastodon" href="#" class="btn btn-primary mb-1" style="display:none;margin-top:-2px;" data-toggle='tooltip' title='Follow these accounts on Mastodon (just those currently in view)'><i class="bi-mastodon"></i> Follow!</a>
                 </td>
               </tr>
               <tr>
@@ -107,14 +190,14 @@
                 </td>
                 <td>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="optWith" id="optWithUrl">
-                    <label class="form-check-label" for="optWithUrl">w/ Url</label>
+                    <input class="form-check-input" type="radio" name="optWith" id="optWithUrl" data-toggle='tooltip' title='Where a URL is available'>
+                    <label class="form-check-label" for="optWithUrl" data-toggle='tooltip' title='Where a URL is available'>w/ Url</label>
                   </div>
                 </td>
                 <td>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="optWith" id="optClear">
-                    <label class="form-check-label" for="optClear">w/ Any</label>
+                    <input class="form-check-input" type="radio" name="optWith" id="optClear" data-toggle='tooltip' title='Remove filters'>
+                    <label class="form-check-label" for="optClear" data-toggle='tooltip' title='Remove filters'>w/ Any</label>
                   </div>
                 </td>
               </tr>
@@ -124,7 +207,6 @@
         <div id="connListProgress" class="progress" style="height:3px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>
-        <div id='connList' class='row'></div>
         <div id='listOwnerPivotPicker' class='row pt-2'></div>
         <div class='listMain row' id='connListMain'>
           <div id='paginated-list' aria-live='polite'>
@@ -135,9 +217,9 @@
     <div class="fixed-bottom">
       <span>
         <span>App Version: <span id='manifestVersion'></span></span>, 
-        <span>SQLite DB Version: <span id='sqliteVersionLib'></span>, 
-        <span>OPFS: <span id='sqliteOpfsOk'></span>, 
-        <span>Script #: <span id='dbScriptNumber'></span> |
+        <span>SQLite DB Version: <span id='sqliteVersionLib'></span></span>, 
+        <span>OPFS: <span id='sqliteOpfsOk'></span></span>, 
+        <span>Script #: <span id='dbScriptNumber'></span></span> |
         <a href='https://whosum.com/privacy' target='_blank'>Privacy</a> |
         <a href='https://whosum.com/terms' target='_blank'>Terms</a> |
         <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a>
@@ -149,11 +231,13 @@
     <script src='lib/shared/settingslib.js'></script>
     <script src='lib/shared/es6lib.js'></script>
     <script src='lib/shared/strlib.js'></script>
+    <script src='lib/shared/imagelib.js'></script>
     <script src='lib/shared/emojilib.js'></script>
     <script src='lib/shared/datatypes.js'></script>
     <script src='lib/shared/appgraphs.js'></script>
     <script src='lib/shared/appschema.js'></script>
     <script src='lib/dbui/renderlib.js'></script>
+    <script src='lib/apis/mastodonlib.js'></script>
     <script src='index.js'></script>
   </body>
 </html>

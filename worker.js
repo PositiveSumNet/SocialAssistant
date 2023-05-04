@@ -22,7 +22,8 @@ importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
 importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
-importScripts('/lib/worker/connsavemapper.js');
+importScripts('/lib/worker/twitterconnsavemapper.js');
+importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
 importScripts('/lib/worker/connfetcher.js');
 
@@ -58,16 +59,25 @@ const _initialEntities = [
   APPSCHEMA.SocialListMember
 ];
 
+const _script4Entities = [
+  APPSCHEMA.SocialFollowerCount,
+  APPSCHEMA.SocialFollowingCount,
+  APPSCHEMA.SocialSourceIdentifier
+];
+
 const getAllEntities = function() {
   const arr = [];
   // as we add more entities beyond the initial set, this array will be a superset
   arr.push(..._initialEntities);
+  arr.push(..._script4Entities);
   return arr;
 }
 
 const getMigrationScripts = function() {
   const scripts = [];
   
+  const negationTime = DBORM.getNowTime(true);  // true is to semantically negate (see comment at top of DBORM)
+
   // note: script 1 was the initialization script that established the Migration table
 
   // create import tables
@@ -79,10 +89,106 @@ const getMigrationScripts = function() {
   const sql3 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_initialEntities, 3);
   scripts.push(DBORM.MIGRATION.newScript(sql3, 3));
   
-  // if we need to create ad-hoc sql scripts, they can come next (script 4 etc.)
-  // and be sure to update _allEntities accordingly
+  const sql4 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script4Entities, 4);
+  scripts.push(DBORM.MIGRATION.newScript(sql4, 4));
   
+  // script 5 is because we sometimes mistook post.news as mastodon
+  const sql5 = `UPDATE SocialProfileLinkMastodonAccount SET Timestamp = ${negationTime} WHERE oValue LIKE '%post.news%';
+    ${DBORM.MIGRATION.writeUpdateMigrationVersionSql(5)}`;
+
+  scripts.push(DBORM.MIGRATION.newScript(sql5, 5));
+
+  // script 6 is because tables were case-sensitive before and should be case inensitive
+  const sql6 = `${writeMakeTablesCaseInsensitiveSql()}
+    ${DBORM.MIGRATION.writeUpdateMigrationVersionSql(6)}`;
+
+  scripts.push(DBORM.MIGRATION.newScript(sql6, 6));
+
+  // script 7 is because import tables were case-sensitive before and should be case insensitive
+  scripts.push(DBORM.MIGRATION.writeEnsureImportTablesScript(7, APPNAME, true));
+
   return scripts;
+}
+
+const migrateToCaseInsensitiveSql = function(entity) {
+  let renameToOldSql = `ALTER TABLE ${entity.Name} RENAME TO ${entity.Name}_Old;`;
+  // create table statement using case insensitive
+  let cleanCreateSql = DBORM.MIGRATION.writeEnsureEntityTableSql(entity);
+  
+  const oDataType = DBORM.getSqliteDataType(entity.ObjectType);
+  const oIsText = oDataType.toUpperCase() === 'TEXT';
+  const oCollate = oIsText ? ' COLLATE NOCASE' : '';
+
+  let insertSql = `INSERT INTO ${entity.Name} (
+    ${entity.SubjectCol},
+    ${entity.ObjectCol},
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph},
+    ${SCHEMA_CONSTANTS.COLUMNS.Timestamp}
+    )`;
+
+  let selectSql = '';
+  let groupBySql = '';
+  if (entity.OneToOne === true) {
+    // unique by subject|graph
+    selectSql = `SELECT 
+    ${entity.SubjectCol},
+    MAX(${entity.ObjectCol}),
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph},
+    MAX(${SCHEMA_CONSTANTS.COLUMNS.Timestamp})
+    `;
+
+    groupBySql = `GROUP BY 
+    ${entity.SubjectCol} COLLATE NOCASE,
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} COLLATE NOCASE
+    `;
+  }
+  else {
+    // unique by subject|object|graph 
+    selectSql = `SELECT 
+    ${entity.SubjectCol},
+    ${entity.ObjectCol},
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph},
+    MAX(${SCHEMA_CONSTANTS.COLUMNS.Timestamp})
+    `;
+
+    groupBySql = `GROUP BY 
+    ${entity.SubjectCol} COLLATE NOCASE,
+    ${entity.ObjectCol}${oCollate},
+    ${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} COLLATE NOCASE
+    `;
+  }
+
+  const dropOldSql = `DROP TABLE ${entity.Name}_Old;`;
+
+  const sql = `
+  ${renameToOldSql}
+
+  ${cleanCreateSql}
+
+  ${insertSql}
+  ${selectSql}
+  FROM ${entity.Name}_Old
+  ${groupBySql};
+
+  ${dropOldSql}
+  `;
+
+  return sql;
+}
+
+const writeMakeTablesCaseInsensitiveSql = function() {
+  const entities = getAllEntities();
+
+  let sql = '';
+  for (let i = 0; i < entities.length; i++) {
+    let entity = entities[i];
+    
+    sql = `${sql}
+
+    ${migrateToCaseInsensitiveSql(entity)}
+    `;
+  }
+  return sql;
 }
 
 /*****************************************/
@@ -116,10 +222,27 @@ onmessage = (evt) => {
       break;
     case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
       DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
+      break;
+    case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
+      savePageRecords(evt.data)
+      break;
     default:
       break;
   }
 };
+
+const savePageRecords = function(data) {
+  const recordCount = DBORM.SAVING.saveRecords(data);
+  console.log('saved ' + recordCount);
+  if (data.onSuccessCountMsg) {
+    // tell the listener how many were saved
+    postMessage({ 
+      type: MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT, 
+      count: recordCount, 
+      pageType: data.pageType,
+      metadata: data.metadata });
+  }
+}
 
 const getActionType = function(evt) {
   if (evt.data && evt.data.actionType) {

@@ -1,3 +1,32 @@
+// stackoverflow.com/questions/2399389/detect-chrome-extension-first-run-update
+chrome.runtime.onInstalled.addListener((details) => {
+  const currentVersion = chrome.runtime.getManifest().version;
+  const previousVersion = details.previousVersion;
+  const reason = details.reason;
+  
+  console.log(`Previous Version: ${previousVersion }`);
+  console.log(`Current Version: ${currentVersion }`);
+
+  switch (reason) {
+     case 'install':
+        console.log('New User installed the extension.');
+        chrome.tabs.create({ url: 'welcome.html' });
+        break;
+     case 'update':
+        console.log('User has updated their extension.');
+        if (previousVersion === "1.0.4") {
+          chrome.tabs.create({ url: 'whatsnew105.html' });
+        }
+        break;
+     case 'chrome_update':
+     case 'shared_module_update':
+     default:
+        console.log('Other install events within the browser');
+        break;
+  }
+
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // stackoverflow.com/a/73836810
   let returnsData = false;

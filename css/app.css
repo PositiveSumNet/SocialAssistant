@@ -81,7 +81,10 @@ a {
 
 .bg-subheader {
   margin-bottom: 0.5rem;
-  padding: 1rem;
+  padding-top: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 0.5rem;
   background-color: #216CB1;
   color: #ffffff;
 }
@@ -106,6 +109,14 @@ a {
 
 .row .striped:nth-child(odd) {
   background-color: #eef5fc;
+}
+
+.row .striped:hover {
+  background-color: #fcfcfb;
+}
+
+.row .striped:nth-child(odd):hover {
+  background-color: #f6fafe;
 }
 
 a.canstar i.bi-star {
@@ -217,4 +228,60 @@ a.canstar:hover i.bi-star-fill {
 
 #paging label {
   background-color: #e9ecef;
+}
+
+#dbui {
+  padding-top: 10px;
+}
+
+.nav-item {
+  border-bottom:#ced4da solid 1px;
+}
+
+label.inputlabel {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  padding: 0.5rem 0.75rem;
+}
+
+input.textinput {
+  margin-left: -5px;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #ced4da;
+  box-sizing: border-box;
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
+  outline: none;
+}
+
+input.textinput:focus {
+  border: 2px solid #8DBAFB;
+}
+
+#mdonDownloadConnsUi {
+  border-bottom: solid 1px #216CB1;
+}
+
+#mdonOAuthUi, .authing #mdonConnError, .authing #mdonReconnecting, .authing #mdonDownloadConnsUi {
+  margin: 20px;
+}
+
+#mdonReconnecting {
+  padding: 10px 0px;
+}
+
+.personDisplay {
+  font-weight: bold;
+}
+
+.text-mastodon, .mastodon-follow-one-anchor {
+ color: #595aff
+}
+
+.following-awaits-response-mdon, a.following-awaits-response-mdon {
+  color: #8DBAFB;
+}
+
+.following-likely-mdon, a.following-likely-mdon {
+  color: #198754
 }

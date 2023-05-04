@@ -7,7 +7,7 @@ var _lastRenderedFollowsRequest = '';
 
 // improves experience of deleting in owner textbox
 var _deletingOwner = false;
-var _lastOwner = '';
+var _deletingMdonRemoteOwner = false;
 
 // so we can reduce how many times we ask for (expensive) total counts
 var _counterSet = new Set();
@@ -16,6 +16,31 @@ var _counters = [];
 // for export
 var _exportPauseRequested;
 var _pausedExportMsg;
+
+// read out to initialize (using chrome.storage.local is more seure than localStorage)
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
+  _mdonRememberedUser = result.mdonUser || {};
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_ID], function(result) {
+  _mdonClientId = result.mdonClientId || '';
+  // console.log('clientid: ' + _mdonClientId);
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.CLIENT_SECRET], function(result) {
+  _mdonClientSecret = result.mdonClientSecret || '';
+  // console.log('secret: ' + _mdonClientSecret);
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.ACCESS_TOKEN], function(result) {
+  _mdonAccessToken = result.mdonAccessToken || '';
+  // console.log('access: ' + _mdonAccessToken);
+});
+
+chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(result) {
+  _mdonUserAuthToken = result.mdonUserAuthToken || '';
+  // console.log('userauth: ' + _mdonUserAuthToken);
+});
 
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
@@ -63,22 +88,32 @@ const onCopiedToDb = async function(cacheKeys) {
   await ensureCopiedToDb();
 }
 
+const onGotSavedCount = function(count, pageType, metadata) {
+  const site = PAGETYPE.getSite(pageType);
+  
+  switch (site) {
+    case SITE.MASTODON:
+      MASTODON.onGotSavedCount(count, metadata.ownerAccountId, MASTODON.getFollowDirectionFromPageType(pageType));
+      return;
+    case SITE.TWITTER:
+    default:
+      // no rendering planned
+      console.log('Saved ' + count);
+      break;
+  }
+}
+
 const ensureCopiedToDb = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
   const xferring = document.getElementById('transferringMsg');
   // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
   const filterSet = document.getElementById('listFilterSet');
-  const connList = document.getElementById('connList');
   
-  // see note at bottom of method
-  initialRender();
-
   xferring.textContent = 'Copying ' + entries.length + ' pages to local database...';
   if (entries.length > 0) {
     xferring.style.display = 'inline-block';
-    //filterSet.style.display = 'none';
-    //connList.style.display = 'none';
+    filterSet.style.display = 'none';
   }
   
   // allow sqlite to do process in larger batches than what was cached
@@ -104,12 +139,9 @@ const ensureCopiedToDb = async function() {
   else {
     // if we got to here, we're fully copied
     xferring.style.display = 'none';
-    //filterSet.style.display = 'flex';
-    //connList.style.display = 'flex';
+    filterSet.style.display = 'flex';
 
-    // We had this only happening after all transfers. 
-    // But it seems like we can safely do this up front, so commenting out here.
-    //initialRender();
+    initialRender();
   }
 }
 
@@ -183,22 +215,38 @@ worker.onmessage = function ({ data }) {
     case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
       onProcessedSyncBatch();
       break;
+    case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
+      onGotSavedCount(data.count, data.pageType, data.metadata);
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
   }
 };
 
+// handles optionally passing in query string parameters
 const initUi = function(owner, pageType) {
+  let site;
+  if (pageType) {
+    site = PAGETYPE.getSite(pageType);
+    SETTINGS.cacheSite(site);
+  }
+  else {
+    site = SETTINGS.getCachedSite();
+  }
+
+  updateForSite();
   // pageType/direction
   pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
   
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWERS:
-      document.getElementById('optFollowers').checked = true;
+    case PAGETYPE.MASTODON.FOLLOWERS:
+        document.getElementById('optFollowers').checked = true;
       break;
     case PAGETYPE.TWITTER.FOLLOWING:
-      document.getElementById('optFollowing').checked = true;
+    case PAGETYPE.MASTODON.FOLLOWING:
+        document.getElementById('optFollowing').checked = true;
       break;
     default:
       break;
@@ -212,14 +260,14 @@ const initUi = function(owner, pageType) {
     // we'll initialize to empty string, but 
     // we'll tell the worker to call us back with the most sensible initial value
     const msg = { 
-      actionType: 'suggestOwner', 
+      actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
       pageType: pageType
     };
     
     waitForOwnerCallback = true;
     worker.postMessage(msg);
   }
-  
+
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
@@ -227,85 +275,14 @@ const initUi = function(owner, pageType) {
   }
 }
 
-// the Detail returned back when we say "with" email/url/mdon is special and we'd like to bold it
 const detailReflectsFilter = function() {
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
 }
 
 const renderPerson = function(person, context) {
-  let roleInfo = '';
-  let imgSize = 92;
-  let withDetail = true;
-  let withAnchors = true;
-  
-  switch (context) {
-    case RENDER_CONTEXT.PERSON.ACCOUNT_OWNER:
-      imgSize = 46;
-      roleInfo = ` role='button'`;  // clickable
-      withDetail = false;
-      withAnchors = false;
-      break;
-    case RENDER_CONTEXT.PERSON.FOLLOW_RESULT:
-      break;
-    default:
-      break;
-  }
-  
-  let handle = DOMPurify.sanitize(person.Handle);
-  let displayName = DOMPurify.sanitize(person.DisplayName);
-  let detail = DOMPurify.sanitize(person.Detail);
-  let imgCdnUrl = DOMPurify.sanitize(person.ImgCdnUrl);
-  let img64Url = DOMPurify.sanitize(person.Img64Url);
-
-  const imgType = STR.inferImageFileExt(imgCdnUrl);
-  const imgStyling = `style='width:${imgSize}px;height:${imgSize}px;padding:2px;'`;
-  
-  let img = '';
-  if (img64Url && img64Url.length > 50) {
-    img = `<img ${imgStyling} src='data:image/${imgType};base64,${img64Url}'/>`;
-  }
-// blocked - ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep so commenting out
-//  else if (imgCdnUrl && imgCdnUrl.length > 0) {
-//    img = `<img ${imgStyling} src='${imgCdnUrl}'/>`;
-//  }
-  else {
-    img = `<img ${imgStyling} src='/images/noprofilepic.png'/>`;
-  }
-  
-  handle = handle.startsWith('@') ? handle : '@' + handle;
-  const sansAt = handle.startsWith('@') ? handle.substring(1) : handle;
   const renderAnchorsRule = getPersonRenderAnchorsRule();
-  const preparedDisplayName = RENDER.prepareDisplayText(displayName, withAnchors, renderAnchorsRule);
-  let preparedDetail = RENDER.prepareDisplayText(detail, withAnchors, renderAnchorsRule);
   const filtered = detailReflectsFilter();
-
-  if (filtered === true) {
-    preparedDetail = `<b>${preparedDetail}</b>`;
-  }
-
-  detail = (withDetail === true && detail) ? `<div class='personDetail'>${preparedDetail}</div>` : ``;
-  
-  let renderedHandle = handle;
-
-  // note: if we're focused on e.g. mdon, don't distract with link to twitter
-  if (withAnchors && !filtered) {
-    renderedHandle = `<a href='https://twitter.com/${sansAt}' target='_blank'>${handle}</a>`;
-  }
-  
-  let starCls = _starOffCls;
-  if (person.InList == 1 && person.ListName === LIST_FAVORITES) {
-    starCls = _starOnCls;
-  }
-  
-  return `<div class='person row striped pt-1' ${roleInfo}>
-    <div class='col-sm-auto'><a href='#' class='canstar' data-testid='${sansAt}'><i class='${starCls}'></i></a></div>
-    <div class='col-sm-auto personImg'>${img}</div>
-    <div class='col personLabel'>
-      <div class='personHandle'>${renderedHandle}</div>
-      <div class='personDisplay'>${preparedDisplayName ?? ''}</div>
-      ${detail}
-    </div>
-  </div>`;
+  return RENDER.renderPerson(person, context, renderAnchorsRule, filtered);
 }
 
 const renderMatchedOwners = function(payload) {
@@ -320,8 +297,11 @@ const renderMatchedOwners = function(payload) {
   }
   else {
     for (i = 0; i < owners.length; i++) {
+      // renderPerson uses DOMPurify.sanitize
       listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
     }
+    
+    IMAGE.resolveDeferredLoadImages(listOwnerPivotPicker);
   }
 }
 
@@ -346,7 +326,7 @@ const getUiValue = function(id) {
     case 'txtOwnerHandle':
       return txtOwnerHandle.value;
     case 'optFollowDirection':
-      return document.getElementById('optFollowers').checked ? 'followers' : 'following';
+      return document.getElementById('optFollowers').checked ? CONN_DIRECTION.FOLLOWERS : CONN_DIRECTION.FOLLOWING;
     case 'txtConnSearch':
       return txtConnSearch.value;
     case 'txtPageNum':
@@ -366,32 +346,20 @@ const getUiValue = function(id) {
   }
 }
 
-const getSite = function() {
-  // the only one supported for now
-  return SITE.TWITTER;
-}
-
 const getPageType = function(direction) {
   direction = direction || getUiValue('optFollowDirection');
-  const site = getSite();
-  switch (site) {
-    case SITE.TWITTER:
-      switch (direction) {
-        case 'following':
-          return PAGETYPE.TWITTER.FOLLOWING;
-        case 'followers':
-          return PAGETYPE.TWITTER.FOLLOWERS;
-        default:
-          return undefined;
-      }
-      break;
-    default:
-      return undefined;
-  }
+  const site = SETTINGS.getCachedSite();
+  return PAGETYPE.getPageType(site, direction);
 }
 
 const resetPage = function() {
   document.getElementById('txtPageNum').value = 1;
+}
+
+const resetFilters = function() {
+  chkMutual.checked = false;
+  chkFavorited.checked = false;
+  optClear.checked = true;
 }
 
 const getPageNum = function() {
@@ -407,22 +375,29 @@ const calcSkip = function() {
   return skip;
 }
 
-// this ensures we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
+// site tab is twitter and clicked to filter to mastodon
 const onClickedMdonOption = function() {
-  const asked = SETTINGS.getAskedMdonServer();
+  // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
+  ensureAskedMdonServer();
   
-  if (!asked) {
-    confirmMdonServer();
-  }
-  
+  setOptionVisibility();
+
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
   networkSearch();  
 }
 
+const ensureAskedMdonServer = function() {
+  const asked = SETTINGS.getAskedMdonServer();
+  
+  if (!asked) {
+    confirmMdonServer();
+  }
+}
+
 const confirmMdonServer = function() {
   const mdonServer = SETTINGS.getMdonServer() || '';
-  const input = prompt("For the best experience, input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
+  const input = prompt("First, please input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
   
   if (input != null) {
     localStorage.setItem(SETTINGS.MDON_SERVER, input);
@@ -443,18 +418,28 @@ const getOwnerFromUi = function() {
 const buildNetworkSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
+  const site = PAGETYPE.getSite(pageType);
   const pageSize = SETTINGS.getPageSize();
   const searchText = getUiValue('txtConnSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
-  const withMdon = getUiValue('optWithMdon');
-  const withEmail = getUiValue('optWithEmail');
-  const withUrl = getUiValue('optWithUrl');
+
+  // conditional filters
+  let withUrl = getUiValue('optWithUrl');
+  let withMdon = site == SITE.TWITTER ? getUiValue('optWithMdon') : false;
+  let withEmail = site == SITE.TWITTER ? getUiValue('optWithEmail') : false;
+  
+  // if haven't yet clicked to the mastodon tab, we might still only have the cached mdon user
+  let myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
+  myMastodonHandle = myMastodonHandle || (_mdonRememberedUser ? _mdonRememberedUser.Handle : undefined);
+
+  const mdonFollowing = ES6.TRISTATE.getValue(chkMdonImFollowing);
   
   const msg = { 
     actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
     pageType: pageType,
+    site: site,
     networkOwner: owner, 
     searchText: searchText, 
     orderBy: 'Handle',  // Handle or DisplayName
@@ -466,8 +451,10 @@ const buildNetworkSearchRequestFromUi = function() {
     requireList: favorited,
     withMdon: withMdon,
     withEmail: withEmail,
-    withUrl: withUrl
-    };
+    withUrl: withUrl,
+    myMastodonHandle: myMastodonHandle,
+    mdonFollowing: mdonFollowing
+  };
   
   return msg;
 }
@@ -486,9 +473,22 @@ const makeNetworkSizeCounterKey = function(owner, pageType) {
   return `${owner}-${pageType}`;
 }
 
+const clearCachedCountForCurrentRequest = function() {
+  const owner = getOwnerFromUi();
+  const pageType = getPageType();
+
+  if (!owner || !pageType) {
+    return;
+  }
+
+  const key = makeNetworkSizeCounterKey(owner, pageType);
+  if (_counterSet.has(key)) {
+    _counterSet.delete(key);
+  }
+}
+
 const requestTotalCount = function() {
   const owner = getOwnerFromUi();
-
   if (!owner) {
     return;
   }
@@ -507,7 +507,7 @@ const requestTotalCount = function() {
   }
   
   const atOwner = STR.ensurePrefix(owner, '@'); // DB includes @ prefix
-  const msg = {actionType: 'getNetworkSize', networkOwner: atOwner, pageType: pageType};
+  const msg = {actionType: MSGTYPE.TODB.GET_NETWORK_SIZE, networkOwner: atOwner, pageType: pageType};
   
   worker.postMessage(msg);
   // record knowledge that this count has been requested
@@ -515,26 +515,34 @@ const requestTotalCount = function() {
   _counters.push({key: key});   // value not set yet; will be when called back
 }
 
-const networkSearch = function() {
+const networkSearch = function(forceRefresh) {
   const msg = buildNetworkSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
   
-  if (_lastRenderedFollowsRequest === requestJson) {
+  SETTINGS.cachePageState(msg);
+
+  if (!forceRefresh && _lastRenderedFollowsRequest === requestJson) {
     // we already have this rendered; avoid double-submission
     return;
   }
   
-  SETTINGS.cachePageState(msg);
+  if (forceRefresh) {
+    // ensure that the follow count is re-requested
+    clearCachedCountForCurrentRequest();
+  }
+
   showNetworkSearchProgress(true);
   worker.postMessage(msg);
 }
 
 const setFollowLabelCaption = function(pageType, count) {
   switch (pageType) {
-    case 'followingOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.MASTODON.FOLLOWING:
       document.getElementById('optFollowingLabel').textContent = `following (${count})`;
       return;
-    case 'followersOnTwitter':
+    case PAGETYPE.TWITTER.FOLLOWERS:
+    case PAGETYPE.MASTODON.FOLLOWERS:
       document.getElementById('optFollowersLabel').textContent = `followers (${count})`;
       return;
     default:
@@ -545,7 +553,6 @@ const setFollowLabelCaption = function(pageType, count) {
 const renderNetworkSize = function(payload) {
   const uiPageType = getPageType();
   const uiOwner = getOwnerFromUi();
-  
   const dbOwnerSansPrefix = STR.stripPrefix(payload.request.networkOwner, '@');
   
   if (uiPageType != payload.request.pageType || uiOwner != dbOwnerSansPrefix) {
@@ -565,15 +572,35 @@ const renderNetworkSize = function(payload) {
   setFollowLabelCaption(uiPageType, count);
 }
 
+const clearConnectionUiElms = function() {
+  document.getElementById('paginated-list').replaceChildren();
+  document.getElementById('listOwnerPivotPicker').replaceChildren();
+  clearFollowCounters();
+}
+
+const canRenderMastodonFollowOneButtons = function() {
+  const site = SETTINGS.getCachedSite();
+  const mdonMode = getUiValue('optWithMdon');
+  return site === SITE.MASTODON || mdonMode === true;
+}
+
 const renderConnections = function(payload) {
+  clearConnectionUiElms();
+  
   const plist = document.getElementById('paginated-list');
-  plist.replaceChildren();
   
   // rows
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
-    plist.innerHTML += renderPerson(row, 'followResult');
+      // renderPerson uses DOMPurify.sanitize
+      plist.innerHTML += renderPerson(row, 'followResult');
+  }
+
+  IMAGE.resolveDeferredLoadImages(plist);
+
+  if (canRenderMastodonFollowOneButtons() === true) {
+    MASTODON.renderFollowOnMastodonButtons(plist);
   }
   
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
@@ -629,17 +656,40 @@ const onAddedFollows = function(container) {
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
 
+// public variables for filter elements that we'll attach events to etc.
+ES6.TRISTATE.initAll();
+
 const txtOwnerHandle = document.getElementById('txtOwnerHandle');
 const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
 const optFollowing = document.getElementById('optFollowing');
 const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtConnSearch');
 const txtPageNum = document.getElementById('txtPageNum');
+
+// FILTERS
+// cell (1,1)
 const chkMutual = document.getElementById('chkMutual');
+
+// cell (1,2) conditional
+// twitter shows Mastodon radio button until it's clicked (then swaps it for I'm following on Mastodon tri-state checkbox)
 const optWithMdon = document.getElementById('optWithMdon');
+// mastodon always shows the tri-state checkbox
+const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
+
+// cell (1,3) conditional
+// twitter shows email option until Mastodon is clicked (then swaps it for Follow on Mastodon! button)
 const optWithEmail = document.getElementById('optWithEmail');
+
+// cell (2,1)
+const chkFavorited = document.getElementById('chkFavorited');
+// cell (2,2)
 const optWithUrl = document.getElementById('optWithUrl');
+// cell (2,3)
 const optClear = document.getElementById('optClear');
+
+// mastodon account typeahead hitting api
+const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
+const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
 
 optFollowing.addEventListener('change', (event) => {
   resetPage();
@@ -666,10 +716,16 @@ optWithEmail.addEventListener('change', (event) => {
   networkSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
+  setOptionVisibility();
+  resetPage();
+  networkSearch();
+});
+chkMdonImFollowing.addEventListener('change', (event) => {
   resetPage();
   networkSearch();
 });
 optClear.addEventListener('change', (event) => {
+  setOptionVisibility();
   resetPage();
   networkSearch();
 });
@@ -689,6 +745,14 @@ txtPageNum.addEventListener('keydown', function(event) {
     networkSearch();
   }
 });
+
+const handleFromClickedOwner = function(event) {
+  const personElm = ES6.findUpClass(event.target, 'person');
+  const handleElm = personElm.querySelector('.personLabel .personHandle');
+  let handleText = handleElm.innerText;
+  handleText = STR.stripPrefix(handleText, '@');
+  return handleText;
+}
 
 const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
@@ -782,23 +846,22 @@ document.getElementById('mdonGear').onclick = function(event) {
 
 // choose owner from typeahead results
 listOwnerPivotPicker.onclick = function(event) {
-  const personElm = ES6.findUpClass(event.target, 'person');
-  const handleElm = personElm.querySelector('.personLabel > .personHandle');
-  let handleText = handleElm.innerText;
-  handleText = STR.stripPrefix(handleText, '@');
-  txtOwnerHandle.value = handleText;
+  txtOwnerHandle.value = handleFromClickedOwner(event);
   onChooseOwner();
 };
 
-const onChooseOwner = function() {
-  // when owner changes, we need to reset the counts and then request a refreshed count
+const clearFollowCounters = function() {
   // the nbsp values are to be less jarring with width changes
   document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
   document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+}
+
+const onChooseOwner = function() {
+  // when owner changes, we need to reset the counts and then request a refreshed count
+  clearFollowCounters();
   listOwnerPivotPicker.replaceChildren();
   resetPage();
   networkSearch();
-  _lastOwner = getOwnerFromUi();
 }
 
 /************************/
@@ -992,3 +1055,192 @@ const handleExportedResults = function(payload) {
     document.getElementById('pauseExportBtn').style.display = 'none';
   }
 }
+
+/************************/
+// Multi-tab
+/************************/
+
+document.getElementById('twitterLensBtn').onclick = function(event) {
+  const site = SETTINGS.getCachedSite();
+
+  if (site != SITE.TWITTER) {
+    SETTINGS.cacheSite(SITE.TWITTER);
+    updateForSite();
+    networkSearch();
+  }
+
+  return false;
+};
+
+document.getElementById('mastodonLensBtn').onclick = function(event) {
+  activateMastodonTab();
+  return false;
+};
+
+const activateMastodonTab = function() {
+  const site = SETTINGS.getCachedSite();
+
+  if (site != SITE.MASTODON) {
+    SETTINGS.cacheSite(SITE.MASTODON);
+    updateForSite();
+    networkSearch();
+  }
+}
+
+const updateForSite = function() {
+  const site = SETTINGS.getCachedSite();
+  SETTINGS.cacheSite(site);
+  // clear what's there now
+  clearConnectionUiElms();
+  _lastRenderedFollowsRequest = '';
+  
+  const owner = SETTINGS.getCachedOwner(site);
+  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
+  
+  const twitterBtn = document.getElementById('twitterLensBtn');
+  const mastodonBtn = document.getElementById('mastodonLensBtn');
+  const mastodonApiUi = document.getElementById('mdonApiUi');
+
+  setOptionVisibility();
+  
+  if (site == SITE.TWITTER) {
+    twitterBtn.classList.add('active');
+    
+    if (mastodonBtn.classList.contains('active')) {
+      mastodonBtn.classList.remove('active');
+    }
+    
+    twitterBtn.setAttribute('aria-current', 'page');
+    mastodonBtn.removeAttribute('aria-current');
+    mastodonApiUi.style.display = 'none';
+
+    // render list
+    document.getElementById('dbui').style.display = 'flex';
+  }
+  else if (site == SITE.MASTODON) {
+    
+    if (twitterBtn.classList.contains('active')) {
+      twitterBtn.classList.remove('active');
+    }
+
+    mastodonBtn.classList.add('active');
+    twitterBtn.removeAttribute('aria-current');
+    mastodonBtn.setAttribute('aria-current', 'page');
+    
+    MASTODON.render();
+    mastodonApiUi.style.display = 'block';
+  }
+  else {
+    return;
+  }
+
+  resetPage();
+  resetFilters();
+}
+
+const setOptionVisibility = function() {
+  // default to undefined (no filter applied) for the tri-state
+  const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
+  ES6.TRISTATE.setValue(chkMdonImFollowing, undefined);
+
+  const pageType = getPageType();
+  const site = PAGETYPE.getSite(pageType);
+  const mdonMode = getUiValue('optWithMdon');
+
+  const filterTwitterWithMdonLink = document.getElementById('filterTwitterWithMdonLink');
+  const filterMdonImFollowing = document.getElementById('filterMdonImFollowing');
+  const filterWithEmail = document.getElementById('filterWithEmail');
+  const btnFollowAllOnMastodon = document.getElementById('btnFollowAllOnMastodon');
+
+  if (site === SITE.MASTODON || mdonMode === true) {
+    // cell (1,2) switches from the Mastodon radio button (which is already true) to the 'Where I'm following' filter
+    filterTwitterWithMdonLink.style.display = 'none';
+    filterMdonImFollowing.style.display = 'block';
+    // cell (1,3) switches from 'w/ Email' to the 'Follow on Mastodon!' button
+    filterWithEmail.style.display = 'none';
+    btnFollowAllOnMastodon.style.display = 'inline-block';
+  }
+  else {
+    filterTwitterWithMdonLink.style.display = 'block';
+    filterMdonImFollowing.style.display = 'none';
+    filterWithEmail.style.display = 'block';
+    btnFollowAllOnMastodon.style.display = 'none';
+  }
+}
+
+/************************/
+// Mastodon events
+/************************/
+
+document.getElementById('mdonLaunchAuthBtn').onclick = function(event) {
+  MASTODON.launchAuth();
+  return false;
+};
+
+document.getElementById('mdonAcceptAuthBtn').onclick = function(event) {
+  MASTODON.userSubmittedAuthCode();
+  return false;
+};
+
+document.getElementById('mdonDisconnect').onclick = function(event) {
+  MASTODON.disconnect();
+  return false;
+};
+document.getElementById('mdonDisconnect2').onclick = function(event) {
+  MASTODON.disconnect();
+  return false;
+};
+
+document.getElementById('mdonDownloadFollowingListBtn').onclick = function(event) {
+  MASTODON.downloadConnections(CONN_DIRECTION.FOLLOWING);
+  return false;
+};
+
+document.getElementById('mdonDownloadFollowersListBtn').onclick = function(event) {
+  MASTODON.downloadConnections(CONN_DIRECTION.FOLLOWERS);
+  return false;
+};
+
+document.getElementById('mdonStopDownloadBtn').onclick = function(event) {
+  MASTODON.abortPaging();
+  return false;
+};
+
+document.getElementById('btnFollowAllOnMastodon').onclick = function(event) {
+  if (!_mdonRememberedUser || !_mdonRememberedUser.Handle) {
+    activateMastodonTab();
+  }
+  else {
+    MASTODON.followAllVisibleMastodonAccounts();
+  }
+
+  return false;
+};
+
+txtRemoteMdon.addEventListener('keydown', function(event) {
+  if (event.key === "Backspace" || event.key === "Delete") {
+    _deletingMdonRemoteOwner = true;
+  }
+  else {
+    _deletingMdonRemoteOwner = false;
+  }
+});
+
+const mdonAccountRemoteSearch = ES6.debounce((event) => {
+  const userInput = txtRemoteMdon.value || '';
+
+  // min 5 characters to search
+  if (!userInput || userInput.length < 5) {
+    MASTODON.initRemoteOwnerPivotPicker(true);
+  }
+  
+  MASTODON.suggestRemoteAccountOwner(userInput);
+}, 250);
+// ... uses debounce
+txtRemoteMdon.addEventListener('input', mdonAccountRemoteSearch);
+
+// choose owner from typeahead results
+mdonRemoteOwnerPivotPicker.onclick = function(event) {
+  txtRemoteMdon.value = handleFromClickedOwner(event);
+  MASTODON.onChooseRemoteOwner();
+};
