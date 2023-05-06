@@ -1244,3 +1244,8 @@ mdonRemoteOwnerPivotPicker.onclick = function(event) {
   txtRemoteMdon.value = handleFromClickedOwner(event);
   MASTODON.onChooseRemoteOwner();
 };
+
+document.getElementById('clearMdonCacheBtn').onclick = function(event) {
+  MASTODON.disconnect(true);
+  return false;
+};
