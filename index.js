@@ -1054,7 +1054,7 @@ const buildExportRequest = function() {
     site = SETTINGS.getCachedSite();
   }
   
-  let siteFilter = site ? CONNFETCHER.EXPORT_HELPER.justThisSiteFilter(site) : undefined;
+  let siteFilter = site ? CONN_EXPORT_HELPER.justThisSiteFilter(site) : undefined;
 
   let hoursAgo = undefined;
   if (document.getElementById('optExportWhenLastWeek').checked) {
@@ -1067,7 +1067,7 @@ const buildExportRequest = function() {
     hoursAgo = 1;
   }
 
-  const hoursAgoFilter = hoursAgo ? DBORM.recentlyModifiedFilter(hoursAgo) : undefined;
+  const hoursAgoFilter = hoursAgo ? CONN_EXPORT_HELPER.recentlyModifiedFilter(hoursAgo) : undefined;
 
   let entities = [
       // not in use yet
@@ -1104,7 +1104,7 @@ const buildExportRequest = function() {
   }
 
   const entitiesFilter = entities.map(function(e) {
-    CONNFETCHER.EXPORT_HELPER.entityFilter(e, owner, direction);
+    CONN_EXPORT_HELPER.entityFilter(e, owner, direction);
   });
 
   const filterSet = {
@@ -1162,7 +1162,8 @@ const handleExportedResults = function(payload) {
   const end = result.skip + result.rows.length;
   const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
   const json = JSON.stringify(result, null, 2);
-  RENDER.saveTextFile(json, fileName);
+  console.log(fileName);
+//  RENDER.saveTextFile(json, fileName);
   
   // kick off next page if appropriate
   if (!payload.done) {
@@ -1170,7 +1171,8 @@ const handleExportedResults = function(payload) {
       actionType: MSGTYPE.TODB.EXPORT_BACKUP,
       nextEntity: payload.nextEntity,
       nextSkip: payload.nextSkip,
-      nextTake: payload.nextTake
+      nextTake: payload.nextTake,
+      filterSet: payload.filterSet
     };
 
     if (!_exportStopRequested) {
