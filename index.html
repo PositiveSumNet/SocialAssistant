@@ -39,12 +39,92 @@
             Copying recent recordings to local database...  | 
           </span>
           <span>
-            <a href="#" id="startExportBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
-            <a href="#" id="pauseExportBtn" role="button" data-toggle='tooltip' title='pause file backup' style="display:none;">Pause Export</a>
+            <a href="#" id="showExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
+            <a href="#" id="stopExportBtn" role="button" data-toggle='tooltip' title='stop file backup' style="display:none;">Cancel Export</a>
             <span>&nbsp;|&nbsp;</span>
             <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Import</a>
             <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
           </span>
+        </div>
+      </div>
+      <div id="exportui" class="row pb-2" style="display:none;">
+        <div id="exportOpts" class="row">
+          <h3>Customize the Export</h3>
+          <div class="col">
+            <p class="h5 mt-3">For Whom</p>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomAll">
+              <label class="form-check-label" for="optExportWhomAll">All networks</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveSiteOnly">
+              <label class="form-check-label" id="optExportWhomActiveSiteOnlyLabel" for="optExportWhomActiveSiteOnly">This account type only</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveAccountFollowingOnly">
+              <label class="form-check-label" id="optExportWhomActiveAccountFollowingOnlyLabel" for="optExportWhomActiveAccountFollowingOnly">Followed by this account only</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveAccountFollowersOnly">
+              <label class="form-check-label" id="optExportWhomActiveAccountFollowersOnlyLabel" for="optExportWhomActiveAccountFollowersOnly">Followers of this account only</label>
+            </div>
+          </div>
+          <div class="col">
+            <p class="h5 mt-3">If Modified When</p>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenAll">
+              <label class="form-check-label" for="optExportWhenAll">All date ranges</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastWeek">
+              <label class="form-check-label" for="optExportWhenLastWeek">In the last week</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastDay">
+              <label class="form-check-label" for="optExportWhenLastDay">In the last day</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastHour">
+              <label class="form-check-label" for="optExportWhenLastHour">In the last hour</label>
+            </div>
+          </div>
+          <div class="col">
+            <p class="h5 mt-3">Which Aspects</p>
+            <div class="ms-2" id="exportWhatDetail">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optExportWhatFollowers">
+                <label class="form-check-label" for="optExportWhatFollowers">Their followers</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optExportWhatFollowing">
+                <label class="form-check-label" for="optExportWhatFollowing">Who they're following</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optExportDisplayNames">
+                <label class="form-check-label" for="optExportDisplayNames">Profile names</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optExportProfileDescriptions">
+                <label class="form-check-label" for="optExportProfileDescriptions">Profile descriptions</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optExportProfileLinks">
+                <label class="form-check-label" for="optExportProfileLinks">Profile links</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optExportPhotos">
+                <label class="form-check-label" for="optExportPhotos" data-toggle='tooltip' title='These files are relatively large'>Profile photos (big files)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="optFollowerCounts">
+                <label class="form-check-label" for="optExportPhotos">Follower counts</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-4">
+          <a href="#" id="btnConfirmExport" role="button" class="btn btn-primary">Start Export</a>
+          <a href="#" id="btnCancelExport" role="button" class="btn btn-secondary ms-2">Cancel</a>
         </div>
       </div>
       <div id="uploadui" class="row pb-2" style="display:none;">
@@ -244,6 +324,7 @@
     <script src='lib/shared/datatypes.js'></script>
     <script src='lib/shared/appgraphs.js'></script>
     <script src='lib/shared/appschema.js'></script>
+    <script src='lib/shared/connfetcher.js'></script>
     <script src='lib/dbui/renderlib.js'></script>
     <script src='lib/apis/mastodonlib.js'></script>
     <script src='index.js'></script>

@@ -21,11 +21,11 @@ importScripts('/lib/shared/appgraphs.js');
 importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
 importScripts('/lib/shared/queue.js');
+importScripts('/lib/shared/connfetcher.js');
 importScripts('/lib/worker/dbormlib.js');
 importScripts('/lib/worker/twitterconnsavemapper.js');
 importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
-importScripts('/lib/worker/connfetcher.js');
 
 self
   .sqlite3InitModule({
