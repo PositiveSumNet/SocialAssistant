@@ -141,6 +141,12 @@ a.canstar:hover i.bi-star-fill {
   padding-right: 0px;
 }
 
+#exportui {
+  width: 900px;
+  margin: 10px auto;
+  padding: 10px 20px;
+}
+
 #uploadui {
   width: 480px;
   margin: 50px auto;

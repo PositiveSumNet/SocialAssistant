@@ -14,8 +14,7 @@ var _counterSet = new Set();
 var _counters = [];
 
 // for export
-var _exportPauseRequested;
-var _pausedExportMsg;
+var _exportStopRequested;
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
@@ -870,16 +869,20 @@ const onChooseOwner = function() {
 /************************/
 document.getElementById('startImportBtn').onclick = function(event) {
   document.getElementById('uploadui').style.display = 'block';
-  document.getElementById('dbui').style.display = 'none';
+  document.getElementById('exportui').style.display = 'none';
   document.getElementById('startImportBtn').style.display = 'none';
   document.getElementById('stopImportBtn').style.display = 'inline-block';
   updateUploadDoneBtnText();
+  stopExport();
+  document.getElementById('dbui').style.display = 'none';
+  document.getElementById('mdonDownloadConnsUi').style.display = 'none';
   return false;
 };
 
 const finishImporting = function() {
   document.getElementById('uploadui').style.display = 'none';
   document.getElementById('dbui').style.display = 'flex';
+  document.getElementById('mdonDownloadConnsUi').style.display = 'block';
   document.getElementById('startImportBtn').style.display = 'inline-block';
   document.getElementById('stopImportBtn').style.display = 'none';
 }
@@ -983,42 +986,172 @@ function updateUploadDoneBtnText() {
 // Export
 /************************/
 
-document.getElementById('startExportBtn').onclick = function(event) {
+document.getElementById('showExportUiBtn').onclick = function(event) {
+  showExportUi();
+  return false;
+};
+
+document.getElementById('btnCancelExport').onclick = function(event) {
+  stopExport();
+  return false;
+};
+document.getElementById('stopExportBtn').onclick = function(event) {
+  stopExport();
+  return false;
+};
+
+document.getElementById('btnConfirmExport').onclick = function(event) {
   startExport();
   return false;
 };
 
-document.getElementById('pauseExportBtn').onclick = function(event) {
-  pauseExport();
-  return false;
-};
+const initiallySelectExportWhatAll = function() {
+  const exportWhatDetail = document.getElementById('exportWhatDetail');
+  const subOptions = Array.from(exportWhatDetail.querySelectorAll(`input[type=checkbox]`));
+  subOptions.forEach(function(elm) {
+    elm.checked = true;
+  });
+}
+
+const showExportUi = function() {
+  const site = SETTINGS.getCachedSite();
+  document.getElementById('optExportWhomActiveSiteOnlyLabel').textContent = site;
+
+  document.getElementById('optExportWhomActiveAccountFollowingOnlyLabel').textContent = `Followed by ${SETTINGS.getCachedOwner()}`;
+  document.getElementById('optExportWhomActiveAccountFollowersOnlyLabel').textContent = `Followers of ${SETTINGS.getCachedOwner()}`;
+
+  document.getElementById('optExportWhomAll').checked = true;
+  document.getElementById('optExportWhenAll').checked = true;
+  initiallySelectExportWhatAll();
+
+  document.getElementById('exportui').style.display = 'flex';
+  document.getElementById('btnConfirmExport').style.display = 'inline-block';
+
+  document.getElementById('uploadui').style.display = 'none';
+  document.getElementById('dbui').style.display = 'none';
+  document.getElementById('mdonDownloadConnsUi').style.display = 'none';
+
+  document.getElementById('showExportUiBtn').style.display = 'none';
+  document.getElementById('stopExportBtn').style.display = 'inline-block';
+}
+
+const buildExportRequest = function() {
+  
+  let direction = undefined;
+  let site = undefined;
+  let owner = undefined;
+  if (document.getElementById('optExportWhomActiveAccountFollowingOnly').checked) {
+    site = SETTINGS.getCachedSite();
+    direction = CONN_DIRECTION.FOLLOWING;
+    owner = SETTINGS.getCachedOwner();
+  }
+  else if (document.getElementById('optExportWhomActiveAccountFollowersOnly').checked) {
+    site = SETTINGS.getCachedSite();
+    direction = CONN_DIRECTION.FOLLOWERS;
+    owner = SETTINGS.getCachedOwner();
+  }
+  else if (document.getElementById('optExportWhomActiveSiteOnly').checked) {
+    site = SETTINGS.getCachedSite();
+  }
+  
+  let siteFilter = site ? CONN_EXPORT_HELPER.justThisSiteFilter(site) : undefined;
+
+  let hoursAgo = undefined;
+  if (document.getElementById('optExportWhenLastWeek').checked) {
+    hoursAgo = 24 * 7;
+  }
+  else if (document.getElementById('optExportWhenLastDay').checked) {
+    hoursAgo = 24;
+  }
+  else if (document.getElementById('optExportWhenLastHour').checked) {
+    hoursAgo = 1;
+  }
+
+  const hoursAgoFilter = hoursAgo ? CONN_EXPORT_HELPER.recentlyModifiedFilter(hoursAgo) : undefined;
+
+  let entities = [
+      // not in use yet
+      //APPSCHEMA.SocialConnection,
+      //APPSCHEMA.SocialSourceIdentifier,
+      // always exported
+      APPSCHEMA.SocialListMember
+    ];
+
+  if (document.getElementById('optExportWhatFollowers').checked) {
+    entities.push(APPSCHEMA.SocialConnHasFollower);
+  }
+  if (document.getElementById('optExportWhatFollowing').checked) {
+    entities.push(APPSCHEMA.SocialConnIsFollowing);
+  }
+  if (document.getElementById('optExportDisplayNames').checked) {
+    entities.push(APPSCHEMA.SocialProfileDisplayName);
+  }
+  if (document.getElementById('optExportProfileDescriptions').checked) {
+    entities.push(APPSCHEMA.SocialProfileDescription);
+  }
+  if (document.getElementById('optExportProfileLinks').checked) {
+    entities.push(APPSCHEMA.SocialProfileLinkMastodonAccount);
+    entities.push(APPSCHEMA.SocialProfileLinkExternalUrl);
+    entities.push(APPSCHEMA.SocialProfileLinkEmailAddress);
+  }
+  if (document.getElementById('optExportPhotos').checked) {
+    entities.push(APPSCHEMA.SocialProfileImgSourceUrl);
+    entities.push(APPSCHEMA.SocialProfileImgBinary);
+  }
+  if (document.getElementById('optFollowerCounts').checked) {
+    entities.push(APPSCHEMA.SocialFollowerCount);
+    entities.push(APPSCHEMA.SocialFollowingCount);
+  }
+
+  const filterSet = {};
+
+  if (siteFilter) {
+    // filter by graph
+    filterSet.siteFilter = siteFilter;
+  }
+  if (hoursAgoFilter) {
+    // filter by timestamp
+    filterSet.hoursAgoFilter = hoursAgoFilter;
+  }
+
+  // indicate relevant entities and the join/where needed to apply related filters
+  filterSet.entitiesFilter = []; 
+  
+  entities.forEach(function(e) {
+    filterSet.entitiesFilter.push(CONN_EXPORT_HELPER.entityFilter(e, owner, direction));
+  });
+  
+  return {
+    actionType: MSGTYPE.TODB.EXPORT_BACKUP,
+    exportTimeMs: Date.now(),
+    filterSet: filterSet
+  };
+}
 
 const startExport = function() {
   
-  const userResponse = confirm("This will download a set of plain-text files (could be many). You can pause any time. To later import, browse to your PC's Downloads folder and you can import in batch.");
+  const msg = buildExportRequest();
 
-  if (userResponse != true) {
-    return;
-  }
+  _exportStopRequested = false;
 
-  const msg = _pausedExportMsg || {
-    actionType: MSGTYPE.TODB.EXPORT_BACKUP,
-    exportTimeMs: Date.now()
-  };
-
-  _exportPauseRequested = false;
-
-  document.getElementById('startExportBtn').style.display = 'none';
-  document.getElementById('pauseExportBtn').style.display = 'inline-block';
+  // at top right
+  document.getElementById('showExportUiBtn').style.display = 'none';
+  document.getElementById('stopExportBtn').style.display = 'inline-block';
+  
+  // within the form
+  document.getElementById('btnConfirmExport').style.display = 'none';
 
   worker.postMessage(msg);
 }
 
-const pauseExport = function() {
-  _exportPauseRequested = true;
-  document.getElementById('startExportBtn').innerText = 'Resume Export';
-  document.getElementById('startExportBtn').style.display = 'inline-block';
-  document.getElementById('pauseExportBtn').style.display = 'none';
+const stopExport = function() {
+  _exportStopRequested = true;
+  document.getElementById('showExportUiBtn').innerText = 'Export';
+  document.getElementById('showExportUiBtn').style.display = 'inline-block';
+  document.getElementById('stopExportBtn').style.display = 'none';
+  document.getElementById('exportui').style.display = 'none';
+  document.getElementById('dbui').style.display = 'flex';
+  document.getElementById('mdonDownloadConnsUi').style.display = 'block';
 }
 
 const handleExportedResults = function(payload) {
@@ -1028,7 +1161,10 @@ const handleExportedResults = function(payload) {
   const end = result.skip + result.rows.length;
   const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
   const json = JSON.stringify(result, null, 2);
-  RENDER.saveTextFile(json, fileName);
+  
+  if (result.rows.length > 0) {
+    RENDER.saveTextFile(json, fileName);
+  }
   
   // kick off next page if appropriate
   if (!payload.done) {
@@ -1036,23 +1172,23 @@ const handleExportedResults = function(payload) {
       actionType: MSGTYPE.TODB.EXPORT_BACKUP,
       nextEntity: payload.nextEntity,
       nextSkip: payload.nextSkip,
-      nextTake: payload.nextTake
+      nextTake: payload.nextTake,
+      filterSet: payload.filterSet
     };
 
-    if (_exportPauseRequested) {
-      _pausedExportMsg = msg;
-    }
-    else {
+    if (!_exportStopRequested) {
       worker.postMessage(msg);
     }
   }
   else {
-    _exportPauseRequested = false;
-    _pausedExportMsg = undefined;
+    _exportStopRequested = false;
 
-    document.getElementById('startExportBtn').innerText = 'Export Again';
-    document.getElementById('startExportBtn').style.display = 'inline-block';
-    document.getElementById('pauseExportBtn').style.display = 'none';
+    document.getElementById('showExportUiBtn').innerText = 'Export Again';
+    document.getElementById('showExportUiBtn').style.display = 'inline-block';
+    document.getElementById('stopExportBtn').style.display = 'none';
+    document.getElementById('exportui').style.display = 'none';
+    document.getElementById('dbui').style.display = 'flex';
+    document.getElementById('mdonDownloadConnsUi').style.display = 'block';
   }
 }
 
@@ -1088,6 +1224,8 @@ const activateMastodonTab = function() {
 }
 
 const updateForSite = function() {
+  stopExport();
+  
   const site = SETTINGS.getCachedSite();
   SETTINGS.cacheSite(site);
   // clear what's there now
