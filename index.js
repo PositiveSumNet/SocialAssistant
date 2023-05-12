@@ -1090,7 +1090,7 @@ const buildExportRequest = function() {
     entities.push(APPSCHEMA.SocialProfileDescription);
   }
   if (document.getElementById('optExportProfileLinks').checked) {
-    entities.push(APPSCHEMA.SocialProfileLinkMastodonAccount.Name);
+    entities.push(APPSCHEMA.SocialProfileLinkMastodonAccount);
     entities.push(APPSCHEMA.SocialProfileLinkExternalUrl);
     entities.push(APPSCHEMA.SocialProfileLinkEmailAddress);
   }
@@ -1103,19 +1103,24 @@ const buildExportRequest = function() {
     entities.push(APPSCHEMA.SocialFollowingCount);
   }
 
-  const entitiesFilter = entities.map(function(e) {
-    CONN_EXPORT_HELPER.entityFilter(e, owner, direction);
-  });
+  const filterSet = {};
 
-  const filterSet = {
+  if (siteFilter) {
     // filter by graph
-    siteFilter: siteFilter,
+    filterSet.siteFilter = siteFilter;
+  }
+  if (hoursAgoFilter) {
     // filter by timestamp
-    hoursAgoFilter: hoursAgoFilter,
-    // indicate relevant entities and the join/where needed to apply related filters
-    entitiesFilter: entitiesFilter
-  };
+    filterSet.hoursAgoFilter = hoursAgoFilter;
+  }
 
+  // indicate relevant entities and the join/where needed to apply related filters
+  filterSet.entitiesFilter = []; 
+  
+  entities.forEach(function(e) {
+    filterSet.entitiesFilter.push(CONN_EXPORT_HELPER.entityFilter(e, owner, direction));
+  });
+  
   return {
     actionType: MSGTYPE.TODB.EXPORT_BACKUP,
     exportTimeMs: Date.now(),
