@@ -1074,7 +1074,7 @@ const buildExportRequest = function() {
       //APPSCHEMA.SocialConnection.Name,
       //APPSCHEMA.SocialSourceIdentifier.Name,
       // always exported
-      APPSCHEMA.SocialListMember.Name
+      APPSCHEMA.SocialListMember
     ];
 
   if (document.getElementById('optExportWhatFollowers').checked) {
@@ -1130,12 +1130,6 @@ const buildExportRequest = function() {
 
 const startExport = function() {
   
-  const userResponse = confirm("This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.");
-
-  if (userResponse != true) {
-    return;
-  }
-
   const msg = buildExportRequest();
 
   _exportStopRequested = false;
@@ -1147,6 +1141,7 @@ const startExport = function() {
   // within the form
   document.getElementById('btnConfirmExport').style.display = 'none';
 
+  //console.log(msg);
   worker.postMessage(msg);
 }
 
