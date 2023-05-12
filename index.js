@@ -1141,7 +1141,6 @@ const startExport = function() {
   // within the form
   document.getElementById('btnConfirmExport').style.display = 'none';
 
-  //console.log(msg);
   worker.postMessage(msg);
 }
 
@@ -1162,8 +1161,10 @@ const handleExportedResults = function(payload) {
   const end = result.skip + result.rows.length;
   const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
   const json = JSON.stringify(result, null, 2);
-  console.log(fileName);
-//  RENDER.saveTextFile(json, fileName);
+  
+  if (result.rows.length > 0) {
+    RENDER.saveTextFile(json, fileName);
+  }
   
   // kick off next page if appropriate
   if (!payload.done) {
@@ -1185,7 +1186,9 @@ const handleExportedResults = function(payload) {
     document.getElementById('showExportUiBtn').innerText = 'Export Again';
     document.getElementById('showExportUiBtn').style.display = 'inline-block';
     document.getElementById('stopExportBtn').style.display = 'none';
-    hideExportUi();
+    document.getElementById('exportui').style.display = 'none';
+    document.getElementById('dbui').style.display = 'flex';
+    document.getElementById('mdonDownloadConnsUi').style.display = 'block';
   }
 }
 
