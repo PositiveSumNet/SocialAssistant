@@ -1071,8 +1071,8 @@ const buildExportRequest = function() {
 
   let entities = [
       // not in use yet
-      //APPSCHEMA.SocialConnection.Name,
-      //APPSCHEMA.SocialSourceIdentifier.Name,
+      //APPSCHEMA.SocialConnection,
+      //APPSCHEMA.SocialSourceIdentifier,
       // always exported
       APPSCHEMA.SocialListMember
     ];
