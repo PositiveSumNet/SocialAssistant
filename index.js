@@ -136,11 +136,14 @@ const ensureCopiedToDb = async function() {
     worker.postMessage( { batches: batches, actionType: MSGTYPE.TODB.XFER_CACHE_TODB } );
   }
   else {
-    // if we got to here, we're fully copied
+    // if we got to here, we've fully copied into the db
     xferring.style.display = 'none';
     filterSet.style.display = 'flex';
 
     initialRender();
+
+    // having fully copied into the db, we can also make sure background fetching is underway
+    kickoffBackgroundScraping();
   }
 }
 
@@ -993,6 +996,8 @@ const processUpload = function(file) {
     else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
       // cache the request for execution upon upload completion
       BGFETCH.cacheTwitterHandlesForProfileScrape(e.target.result);
+      // make sure the background worker knows we want it to look for scrape requests
+      kickoffBackgroundScraping();
       // "processed" in this case means saved the request to cache
       onProcessedUploadBatch();
     }
@@ -1000,6 +1005,10 @@ const processUpload = function(file) {
 
   // start reading
   reader.readAsText(file);
+}
+
+const kickoffBackgroundScraping = function() {
+  chrome.runtime.sendMessage({ actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE });
 }
 
 const onProcessedUploadBatch = function() {
