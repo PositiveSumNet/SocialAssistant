@@ -120,7 +120,7 @@ const ensureCopiedToDb = async function() {
   const maxBatches = 10;
   let ctr = 0;
   for (const [key, val] of entries) {
-    if (key.startsWith('fordb-')) {
+    if (key.startsWith(STORAGE_PREFIX.FOR_DB)) {
       let batch = { key: key, val: val };
       batches.push(batch);
       ctr++;
@@ -152,7 +152,8 @@ const initialRender = function() {
   // defaults
   let owner;
   let pageType;
-  
+  let mode;
+
   for (const [key, value] of urlParams) {
     if (key === 'owner') {
       owner = value;
@@ -160,8 +161,26 @@ const initialRender = function() {
     else if (key === 'pageType') {
       pageType = value;
     }
+    else if (key === 'mode') {
+      mode = value;
+    }
   }
   
+  // power user mode (undocumented; exposes some advanced features)
+  if (mode) {
+    switch (mode) {
+      case 'power':
+        SETTINGS.setPowerUserMode(true);
+        break;
+      case 'basic':
+        document.getElementById('optImportContextEntities').checked = true;
+        SETTINGS.setPowerUserMode(false);
+        break;
+      default:
+        break;
+    }
+  }
+
   if (owner || pageType) {
     // clear url parms so that a page refresh going forward respects the UI state instead of the query string
     // stackoverflow.com/questions/38625654/remove-url-parameter-without-page-reloading
@@ -864,7 +883,7 @@ const onChooseOwner = function() {
 }
 
 /************************/
-// Import 
+// Upload/Import 
 // smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
 /************************/
 document.getElementById('startImportBtn').onclick = function(event) {
@@ -876,16 +895,13 @@ document.getElementById('startImportBtn').onclick = function(event) {
   stopExport();
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('mdonDownloadConnsUi').style.display = 'none';
+
+  if (SETTINGS.getPowerUserMode() == 'true') {
+    document.getElementById('powerUserImport').style.display = 'block';
+  }
+
   return false;
 };
-
-const finishImporting = function() {
-  document.getElementById('uploadui').style.display = 'none';
-  document.getElementById('dbui').style.display = 'flex';
-  document.getElementById('mdonDownloadConnsUi').style.display = 'block';
-  document.getElementById('startImportBtn').style.display = 'inline-block';
-  document.getElementById('stopImportBtn').style.display = 'none';
-}
   
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
 document.getElementById('stopImportBtn').onclick = function(event) {
@@ -928,7 +944,7 @@ _fileElem.addEventListener('change', (event) => {
   handleUploadFiles(event.target.files);
 });
 
-function handleUploadFiles(files) {
+const handleUploadFiles = function(files) {
   files = [...files];
   files.forEach(processUpload);
 }
@@ -948,28 +964,49 @@ function handleDrop(e) {
   handleUploadFiles(files);
 }
 
+const getUploadContext = function() {
+  if (document.getElementById('optImportContextTwitterProfilesToScrape').checked == true) {
+    return UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE;
+  }
+  else {
+    return UPLOAD_CONTEXT.ENTITIES_TO_IMPORT;
+  }
+}
+
 // stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
-function processUpload(file) {
+const processUpload = function(file) {
   const reader = new FileReader();
+
+  // set the event for when reading completes
   reader.onload = function(e) {
     const uploadedCntElem = document.getElementById('uploadedCnt');
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
     updateUploadDoneBtnText();
-    worker.postMessage({
-      actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
-      json: e.target.result
-    });
+    
+    const uploadContext = getUploadContext();
+    if (uploadContext == UPLOAD_CONTEXT.ENTITIES_TO_IMPORT) {
+      worker.postMessage({
+        actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
+        json: e.target.result
+      });
+    }
+    else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
+      // cache the request for execution upon upload completion
+      BGFETCH.cacheTwitterHandlesForProfileScrape(e.target.result);
+    }
   }
+
+  // start reading
   reader.readAsText(file);
 }
 
-function onProcessedSyncBatch() {
+const onProcessedSyncBatch = function() {
   const processedCntElem = document.getElementById('syncImportProcessedCnt');
   processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
   updateUploadDoneBtnText();
 }
 
-function updateUploadDoneBtnText() {
+const updateUploadDoneBtnText = function() {
   const uploadedCnt = parseInt(document.getElementById('uploadedCnt').innerText);
   const processedCnt = parseInt(document.getElementById('syncImportProcessedCnt').innerText);
   const btnElem = document.getElementById('uploadDone');

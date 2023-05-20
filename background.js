@@ -1,3 +1,4 @@
+// ON-INSTALL
 // stackoverflow.com/questions/2399389/detect-chrome-extension-first-run-update
 chrome.runtime.onInstalled.addListener((details) => {
   const currentVersion = chrome.runtime.getManifest().version;
@@ -24,15 +25,18 @@ chrome.runtime.onInstalled.addListener((details) => {
         console.log('Other install events within the browser');
         break;
   }
-
 });
 
+// LISTEN FOR MESSAGES
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // stackoverflow.com/a/73836810
   let returnsData = false;
   switch (request.actionType) {
     case 'save':
       returnsData = true;
+      break;
+    case 'scrapeTwitterProfiles':
+      console.log(request);
       break;
     default:
       break;
@@ -79,7 +83,7 @@ const injectImageBase64s = async function(records) {
 // caches what we'll want to persist to the sqlitedb when we get the chance
 const saveToTempStorage = function(records) {
   // the 'fordb-' prefix is how we find all such pending batches
-  const key = 'fordb-' + Date.now().toString();
+  const key = `fordb-${Date.now().toString()}`;
   chrome.storage.local.set({ [key]: records });
 }
 

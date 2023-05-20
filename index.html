@@ -129,13 +129,25 @@
         </div>
       </div>
       <div id="uploadui" class="row pb-2" style="display:none;">
+        <div id="powerUserImport" style="display:none;" class="ps-4">
+          <p class="h5">Context</p>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="optImportContext" id="optImportContextEntities">
+            <label class="form-check-label" for="optImportContextEntities">Simple import</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="optImportContext" id="optImportContextTwitterProfilesToScrape">
+            <label class="form-check-label" for="optImportContextTwitterProfilesToScrape">(advanced) Twitter profiles to scrape and save</label>
+          </div>
+        </div>
+        <br/>
         <div id="drop-area">
           <form class="my-form">
             <p>Upload multiple files (click or drag & drop)</p>
             <input type="file" id="fileElem" multiple accept="application/JSON">
             <label class="upload-button" for="fileElem">Choose files</label>
           </form>
-        </div>        
+        </div>
         <div class="pt-3 ps-4">
           <span>Uploaded: </span><span id="uploadedCnt">0</span> | 
           <span>Processed: </span><span id="syncImportProcessedCnt">0</span>
@@ -324,6 +336,7 @@
     <script src='lib/shared/emojilib.js'></script>
     <script src='lib/shared/datatypes.js'></script>
     <script src='lib/shared/appgraphs.js'></script>
+    <script src='lib/shared/bgfetchlib.js'></script>
     <script src='lib/shared/appschema.js'></script>
     <script src='lib/dbui/renderlib.js'></script>
     <script src='lib/dbui/connexportlib.js'></script>
