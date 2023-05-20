@@ -231,7 +231,7 @@ worker.onmessage = function ({ data }) {
       handleExportedResults(data.payload);
       break;
     case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
-      onProcessedSyncBatch();
+      onProcessedUploadBatch();
       break;
     case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
       onGotSavedCount(data.count, data.pageType, data.metadata);
@@ -993,6 +993,8 @@ const processUpload = function(file) {
     else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
       // cache the request for execution upon upload completion
       BGFETCH.cacheTwitterHandlesForProfileScrape(e.target.result);
+      // "processed" in this case means saved the request to cache
+      onProcessedUploadBatch();
     }
   }
 
@@ -1000,18 +1002,18 @@ const processUpload = function(file) {
   reader.readAsText(file);
 }
 
-const onProcessedSyncBatch = function() {
-  const processedCntElem = document.getElementById('syncImportProcessedCnt');
+const onProcessedUploadBatch = function() {
+  const processedCntElem = document.getElementById('uploadProcessedCnt');
   processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
   updateUploadDoneBtnText();
 }
 
 const updateUploadDoneBtnText = function() {
   const uploadedCnt = parseInt(document.getElementById('uploadedCnt').innerText);
-  const processedCnt = parseInt(document.getElementById('syncImportProcessedCnt').innerText);
+  const processedCnt = parseInt(document.getElementById('uploadProcessedCnt').innerText);
   const btnElem = document.getElementById('uploadDone');
 
-  if (uploadedCnt > 0 && processedCnt === uploadedCnt) {
+  if (uploadedCnt > 0 && processedCnt >= uploadedCnt) {
     btnElem.innerText = 'Done!';
   }
   else {
