@@ -118,14 +118,20 @@ const ensureCopiedToDb = async function() {
   // allow sqlite to do process in larger batches than what was cached
   const batches = [];
   const maxBatches = 10;
+  const monoMultiplier = 10; // if these aren't arrays, we'll process 100 items instead of 10 array pages
   let ctr = 0;
+  let hitArray = false;
   for (const [key, val] of entries) {
     if (key.startsWith(STORAGE_PREFIX.FOR_DB)) {
       let batch = { key: key, val: val };
       batches.push(batch);
       ctr++;
       
-      if (ctr >= maxBatches) {
+      if (Array.isArray(val)) {
+        hitArray = true;
+      }
+
+      if ((hitArray == true && ctr >= maxBatches) || (hitArray == false && ctr >= maxBatches * monoMultiplier)) {
         // come back for more rather than sending massive messages around
         break;
       }

@@ -1,5 +1,3 @@
-console.log(document.body.outerHTML.substring(0, 200));
-
 // a note on scraping (legal standing):
 // cpomagazine.com/data-privacy/what-the-hiq-vs-linkedin-case-means-for-automated-web-scraping/
 
@@ -18,12 +16,18 @@ console.log(document.body.outerHTML.substring(0, 200));
   
 */
 
+const _parsedUrl = URLPARSE.getParsedUrl();
+if (_parsedUrl && _parsedUrl.pageType == PAGETYPE.NITTER.PROFILE) {
+  // we could later use localStorage or a query string to provide directives on how to process etc. (if needed)
+  NITTER_PROFILE_PARSER.parseToTempStorage();
+}
+
 // on startup, see if supposed to already be recording
 chrome.storage.local.get(['recording'], function(result) {
   if (result.recording === true) {
     // here at startup, extension is in a 'load if we can' state
     const recorder = RECORDING.getRecorder();
-
+    // note: nitter doesn't return a recorder
     if (recorder) {
       recorder.startRecording();
     }
@@ -33,7 +37,7 @@ chrome.storage.local.get(['recording'], function(result) {
 // toggle recording and auto-scroll on/off
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   const recorder = RECORDING.getRecorder();
-  
+  // note: nitter doesn't return a recorder
   if (recorder) {
     recorder.listenForRecordingToggle(request, sender, sendResponse);
   }

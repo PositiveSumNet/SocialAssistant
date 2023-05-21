@@ -16,7 +16,7 @@
 //   e) scrapeNext() - Kick off _bgScrapeRequests[0]
 //      determine the offscreen document to load (the url) and sendMessage 
 // 3) This offscreen.js hears the message and navigates the offscreen page frame to the url 
-//    (which will wake up content.js for scraping)
+// 4) content.js wakes up for the nitter url and calls NITTER_PROFILE_PARSER.parseToTempStorage()
 /*******************************************************************************************************/
 
 // loading page to scrape into an offscreen document iframe

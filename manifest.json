@@ -33,6 +33,7 @@
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
         "lib/content/twitter/twitterfollowrecorder.js", 
+        "lib/content/nitter/nitterprofileparsing.js", 
         "lib/content/recorderfactory.js",
         "content.js"
       ],
