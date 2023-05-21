@@ -89,7 +89,7 @@ chrome.runtime.onInstalled.addListener(() => {
         {header: 'X-Frame-Options', operation: 'remove'},
         {header: 'Content-Security-Policy', operation: 'set', value: ''},
         {header: 'Cross-Origin-Resource-Policy', operation: 'set', value: 'cross-origin'},
-        {header: 'Cross-Origin-Embedder-Policy', operation: 'set', value: 'credentialless'}
+        {header: 'Cross-Origin-Embedder-Policy', operation: 'set', value: 'require-corp'}
       ],
     },
   };
@@ -167,7 +167,7 @@ const hasDocument = async function() {
 }
 
 const ensureQueuedScrapeRequests = async function() {
-  console.log('checking scrape queue');
+  // console.log('checking scrape queue');
   if (_bgScrapeProcessing === true) { return; }
   
   const all = await chrome.storage.local.get();
@@ -248,7 +248,7 @@ const navigateOffscreenDocument = async function(url) {
 }
 
 const scrapeTwitterProfile = async function(request) {
-  const handleOnly = request.handle.substring(1);
+  const handleOnly = request.handle.substring(1); // sans-@
   const url = `https://nitter.net/${handleOnly}`;
   await navigateOffscreenDocument(url);
 }

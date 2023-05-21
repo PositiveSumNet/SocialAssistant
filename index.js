@@ -998,9 +998,9 @@ const processUpload = function(file) {
       BGFETCH.cacheTwitterHandlesForProfileScrape(e.target.result);
       // make sure the background worker knows we want it to look for scrape requests
       kickoffBackgroundScraping();
-      // "processed" in this case means saved the request to cache
-      onProcessedUploadBatch();
     }
+
+    onProcessedUploadBatch();
   }
 
   // start reading

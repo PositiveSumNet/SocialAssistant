@@ -3,9 +3,6 @@ console.log(document.body.outerHTML.substring(0, 200));
 // a note on scraping (legal standing):
 // cpomagazine.com/data-privacy/what-the-hiq-vs-linkedin-case-means-for-automated-web-scraping/
 
-// manifest shows other included files
-// also see lib/recordinglib.js (including for public variables)
-
 /*
   APPLICATION FLOW:
   
