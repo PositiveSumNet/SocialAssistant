@@ -1,6 +1,5 @@
 // background scraping
 var _bgScrapeRequests = [];
-var _bgScrapeProcessing = false;
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
 /**************************/
@@ -59,7 +58,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.action.setBadgeText({text: request.badgeText});
         return returnsData;
       case 'letsScrape':
-        await ensureQueuedScrapeRequests();
+        await ensureQueuedScrapeRequests(request.lastScrape);
         return returnsData;
       default:
         return returnsData;
@@ -166,9 +165,49 @@ const hasDocument = async function() {
   return false;
 }
 
-const ensureQueuedScrapeRequests = async function() {
+const isScraping = function() {
+  return _bgScrapeRequests.length > 0;
+}
+
+const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
+  
+  if (request.pageType != parsedUrl.pageType) {
+    return false;
+  }
+  
+  switch (request.pageType) {
+    case 'nitterProfile':
+      return request.handle == parsedUrl.owner;
+    default:
+      return false;
+  }
+}
+
+const processLastScrape = function(parsedUrl) {
+  if (!parsedUrl || !isScraping()) { return; }
+
+  let removalCacheKey = '';
+  for (let i = 0; i < _bgScrapeRequests.length; i++) {
+    let request = _bgScrapeRequests[i];
+
+    if (scrapeRequestMatchesParsedUrl(request. parsedUrl) == true) {
+      _bgScrapeRequests = _bgScrapeRequests.splice(i, 1);
+      removalCacheKey = request.cacheKey;
+      break;
+    }
+  }
+  
+  // if we've now processed the last item, that storage item can be removed
+  if (_bgScrapeRequests.length == 0 && removalCacheKey.length > 0) {
+    chrome.storage.local.remove(removalCacheKey);
+  }
+}
+
+// pass in an optional parsedUrl for a scrape that just completed
+const ensureQueuedScrapeRequests = async function(lastScrape) {
+  processLastScrape(lastScrape);
   // console.log('checking scrape queue');
-  if (_bgScrapeProcessing === true) { return; }
+  if (isScraping() === true) { return; }
   
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
@@ -177,10 +216,8 @@ const ensureQueuedScrapeRequests = async function() {
     // i.e. STORAGE_PREFIX.BG_SCRAPE
     if (key.startsWith('bgscrape-')) {
       // apply a lock and 
-      _bgScrapeProcessing = true;
-      // see BG_SCRAPE_TYPE
-      switch (val.type) {
-        case 'twitterProfile':
+      switch (val.pageType) {
+        case 'nitterProfile':
           // we only want to kick off one set of handles at a time, so...
           // add handles to queue
           enqueueHandleScrapeRequests(val.data, val.type, key);
@@ -205,7 +242,6 @@ const enqueueHandleScrapeRequests = function(handles, type, cacheKey) {
 
 const scrapeNext = async function() {
   if (_bgScrapeRequests.length === 0) {
-    _bgScrapeProcessing = false;
     //console.log('Done processing scrape queue for now');
     return;
   }
@@ -213,8 +249,8 @@ const scrapeNext = async function() {
   const request = _bgScrapeRequests[0];
   
   switch (request.type) {
-    case 'twitterProfile':
-      await scrapeTwitterProfile(request);
+    case 'nitterProfile':
+      await scrapeNitterProfile(request);
       break;
     default:
       break;
@@ -247,7 +283,7 @@ const navigateOffscreenDocument = async function(url) {
   });
 }
 
-const scrapeTwitterProfile = async function(request) {
+const scrapeNitterProfile = async function(request) {
   const handleOnly = request.handle.substring(1); // sans-@
   const url = `https://nitter.net/${handleOnly}`;
   await navigateOffscreenDocument(url);

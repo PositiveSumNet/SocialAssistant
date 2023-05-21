@@ -4,7 +4,6 @@
 // (index.js processUpload() with UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE)
 // * BGFETCH.cacheTwitterHandlesForProfileScrape() caches to 
 //    storage.local an array of handles with a cacheKey starting with STORAGE_PREFIX.BG_SCRAPE
-//    (and BG_SCRAPE_TYPE.TOKEN.TYPE, ..DATA provide use-case-specific instructions)
 // NEXT (including for future use cases...)
 // 1) fire a message MSGTYPE.TOBACKGROUND.LETS_SCRAPE
 //   (to make sure the background worker knows we want it to look for scrape requests, if it wasn't already)
