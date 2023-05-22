@@ -165,10 +165,6 @@ const hasDocument = async function() {
   return false;
 }
 
-const isScraping = function() {
-  return _bgScrapeRequests.length > 0;
-}
-
 const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
   
   if (request.pageType != parsedUrl.pageType) {
@@ -177,26 +173,38 @@ const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
   
   switch (request.pageType) {
     case 'nitterProfile':
-      return request.handle == parsedUrl.owner;
+      return handlesMatch(request.handle, parsedUrl.owner);
     default:
       return false;
   }
 }
 
-const processLastScrape = function(parsedUrl) {
-  if (!parsedUrl || !isScraping()) { return; }
+const handlesMatch = function(h1, h2) {
+  if (!h1 || !h2) {return false;}
 
+  if (!h1.startsWith('@')) {
+    h1 = '@' + h1;
+  }
+  if (!h2.startsWith('@')) {
+    h2 = '@' + h2;
+  }
+
+  return h1.toLowerCase() == h2.toLowerCase();
+}
+
+const processLastScrape = function(parsedUrl) {
+  if (!parsedUrl) { return; }
+  
   let removalCacheKey = '';
   for (let i = 0; i < _bgScrapeRequests.length; i++) {
     let request = _bgScrapeRequests[i];
-
-    if (scrapeRequestMatchesParsedUrl(request. parsedUrl) == true) {
-      _bgScrapeRequests = _bgScrapeRequests.splice(i, 1);
+    if (scrapeRequestMatchesParsedUrl(request, parsedUrl) == true) {
+      _bgScrapeRequests.splice(i, 1);
       removalCacheKey = request.cacheKey;
       break;
     }
   }
-  
+
   // if we've now processed the last item, that storage item can be removed
   if (_bgScrapeRequests.length == 0 && removalCacheKey.length > 0) {
     chrome.storage.local.remove(removalCacheKey);
@@ -205,38 +213,49 @@ const processLastScrape = function(parsedUrl) {
 
 // pass in an optional parsedUrl for a scrape that just completed
 const ensureQueuedScrapeRequests = async function(lastScrape) {
+  // pull the last scrape out of the in-memory variable
+  // and if it was the last one, remove the cacheKey holding its batch
   processLastScrape(lastScrape);
-  // console.log('checking scrape queue');
-  if (isScraping() === true) { return; }
   
-  const all = await chrome.storage.local.get();
-  const entries = Object.entries(all);
-
-  for (const [key, val] of entries) {
-    // i.e. STORAGE_PREFIX.BG_SCRAPE
-    if (key.startsWith('bgscrape-')) {
-      // apply a lock and 
-      switch (val.pageType) {
-        case 'nitterProfile':
+  if (_bgScrapeRequests.length > 0) { 
+    // if there are more items already in-queue to process, then we can just kick off the next one
+    await scrapeNext();
+  }
+  else {
+    const all = await chrome.storage.local.get();
+    const entries = Object.entries(all);
+  
+    const clearCacheForTesting = false; // temporary aid to debugging
+  
+    for (const [key, val] of entries) {
+      // i.e. STORAGE_PREFIX.BG_SCRAPE
+      if (key.startsWith('bgscrape-')) {
+        if (clearCacheForTesting == true) {
+          // only relevant while testing
+          //console.log(key);
+          //console.log(val);
+          //chrome.storage.local.remove(key);
+        }
+        else {
           // we only want to kick off one set of handles at a time, so...
           // add handles to queue
-          enqueueHandleScrapeRequests(val.data, val.type, key);
+          enqueueScrapeRequests(val.data, val.pageType, key);
           // kick off first scrape and
           await scrapeNext();
           // exit without looping further
           return;
-        default:
-          break;
+        }
       }
     }
   }
-
   //console.log('Done queueing background scrape requests');
 }
 
-const enqueueHandleScrapeRequests = function(handles, type, cacheKey) {
+// for now, the background scrape request always provides a set of handles as its data payload
+// if this changes, we'll build a switch statement on pageType
+const enqueueScrapeRequests = function(handles, pageType, cacheKey) {
   for (let i = 0; i < handles.length; i++) {
-    _bgScrapeRequests.push({type: type, handle: handles[i], cacheKey: cacheKey});
+    _bgScrapeRequests.push({pageType: pageType, handle: handles[i], cacheKey: cacheKey});
   }
 }
 
@@ -247,8 +266,7 @@ const scrapeNext = async function() {
   }
 
   const request = _bgScrapeRequests[0];
-  
-  switch (request.type) {
+  switch (request.pageType) {
     case 'nitterProfile':
       await scrapeNitterProfile(request);
       break;
@@ -258,10 +276,8 @@ const scrapeNext = async function() {
 }
 
 const ensureOffscreenDocument = async function() {
-
-  if (hasDocument() == true) {
-    return;
-  }
+  const hasDoc = await hasDocument();
+  if (hasDoc == true) { return; }
 
   await chrome.offscreen.createDocument({
     url: OFFSCREEN_DOCUMENT_PATH,

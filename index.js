@@ -956,6 +956,12 @@ _fileElem.addEventListener('change', (event) => {
 const handleUploadFiles = function(files) {
   files = [...files];
   files.forEach(processUpload);
+
+  const uploadContext = getUploadContext();
+  if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
+    // make sure the background worker knows we want it to look for scrape requests
+    kickoffBackgroundScraping();
+  }
 }
 
 function highlightDropArea(e) {
@@ -1002,8 +1008,6 @@ const processUpload = function(file) {
     else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
       // cache the request for execution upon upload completion
       BGFETCH.cacheTwitterHandlesForProfileScrape(e.target.result);
-      // make sure the background worker knows we want it to look for scrape requests
-      kickoffBackgroundScraping();
     }
 
     onProcessedUploadBatch();
