@@ -41,7 +41,9 @@
       "matches": [
         "https://twitter.com/*",
         "https://mobile.twitter.com/*",
-        "https://nitter.net/*"
+        "https://nitter.net/*",
+        "https://nitter.it/*",
+        "https://nitter.at/*"
       ]
     }
   ],
@@ -56,7 +58,11 @@
     "declarativeNetRequestWithHostAccess", 
     "browsingData"
   ],
-  "host_permissions": ["https://nitter.net/"],
+  "host_permissions": [
+    "https://nitter.net/",
+    "https://nitter.it/",
+    "https://nitter.at/"
+  ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"
   },

@@ -102,15 +102,28 @@ const onGotSavedCount = function(count, pageType, metadata) {
   }
 }
 
-const ensureCopiedToDb = async function() {
+const getSavableCacheKvps = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
+  const kvps = [];
+
+  for (const [key, val] of entries) {
+    if (key.startsWith(STORAGE_PREFIX.FOR_DB)) {
+      kvps.push({key: key, val: val});
+    }
+  }
+
+  return kvps;
+}
+
+const ensureCopiedToDb = async function() {
+  const kvps = await getSavableCacheKvps();
+  
   const xferring = document.getElementById('transferringMsg');
   // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
   const filterSet = document.getElementById('listFilterSet');
-  
-  xferring.textContent = 'Copying ' + entries.length + ' pages to local database...';
-  if (entries.length > 0) {
+  xferring.textContent = 'Copying ' + kvps.length + ' pages to local database...';
+  if (kvps.length > 0) {
     xferring.style.display = 'inline-block';
     filterSet.style.display = 'none';
   }
@@ -121,20 +134,18 @@ const ensureCopiedToDb = async function() {
   const monoMultiplier = 10; // if these aren't arrays, we'll process 100 items instead of 10 array pages
   let ctr = 0;
   let hitArray = false;
-  for (const [key, val] of entries) {
-    if (key.startsWith(STORAGE_PREFIX.FOR_DB)) {
-      let batch = { key: key, val: val };
-      batches.push(batch);
-      ctr++;
-      
-      if (Array.isArray(val)) {
-        hitArray = true;
-      }
+  for (let i = 0; i < kvps.length; i++) {
+    let kvp = kvps[i];
+    batches.push(kvp);
+    ctr++;
+    
+    if (Array.isArray(kvp.val)) {
+      hitArray = true;
+    }
 
-      if ((hitArray == true && ctr >= maxBatches) || (hitArray == false && ctr >= maxBatches * monoMultiplier)) {
-        // come back for more rather than sending massive messages around
-        break;
-      }
+    if ((hitArray == true && ctr >= maxBatches) || (hitArray == false && ctr >= maxBatches * monoMultiplier)) {
+      // come back for more rather than sending massive messages around
+      break;
     }
   }
   
@@ -1022,7 +1033,10 @@ const processUpload = function(file) {
 }
 
 const kickoffBackgroundScraping = function() {
-  chrome.runtime.sendMessage({ actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE });
+  chrome.runtime.sendMessage({ 
+    actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE,
+    nitterUrl: SETTINGS.NITTER.getNitterUrl()
+  });
 }
 
 const onProcessedUploadBatch = function() {

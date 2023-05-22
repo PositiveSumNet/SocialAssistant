@@ -22,6 +22,7 @@ importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
 importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
+importScripts('/lib/worker/twitterprofilesavemapper.js');
 importScripts('/lib/worker/twitterconnsavemapper.js');
 importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');

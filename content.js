@@ -16,6 +16,8 @@
   
 */
 
+console.log(document.location.href);
+
 const _parsedUrl = URLPARSE.getParsedUrl();
 if (_parsedUrl && _parsedUrl.pageType == PAGETYPE.NITTER.PROFILE) {
   // we could later use e.g. a query string to provide directives on how to process etc. (if needed)

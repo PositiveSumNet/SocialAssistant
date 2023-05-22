@@ -51,14 +51,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
     switch (request.actionType) {
       case 'save':
-        const saveResponse = await processSave(request.payload);
+        const saveResponse = await processSave(request);
         sendResponse(saveResponse);
         return returnsData;
       case 'setBadge':
         chrome.action.setBadgeText({text: request.badgeText});
         return returnsData;
       case 'letsScrape':
-        await ensureQueuedScrapeRequests(request.lastScrape);
+        await ensureQueuedScrapeRequests(request.lastScrape, request.nitterUrl);
         return returnsData;
       default:
         return returnsData;
@@ -79,6 +79,8 @@ chrome.runtime.onInstalled.addListener(() => {
       initiatorDomains: [chrome.runtime.id],
       requestDomains: [
         'nitter.net',
+        'nitter.it',
+        'nitter.at'
       ],
       resourceTypes: ['sub_frame'],
     },
@@ -103,8 +105,13 @@ chrome.runtime.onInstalled.addListener(() => {
 // SAVING
 /**************************/
 
-const processSave = async function(records) {
-  await injectImageBase64s(records);
+const processSave = async function(request) {
+  const records = request.payload;
+
+  if (request.skipImg64 != true) {
+    await injectImageBase64s(records);
+  }
+
   saveToTempStorage(records);
   return {saved: records, success: true};
 }
@@ -212,14 +219,14 @@ const processLastScrape = function(parsedUrl) {
 }
 
 // pass in an optional parsedUrl for a scrape that just completed
-const ensureQueuedScrapeRequests = async function(lastScrape) {
+const ensureQueuedScrapeRequests = async function(lastScrape, nitterUrl) {
   // pull the last scrape out of the in-memory variable
   // and if it was the last one, remove the cacheKey holding its batch
   processLastScrape(lastScrape);
   
   if (_bgScrapeRequests.length > 0) { 
     // if there are more items already in the in-memory-queue to process, then we can just kick off the next one
-    await scrapeNext();
+    await scrapeNext(nitterUrl);
   }
   else {
     const all = await chrome.storage.local.get();
@@ -241,7 +248,7 @@ const ensureQueuedScrapeRequests = async function(lastScrape) {
           // add handles to queue
           enqueueScrapeRequests(val.data, val.pageType, key);
           // kick off first scrape and
-          await scrapeNext();
+          await scrapeNext(nitterUrl);
           // exit without looping further
           return;
         }
@@ -259,7 +266,7 @@ const enqueueScrapeRequests = function(handles, pageType, cacheKey) {
   }
 }
 
-const scrapeNext = async function() {
+const scrapeNext = async function(nitterUrl) {
   if (_bgScrapeRequests.length === 0) {
     //console.log('Done processing scrape queue for now');
     return;
@@ -268,7 +275,7 @@ const scrapeNext = async function() {
   const request = _bgScrapeRequests[0];
   switch (request.pageType) {
     case 'nitterProfile':
-      await scrapeNitterProfile(request);
+      await scrapeNitterProfile(request, nitterUrl);
       break;
     default:
       break;
@@ -300,8 +307,8 @@ const navigateOffscreenDocument = async function(url) {
 }
 
 // see notes at offscreen.js
-const scrapeNitterProfile = async function(request) {
+const scrapeNitterProfile = async function(request, nitterUrl) {
   const handleOnly = request.handle.substring(1); // sans-@
-  const url = `https://nitter.net/${handleOnly}`;
+  const url = `${nitterUrl}/${handleOnly}`;
   await navigateOffscreenDocument(url);
 }
