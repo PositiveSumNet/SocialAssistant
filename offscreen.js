@@ -23,11 +23,11 @@ chrome.runtime.onMessage.addListener(handleMessages);
 
 async function handleMessages(message) {
   switch (message.actionType) {
-    case 'navFrameUrl':
+    case MSGTYPE.TO_OFFSCREEN.NAV_FRAME_URL:
       await navFrameUrl(message);
-      return true;
+      break;
     default:
-      return false;
+      break;
   }
 }
 

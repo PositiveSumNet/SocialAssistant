@@ -218,7 +218,7 @@ const ensureQueuedScrapeRequests = async function(lastScrape) {
   processLastScrape(lastScrape);
   
   if (_bgScrapeRequests.length > 0) { 
-    // if there are more items already in-queue to process, then we can just kick off the next one
+    // if there are more items already in the in-memory-queue to process, then we can just kick off the next one
     await scrapeNext();
   }
   else {
@@ -299,6 +299,7 @@ const navigateOffscreenDocument = async function(url) {
   });
 }
 
+// see notes at offscreen.js
 const scrapeNitterProfile = async function(request) {
   const handleOnly = request.handle.substring(1); // sans-@
   const url = `https://nitter.net/${handleOnly}`;

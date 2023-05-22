@@ -958,9 +958,13 @@ const handleUploadFiles = function(files) {
   files.forEach(processUpload);
 
   const uploadContext = getUploadContext();
-  if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
-    // make sure the background worker knows we want it to look for scrape requests
-    kickoffBackgroundScraping();
+  switch(uploadContext) {
+    case UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE:
+      // make sure the background worker knows we want it to look for scrape requests
+      kickoffBackgroundScraping();
+      break;
+    default:
+      break;
   }
 }
 

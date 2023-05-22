@@ -18,7 +18,7 @@
 
 const _parsedUrl = URLPARSE.getParsedUrl();
 if (_parsedUrl && _parsedUrl.pageType == PAGETYPE.NITTER.PROFILE) {
-  // we could later use localStorage or a query string to provide directives on how to process etc. (if needed)
+  // we could later use e.g. a query string to provide directives on how to process etc. (if needed)
   NITTER_PROFILE_PARSER.parseToTempStorage();
 }
 
