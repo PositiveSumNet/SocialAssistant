@@ -1022,7 +1022,7 @@ const processUpload = function(file) {
     }
     else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
       // cache the request for execution upon upload completion
-      BGFETCH.cacheTwitterHandlesForProfileScrape(e.target.result);
+      BGFETCH_REQUEST.cacheTwitterHandlesForProfileScrape(e.target.result);
     }
 
     onProcessedUploadBatch();
