@@ -2,7 +2,7 @@
 // SCRAPING FLOW
 // Use Case #1) power-user upload of PSN-scored handles 
 // (index.js processUpload() with UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE)
-// * BGFETCH.cacheTwitterHandlesForProfileScrape() caches to 
+// * BGFETCH_REQUEST.cacheTwitterHandlesForProfileScrape() caches to 
 //    storage.local an array of handles with a cacheKey starting with STORAGE_PREFIX.BG_SCRAPE
 // NEXT (including for future use cases...)
 // 1) fire a message MSGTYPE.TOBACKGROUND.LETS_SCRAPE
@@ -37,6 +37,5 @@ async function navFrameUrl(message) {
   const newFrame = document.createElement('iframe');
   newFrame.setAttribute('id', 'extUrlFrame');
   newFrame.src = message.url;
-  SETTINGS.setBackgroundScrapeUrl(message.url);
   document.body.appendChild(newFrame);
 }

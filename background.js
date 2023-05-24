@@ -16,21 +16,23 @@ chrome.runtime.onInstalled.addListener((details) => {
   console.log(`Current Version: ${currentVersion }`);
 
   switch (reason) {
-     case 'install':
-        console.log('New User installed the extension.');
-        chrome.tabs.create({ url: 'welcome.html' });
-        break;
-     case 'update':
+    case 'install':
+      console.log('New User installed the extension.');
+      chrome.tabs.create({ url: 'welcome.html' });
+      break;
+    case 'update':
+      if (previousVersion != currentVersion) {
         console.log('User has updated their extension.');
         if (previousVersion === "1.0.4") {
           chrome.tabs.create({ url: 'whatsnew105.html' });
         }
-        break;
-     case 'chrome_update':
-     case 'shared_module_update':
-     default:
-        console.log('Other install events within the browser');
-        break;
+      }
+      break;
+    case 'chrome_update':
+    case 'shared_module_update':
+    default:
+      console.log('Other install events within the browser');
+      break;
   }
 });
 
@@ -58,7 +60,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.action.setBadgeText({text: request.badgeText});
         return returnsData;
       case 'letsScrape':
-        await ensureQueuedScrapeRequests(request.lastScrape, request.nitterUrl);
+        await ensureQueuedScrapeRequests(request.nitterUrl, request.lastScrape);
         return returnsData;
       default:
         return returnsData;
@@ -173,7 +175,7 @@ const hasDocument = async function() {
 }
 
 const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
-  
+
   if (request.pageType != parsedUrl.pageType) {
     return false;
   }
@@ -216,14 +218,19 @@ const processLastScrape = function(parsedUrl) {
   if (_bgScrapeRequests.length == 0 && removalCacheKey.length > 0) {
     chrome.storage.local.remove(removalCacheKey);
   }
+  // tell listeners we just scraped this
+  chrome.runtime.sendMessage(
+    {
+      actionType: 'bgScraped',
+      parsedUrl: parsedUrl
+    });
 }
 
 // pass in an optional parsedUrl for a scrape that just completed
-const ensureQueuedScrapeRequests = async function(lastScrape, nitterUrl) {
+const ensureQueuedScrapeRequests = async function(nitterUrl, lastScrape) {
   // pull the last scrape out of the in-memory variable
   // and if it was the last one, remove the cacheKey holding its batch
   processLastScrape(lastScrape);
-  
   if (_bgScrapeRequests.length > 0) { 
     // if there are more items already in the in-memory-queue to process, then we can just kick off the next one
     await scrapeNext(nitterUrl);

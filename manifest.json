@@ -27,6 +27,7 @@
         "lib/shared/settingslib.js", 
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
+        "lib/shared/bgfetchlib.js", 
         "lib/shared/emojilib.js", 
         "lib/content/urlparsing.js", 
         "lib/content/recordinglib.js", 
