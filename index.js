@@ -41,6 +41,18 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(re
   // console.log('userauth: ' + _mdonUserAuthToken);
 });
 
+// listen for messages (aside from worker messages which are handled separately)
+chrome.runtime.onMessage.addListener(handleMessages);
+async function handleMessages(message) {
+  switch (message.actionType) {
+    case MSGTYPE.FROMBG.BG_SCRAPED:
+      onScrapedBg(message.parsedUrl);
+      break;
+    default:
+      break;
+  }
+}
+
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -102,15 +114,28 @@ const onGotSavedCount = function(count, pageType, metadata) {
   }
 }
 
-const ensureCopiedToDb = async function() {
+const getSavableCacheKvps = async function() {
   const all = await chrome.storage.local.get();
   const entries = Object.entries(all);
+  const kvps = [];
+
+  for (const [key, val] of entries) {
+    if (key.startsWith(STORAGE_PREFIX.FOR_DB)) {
+      kvps.push({key: key, val: val});
+    }
+  }
+
+  return kvps;
+}
+
+const ensureCopiedToDb = async function() {
+  const kvps = await getSavableCacheKvps();
+  
   const xferring = document.getElementById('transferringMsg');
   // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
   const filterSet = document.getElementById('listFilterSet');
-  
-  xferring.textContent = 'Copying ' + entries.length + ' pages to local database...';
-  if (entries.length > 0) {
+  xferring.textContent = 'Copying ' + kvps.length + ' pages to local database...';
+  if (kvps.length > 0) {
     xferring.style.display = 'inline-block';
     filterSet.style.display = 'none';
   }
@@ -118,17 +143,21 @@ const ensureCopiedToDb = async function() {
   // allow sqlite to do process in larger batches than what was cached
   const batches = [];
   const maxBatches = 10;
+  const monoMultiplier = 10; // if these aren't arrays, we'll process 100 items instead of 10 array pages
   let ctr = 0;
-  for (const [key, val] of entries) {
-    if (key.startsWith('fordb-')) {
-      let batch = { key: key, val: val };
-      batches.push(batch);
-      ctr++;
-      
-      if (ctr >= maxBatches) {
-        // come back for more rather than sending massive messages around
-        break;
-      }
+  let hitArray = false;
+  for (let i = 0; i < kvps.length; i++) {
+    let kvp = kvps[i];
+    batches.push(kvp);
+    ctr++;
+    
+    if (Array.isArray(kvp.val)) {
+      hitArray = true;
+    }
+
+    if ((hitArray == true && ctr >= maxBatches) || (hitArray == false && ctr >= maxBatches * monoMultiplier)) {
+      // come back for more rather than sending massive messages around
+      break;
     }
   }
   
@@ -136,11 +165,14 @@ const ensureCopiedToDb = async function() {
     worker.postMessage( { batches: batches, actionType: MSGTYPE.TODB.XFER_CACHE_TODB } );
   }
   else {
-    // if we got to here, we're fully copied
+    // if we got to here, we've fully copied into the db
     xferring.style.display = 'none';
     filterSet.style.display = 'flex';
 
     initialRender();
+
+    // having fully copied into the db, we can also make sure background fetching is underway
+    kickoffBackgroundScraping();
   }
 }
 
@@ -152,7 +184,8 @@ const initialRender = function() {
   // defaults
   let owner;
   let pageType;
-  
+  let mode;
+
   for (const [key, value] of urlParams) {
     if (key === 'owner') {
       owner = value;
@@ -160,8 +193,26 @@ const initialRender = function() {
     else if (key === 'pageType') {
       pageType = value;
     }
+    else if (key === 'mode') {
+      mode = value;
+    }
   }
   
+  // power user mode (undocumented; exposes some advanced features)
+  if (mode) {
+    switch (mode) {
+      case 'power':
+        SETTINGS.setPowerUserMode(true);
+        break;
+      case 'basic':
+        document.getElementById('optImportContextEntities').checked = true;
+        SETTINGS.setPowerUserMode(false);
+        break;
+      default:
+        break;
+    }
+  }
+
   if (owner || pageType) {
     // clear url parms so that a page refresh going forward respects the UI state instead of the query string
     // stackoverflow.com/questions/38625654/remove-url-parameter-without-page-reloading
@@ -212,7 +263,7 @@ worker.onmessage = function ({ data }) {
       handleExportedResults(data.payload);
       break;
     case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
-      onProcessedSyncBatch();
+      onProcessedUploadBatch();
       break;
     case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
       onGotSavedCount(data.count, data.pageType, data.metadata);
@@ -302,6 +353,12 @@ const renderMatchedOwners = function(payload) {
     
     IMAGE.resolveDeferredLoadImages(listOwnerPivotPicker);
   }
+}
+
+const onScrapedBg = function(parsedUrl) {
+  const msg = `Processed ${STR.friendlyParsedUrl(parsedUrl)}`;
+  const elm = document.getElementById('bgStatusMsg');
+  elm.textContent = msg;
 }
 
 const renderSuggestedOwner = function(payload) {
@@ -864,7 +921,7 @@ const onChooseOwner = function() {
 }
 
 /************************/
-// Import 
+// Upload/Import 
 // smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
 /************************/
 document.getElementById('startImportBtn').onclick = function(event) {
@@ -876,16 +933,13 @@ document.getElementById('startImportBtn').onclick = function(event) {
   stopExport();
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('mdonDownloadConnsUi').style.display = 'none';
+
+  if (SETTINGS.getPowerUserMode() == 'true') {
+    document.getElementById('powerUserImport').style.display = 'block';
+  }
+
   return false;
 };
-
-const finishImporting = function() {
-  document.getElementById('uploadui').style.display = 'none';
-  document.getElementById('dbui').style.display = 'flex';
-  document.getElementById('mdonDownloadConnsUi').style.display = 'block';
-  document.getElementById('startImportBtn').style.display = 'inline-block';
-  document.getElementById('stopImportBtn').style.display = 'none';
-}
   
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
 document.getElementById('stopImportBtn').onclick = function(event) {
@@ -928,9 +982,19 @@ _fileElem.addEventListener('change', (event) => {
   handleUploadFiles(event.target.files);
 });
 
-function handleUploadFiles(files) {
+const handleUploadFiles = function(files) {
   files = [...files];
   files.forEach(processUpload);
+
+  const uploadContext = getUploadContext();
+  switch(uploadContext) {
+    case UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE:
+      // make sure the background worker knows we want it to look for scrape requests
+      kickoffBackgroundScraping();
+      break;
+    default:
+      break;
+  }
 }
 
 function highlightDropArea(e) {
@@ -948,33 +1012,63 @@ function handleDrop(e) {
   handleUploadFiles(files);
 }
 
+const getUploadContext = function() {
+  if (document.getElementById('optImportContextTwitterProfilesToScrape').checked == true) {
+    return UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE;
+  }
+  else {
+    return UPLOAD_CONTEXT.ENTITIES_TO_IMPORT;
+  }
+}
+
 // stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
-function processUpload(file) {
+const processUpload = function(file) {
   const reader = new FileReader();
+
+  // set the event for when reading completes
   reader.onload = function(e) {
     const uploadedCntElem = document.getElementById('uploadedCnt');
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
     updateUploadDoneBtnText();
-    worker.postMessage({
-      actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
-      json: e.target.result
-    });
+    
+    const uploadContext = getUploadContext();
+    if (uploadContext == UPLOAD_CONTEXT.ENTITIES_TO_IMPORT) {
+      worker.postMessage({
+        actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
+        json: e.target.result
+      });
+    }
+    else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
+      // cache the request for execution upon upload completion
+      BGFETCH_REQUEST.cacheTwitterHandlesForProfileScrape(e.target.result);
+    }
+
+    onProcessedUploadBatch();
   }
+
+  // start reading
   reader.readAsText(file);
 }
 
-function onProcessedSyncBatch() {
-  const processedCntElem = document.getElementById('syncImportProcessedCnt');
+const kickoffBackgroundScraping = function() {
+  chrome.runtime.sendMessage({ 
+    actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE,
+    nitterUrl: SETTINGS.NITTER.getNitterUrl()
+  });
+}
+
+const onProcessedUploadBatch = function() {
+  const processedCntElem = document.getElementById('uploadProcessedCnt');
   processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
   updateUploadDoneBtnText();
 }
 
-function updateUploadDoneBtnText() {
+const updateUploadDoneBtnText = function() {
   const uploadedCnt = parseInt(document.getElementById('uploadedCnt').innerText);
-  const processedCnt = parseInt(document.getElementById('syncImportProcessedCnt').innerText);
+  const processedCnt = parseInt(document.getElementById('uploadProcessedCnt').innerText);
   const btnElem = document.getElementById('uploadDone');
 
-  if (uploadedCnt > 0 && processedCnt === uploadedCnt) {
+  if (uploadedCnt > 0 && processedCnt >= uploadedCnt) {
     btnElem.innerText = 'Done!';
   }
   else {

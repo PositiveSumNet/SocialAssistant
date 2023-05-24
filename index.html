@@ -129,16 +129,28 @@
         </div>
       </div>
       <div id="uploadui" class="row pb-2" style="display:none;">
+        <div id="powerUserImport" style="display:none;" class="ps-4">
+          <p class="h5">Context</p>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="optImportContext" id="optImportContextEntities">
+            <label class="form-check-label" for="optImportContextEntities">Simple import</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="optImportContext" id="optImportContextTwitterProfilesToScrape">
+            <label class="form-check-label" for="optImportContextTwitterProfilesToScrape">(advanced) Twitter profiles to scrape and save</label>
+          </div>
+        </div>
+        <br/>
         <div id="drop-area">
           <form class="my-form">
             <p>Upload multiple files (click or drag & drop)</p>
             <input type="file" id="fileElem" multiple accept="application/JSON">
             <label class="upload-button" for="fileElem">Choose files</label>
           </form>
-        </div>        
+        </div>
         <div class="pt-3 ps-4">
           <span>Uploaded: </span><span id="uploadedCnt">0</span> | 
-          <span>Processed: </span><span id="syncImportProcessedCnt">0</span>
+          <span>Processed: </span><span id="uploadProcessedCnt">0</span>
         </div>
         <div class="pt-2 ps-4">
           <a href="#" id="uploadDone" role="button" class="btn btn-primary">Done</a>
@@ -303,16 +315,21 @@
         </div>
       </div>
     </div>
-    <div class="fixed-bottom">
-      <span>
+    <div class="fixed-bottom row">
+      <div class="col">
         <span>App Version: <span id='manifestVersion'></span></span>, 
         <span>SQLite DB Version: <span id='sqliteVersionLib'></span></span>, 
         <span>OPFS: <span id='sqliteOpfsOk'></span></span>, 
         <span>Script #: <span id='dbScriptNumber'></span></span> |
         <a href='https://whosum.com/privacy' target='_blank'>Privacy</a> |
         <a href='https://whosum.com/terms' target='_blank'>Terms</a> |
-        <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a>
-      </span>
+        <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a> |
+        <a href='https://whosum.com/assistant' target='_blank'>Videos</a> |
+        <a href='https://whosum.com/faq' target='_blank'>Help</a>
+      </div>
+      <div id="bgStatusMsg" class="col-sm-auto text-right me-4">
+        
+      </div>
     </div>
     <script src='lib/shared/purify.min.js'></script>
     <script src='lib/shared/constants.js'></script>
@@ -324,6 +341,7 @@
     <script src='lib/shared/emojilib.js'></script>
     <script src='lib/shared/datatypes.js'></script>
     <script src='lib/shared/appgraphs.js'></script>
+    <script src='lib/shared/bgfetchlib.js'></script>
     <script src='lib/shared/appschema.js'></script>
     <script src='lib/dbui/renderlib.js'></script>
     <script src='lib/dbui/connexportlib.js'></script>

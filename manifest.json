@@ -27,18 +27,24 @@
         "lib/shared/settingslib.js", 
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
+        "lib/shared/bgfetchlib.js", 
         "lib/shared/emojilib.js", 
         "lib/content/urlparsing.js", 
         "lib/content/recordinglib.js", 
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
         "lib/content/twitter/twitterfollowrecorder.js", 
+        "lib/content/nitter/nitterprofileparsing.js", 
         "lib/content/recorderfactory.js",
         "content.js"
       ],
+      "all_frames": true,
       "matches": [
         "https://twitter.com/*",
-        "https://mobile.twitter.com/*"
+        "https://mobile.twitter.com/*",
+        "https://nitter.net/*",
+        "https://nitter.it/*",
+        "https://nitter.at/*"
       ]
     }
   ],
@@ -46,9 +52,19 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "activeTab", "storage", "unlimitedStorage"
+    "activeTab", 
+    "storage", 
+    "unlimitedStorage", 
+    "offscreen", 
+    "declarativeNetRequestWithHostAccess", 
+    "browsingData"
   ],
-    "cross_origin_embedder_policy": {
+  "host_permissions": [
+    "https://nitter.net/",
+    "https://nitter.it/",
+    "https://nitter.at/"
+  ],
+  "cross_origin_embedder_policy": {
     "value": "require-corp"
   },
   "cross_origin_opener_policy": {
