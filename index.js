@@ -359,13 +359,6 @@ const onScrapedBg = function(parsedUrl) {
   const msg = `Processed ${STR.friendlyParsedUrl(parsedUrl)}`;
   const elm = document.getElementById('bgStatusMsg');
   elm.textContent = msg;
-  
-  setTimeout(() => {
-    // clear after a few seconds if it still has this message
-    if (elm.textContent == msg) {
-      elm.textContent = '';
-    }
-  }, 5000);
 }
 
 const renderSuggestedOwner = function(payload) {
