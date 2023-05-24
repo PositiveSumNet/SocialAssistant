@@ -16,12 +16,11 @@
   
 */
 
-console.log(document.location.href);
-
 const _parsedUrl = URLPARSE.getParsedUrl();
+const _isBgScrape = URLPARSE.isBackgroundScrapeUrl();
 if (_parsedUrl && _parsedUrl.pageType == PAGETYPE.NITTER.PROFILE) {
   // we could later use e.g. a query string to provide directives on how to process etc. (if needed)
-  NITTER_PROFILE_PARSER.parseToTempStorage();
+  NITTER_PROFILE_PARSER.parseToTempStorage(_isBgScrape);
 }
 
 // on startup, see if supposed to already be recording

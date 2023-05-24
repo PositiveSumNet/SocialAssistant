@@ -37,5 +37,6 @@ async function navFrameUrl(message) {
   const newFrame = document.createElement('iframe');
   newFrame.setAttribute('id', 'extUrlFrame');
   newFrame.src = message.url;
+  localStorage.setItem(SETTINGS.BG_SCRAPE_URL, message.url);
   document.body.appendChild(newFrame);
 }
