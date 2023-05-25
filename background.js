@@ -71,7 +71,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 /******************************/
 // CSP HEADER STRIPPING
+// COMMENTED OUT FOR NOW
 /******************************/
+/*
 chrome.runtime.onInstalled.addListener(() => {
   
   // developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
@@ -102,6 +104,7 @@ chrome.runtime.onInstalled.addListener(() => {
     addRules: [RULE],
   });
 });
+*/
 
 /**************************/
 // SAVING
@@ -303,6 +306,9 @@ const ensureOffscreenDocument = async function() {
 const navigateOffscreenDocument = async function(url) {
   
   await ensureOffscreenDocument();
+
+  // this will help the content.js to know it's a background scrape request
+  chrome.storage.local.set({ ['bgScrapeUrl']: url });
 
   // send a message to be picked up by offscreen.js
   // and provided that the url is recognized by the manifest, 
