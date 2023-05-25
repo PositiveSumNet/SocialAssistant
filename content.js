@@ -16,18 +16,32 @@
   
 */
 
-const _parsedUrl = URLPARSE.getParsedUrl();
-if (_parsedUrl && _parsedUrl.pageType == PAGETYPE.NITTER.PROFILE) {
-  // we could later use e.g. a query string to provide directives on how to process etc. (if needed)
-  NITTER_PROFILE_PARSER.parseToTempStorage();
-}
+let _bgOnly = false;
+// on startup, see if it's a background scrape request
+chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
+  const bgUrl = result[SETTINGS.BG_SCRAPE.SCRAPE_URL];
+
+  if (bgUrl && STR.sameText(bgUrl, document.location.href)) {
+    const parsedUrl = URLPARSE.getParsedUrl();
+    if (parsedUrl) {
+      switch (parsedUrl.pageType) {
+        // background processing
+        case PAGETYPE.NITTER.PROFILE:
+          _bgOnly = true;
+          NITTER_PROFILE_PARSER.parseToTempStorage();
+          break;
+        default:
+          break;
+      }
+    }
+  }
+});
 
 // on startup, see if supposed to already be recording
-chrome.storage.local.get(['recording'], function(result) {
-  if (result.recording === true) {
+chrome.storage.local.get([SETTINGS.RECORDING], function(result) {
+  if (!_bgOnly && result.recording === true) {
     // here at startup, extension is in a 'load if we can' state
     const recorder = RECORDING.getRecorder();
-    // note: nitter doesn't return a recorder
     if (recorder) {
       recorder.startRecording();
     }
@@ -37,8 +51,7 @@ chrome.storage.local.get(['recording'], function(result) {
 // toggle recording and auto-scroll on/off
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   const recorder = RECORDING.getRecorder();
-  // note: nitter doesn't return a recorder
-  if (recorder) {
+  if (!_bgOnly && recorder) {
     recorder.listenForRecordingToggle(request, sender, sendResponse);
   }
 });

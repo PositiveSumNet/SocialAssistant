@@ -38,13 +38,9 @@
         "lib/content/recorderfactory.js",
         "content.js"
       ],
-      "all_frames": true,
       "matches": [
         "https://twitter.com/*",
-        "https://mobile.twitter.com/*",
-        "https://nitter.net/*",
-        "https://nitter.it/*",
-        "https://nitter.at/*"
+        "https://mobile.twitter.com/*"
       ]
     }
   ],
@@ -54,15 +50,7 @@
   "permissions": [
     "activeTab", 
     "storage", 
-    "unlimitedStorage", 
-    "offscreen", 
-    "declarativeNetRequestWithHostAccess", 
-    "browsingData"
-  ],
-  "host_permissions": [
-    "https://nitter.net/",
-    "https://nitter.it/",
-    "https://nitter.at/"
+    "unlimitedStorage"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"
