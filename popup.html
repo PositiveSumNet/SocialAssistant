@@ -66,7 +66,7 @@
         <p>Session expiration: <code id="sessionExpiration">10:00</code></p>
         <div class="d-grid gap-3">
           <button id="btnExtendTimer" class="btn btn-secondary">Extend Timer</button>
-          <button class="btn btn-primary" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
+          <button class="btn btn-primary" id="btnStopManualRecording" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
         </div>
       </div>
       <div id="configureAutoRecordingSection" class="appRecordingSection" style="display:none;">
@@ -121,7 +121,7 @@
         <p><em id="autoRecordingStatus">@userName tweets via nitter.it</em></p>
         <p class="small"><i class="bi-info-circle"></i> You can stop to review progress at any time and resume later</p>
         <div class="d-grid gap-3">
-          <button class="btn btn-primary" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
+          <button class="btn btn-primary" id="btnStopAutoRecording" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
         </div>
       </div>
       <br>

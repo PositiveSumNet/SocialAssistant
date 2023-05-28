@@ -287,6 +287,25 @@ const showRecordingDiv = function(sectionId) {
   });
 }
 
+const btnStopManualRecording = document.getElementById('btnStopManualRecording');
+btnStopManualRecording.addEventListener('click', async () => {
+  await stopRecording();
+  window.close();
+});
+
+const btnStopAutoRecording = document.getElementById('btnStopAutoRecording');
+btnStopAutoRecording.addEventListener('click', async () => {
+  await stopRecording();
+  window.close();
+});
+
+const stopRecording = async function() {
+  const context = SETTINGS.RECORDING.getContext();
+  context.state = SETTINGS.RECORDING.STATE.OFF;
+  context.manualTimeoutAt = Date.now();
+  await reviewDb();
+}
+
 const reviewDb = async function() {
   let queryString = '';
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
