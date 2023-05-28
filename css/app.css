@@ -284,10 +284,18 @@ input.textinput:focus {
  color: #595aff
 }
 
+.text-twitter {
+  color: #1D9BF0
+}
+
 .following-awaits-response-mdon, a.following-awaits-response-mdon {
   color: #8DBAFB;
 }
 
 .following-likely-mdon, a.following-likely-mdon {
   color: #198754
+}
+
+.indented-switches {
+  margin-left: 40px;
 }

@@ -71,9 +71,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 /******************************/
 // CSP HEADER STRIPPING
-// COMMENTED OUT FOR NOW
 /******************************/
-/*
 chrome.runtime.onInstalled.addListener(() => {
   
   // developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
@@ -83,8 +81,10 @@ chrome.runtime.onInstalled.addListener(() => {
       initiatorDomains: [chrome.runtime.id],
       requestDomains: [
         'nitter.net',
+        'nitter.nl',
+        'nitter.at',
         'nitter.it',
-        'nitter.at'
+        'nitter.one'
       ],
       resourceTypes: ['sub_frame'],
     },
@@ -104,7 +104,6 @@ chrome.runtime.onInstalled.addListener(() => {
     addRules: [RULE],
   });
 });
-*/
 
 /**************************/
 // SAVING

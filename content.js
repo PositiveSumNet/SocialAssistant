@@ -33,6 +33,8 @@ chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
         default:
           break;
       }
+
+      SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
     }
   }
 });

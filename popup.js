@@ -1,78 +1,150 @@
 chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
-  
+  onLoadReflectRecordingContext();
   chrome.storage.sync.get([SETTINGS.AGREED_TO_TERMS], function(result) {
     if (result.agreedToTerms == 'true') {
       activateApp();
     }
   });
+});
+
+const updateManuallyRecordingWhatDisplay = function(context) {
+  const shouldRecordFollows = SETTINGS.RECORDING.getManualRecordsFollows(context);
+  document.getElementById('chkManualRecordsFollowLists').checked == shouldRecordFollows;
   
-  const termsSection = document.getElementById('termsSection');
-  const appSection = document.getElementById('appSection');
+  const shouldRecordTweets = SETTINGS.RECORDING.shouldRecordTweets(context);
+  document.getElementById('chkManualRecordsTweets').checked == shouldRecordTweets;
   
-  const urlInfo = URLPARSE.parseUrl(tab.url);
-  
-  if (urlInfo && urlInfo.pageType) {
-    document.getElementById('runnableTwitterPageMsg').style.display = 'block';
-    let recordTwitterBanner = document.getElementById('recordTwitterBanner');
-    
-    switch (urlInfo.pageType) {
-      case PAGETYPE.TWITTER.FOLLOWING:
-        recordTwitterBanner.innerText = 'Save who @' + urlInfo.owner + ' is following';
-        break;
-      case PAGETYPE.TWITTER.FOLLOWERS:
-        recordTwitterBanner.innerText = 'Save followers of @' + urlInfo.owner;
-        break;
-      default:
-        break;
-    }
-    
-    // reflect button visibility based on whether recording
-    chrome.storage.local.get([SETTINGS.RECORDING], function(result) {
-      let isRecording = (result.recording === true);
-      let ifRecordings = document.getElementsByClassName('ifRecording');
-      for (let i = 0; i < ifRecordings.length; i++) {
-        let elm = ifRecordings[i];
-        let displayStyle = 'block';
-        
-        if (isRecording === true && elm.classList.contains('hideIfRecording')) {
-          displayStyle = 'none';
-        }
-        else if (isRecording === false && elm.classList.contains('hideIfNotRecording')) {
-          displayStyle = 'none';
-        }
-        
-        elm.style.display = displayStyle;
-      }
-    });
-    
+  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
+  if (shouldRecordTweets) {
+    chkWithImages.checked = SETT.RECORDING.getManualRecordsTweetImages(context);
+    chkWithImages.disabled = false;
   }
   else {
-    document.getElementById('invalidTwitterPageMsg').style.display = 'block';
+    chkWithImages.checked = false;
+    chkWithImages.disabled = true;
   }
-});
+
+  let display = '';
+  if (shouldRecordFollows == true && shouldRecordTweets) {
+    display = ' (follows and tweets)';
+  }
+  else if (shouldRecordFollows == true) {
+    display = ' (follows)';
+  }
+  else if (shouldRecordTweets == true) {
+    display = ' (tweets)';
+  }
+  document.getElementById('manuallyRecordingWhat').textContent = display;
+}
+
+const onLoadReflectRecordingContext = function() {
+  const context = SETTINGS.RECORDING.getContext();
+  switch (context.state) {
+    case SETTINGS.RECORDING.STATE.MANUAL:
+      updateManuallyRecordingWhatDisplay(context);
+      showRecordingDiv('manuallyRecordingSection');
+      break;
+    case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
+      showRecordingDiv('autoRecordingSection');
+      break;
+    case SETTINGS.RECORDING.STATE.OFF:
+    default:
+      showRecordingDiv('notYetRecordingSection');
+      break;
+  }
+}
 
 const btnAgreeToTerms = document.getElementById('btnAgreeToTerms');
 btnAgreeToTerms.addEventListener('click', async () => {
   chrome.storage.sync.set({ agreedToTerms: 'true' }).then(() => activateApp());
 });
 
-const btnRecTwitterManualScroll = document.getElementById('btnRecTwitterManualScroll');
-btnRecTwitterManualScroll.addEventListener('click', () => {
-  kickoffRecording(true, false);
-  window.close();
+const btnChooseManualScroll = document.getElementById('btnChooseManualScroll');
+btnChooseManualScroll.addEventListener('click', async () => {
+  // prep the ui with default values
+  const context = SETTINGS.RECORDING.getContext();
+
+  document.getElementById('chkManualRecordsFollowLists').checked = SETTINGS.RECORDING.getManualRecordsFollows(context);
+  const manualRecordsTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
+  document.getElementById('chkManualRecordsTweets').checked = manualRecordsTweets;
+  const manualRecordsTweetImages = SETTINGS.RECORDING.getManualRecordsTweetImages(context);
+  const tweetImagesElm = document.getElementById('chkManualRecordsTweetImages');
+  tweetImagesElm.checked = manualRecordsTweetImages;
+
+  if (manualRecordsTweets == false) {
+    tweetImagesElm.disabled = true;
+  }
+
+  // now the timer
+  document.getElementById('startClockFor').textContent = STR.toFancyTimeFormat(SETTINGS.RECORDING.DEFAULT_MANUAL_SECONDS);
+
+  // unveil the div
+  showRecordingDiv('configureManualRecordingSection');
 });
 
-const btnRecTwitterAutoScroll = document.getElementById('btnRecTwitterAutoScroll');
-btnRecTwitterAutoScroll.addEventListener('click', () => {
-  kickoffRecording(true, true);
-  window.close();
-});
+const btnChooseAutoScroll = document.getElementById('btnChooseAutoScroll');
+btnChooseAutoScroll.addEventListener('click', async () => {
+  const parsedUrl = SETTINGS.RECORDING.getLastParsedUrl();
+  const context = SETTINGS.RECORDING.getContext();
+  let recordTweets = false;
+  if (parsedUrl && parsedUrl.owner) {
+    document.getElementById('txtAutoRecordFor').value = parsedUrl.owner;
 
-const btnRecTwitterStop = document.getElementById('btnRecTwitterStop');
-btnRecTwitterStop.addEventListener('click', async () => {
-  kickoffRecording(false, false);
-  reviewDb();
-  window.close();
+    switch (parsedUrl.pageType) {
+      case PAGETYPE.TWITTER.TWEETS:
+      case PAGETYPE.NITTER.TWEETS:
+        document.getElementById('optAutoRecordTweets').checked = true;
+        recordTweets = true;
+        break;
+      case PAGETYPE.TWITTER.FOLLOWERS:
+        document.getElementById('optAutoRecordFollowers').checked = true;
+        break;
+      case PAGETYPE.TWITTER.FOLLOWING:
+      default:
+        document.getElementById('optAutoRecordFollowing').checked = true;
+        break;
+    }
+  }
+  else {
+    document.getElementById('optAutoRecordFollowing').checked = true;
+  }
+
+  const optViaNitter = document.getElementById('optAutoRecordViaNitter');
+  const optViaTwitter = document.getElementById('optAutoRecordViaTwitter')
+  const chkWithImages = document.getElementById('chkAutoRecordTweetImages');
+  const chkResolveThreads = document.getElementById('chkAutoRecordResolvesThreads');
+  if (recordTweets == true) {
+    let viaNitter = SETTINGS.RECORDING.getAutoViaNitter(getAutoViaNitter);
+    optViaNitter.disabled = false;
+    optViaTwitter.disabled = false;
+
+    switch (viaNitter) {
+      case true:
+        optViaNitter.checked = true;
+        break;
+      case false:
+        optViaTwitter.checked = true;
+        break;
+      case undefined:
+      default:
+        // neither selected yet; make user choose
+        break;
+    }
+
+    chkWithImages.checked = SETTINGS.RECORDING.getAutoRecordsTweetImages(context);
+    chkWithImages.disabled = false;
+    chkResolveThreads.checked = SETTINGS.RECORDING.getAutoRecordResolvesThreads(context);
+    chkResolveThreads.disabled = false;
+  }
+  else {
+    chkWithImages.checked = false;
+    chkWithImages.disabled = true;
+    chkResolveThreads.checked = false;
+    chkResolveThreads.disabled = true;
+  }
+
+  // unveil the div
+  showRecordingDiv('configureAutoRecordingSection');
 });
 
 const btnReviewDb = document.getElementById('btnReviewDb');
@@ -80,6 +152,140 @@ btnReviewDb.addEventListener('click', async () => {
   await reviewDb();
   window.close();
 });
+
+const btnStartManualRecording = document.getElementById('btnStartManualRecording');
+btnStartManualRecording.addEventListener('click', async () => {
+  
+  const shouldRecordFollows = document.getElementById('chkManualRecordsFollowLists').checked == true;
+  const shouldRecordTweets = document.getElementById('chkManualRecordsTweets').checked == true;
+
+  if (shouldRecordFollows == false && shouldRecordTweets == false) {
+    document.getElementById('manualNonSelError').style.display = 'block';
+    return;
+  }
+  else {
+    document.getElementById('manualNonSelError').style.display = 'none';
+  }
+
+  const context = SETTINGS.RECORDING.getContext();
+  context.state = SETTINGS.RECORDING.STATE.MANUAL;
+  context.manual = {};
+  context.manual.timeoutAt = STR.fromFancyTimeToSeconds(document.getElementById('startClockFor').textContent);
+  context.manual.recordsFollows = shouldRecordFollows;
+  context.manual.recordsTweets = shouldRecordTweets;
+  context.manual.recordsTweetImages = document.getElementById('chkManualRecordsTweetImages').checked == true;
+  SETTINGS.RECORDING.saveContext(context);
+
+  window.close();
+});
+
+setTimeout(() => {
+  let secondsRemaining = SETTINGS.RECORDING.getManualSecondsRemaining();
+  let secondsDisplay = STR.toFancyTimeFormat(secondsRemaining);
+  document.getElementById('sessionExpiration').textContent = secondsDisplay;
+}, 1000);
+
+const chkManualRecordsTweets = document.getElementById('chkManualRecordsTweets');
+chkManualRecordsTweets.addEventListener('change', (event) => {
+  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
+  if (event.target.checked == true) {
+    chkWithImages.disabled = false;
+  }
+  else {
+    chkWithImages.disabled = true;
+    chkWithImages.checked = false;
+  }
+});
+
+const btnEscapeManualRecordingConfig = document.getElementById('btnEscapeManualRecordingConfig');
+btnEscapeManualRecordingConfig.addEventListener('click', async () => {
+  showRecordingDiv('notYetRecordingSection');
+});
+
+const btnExtendTimer = document.getElementById('btnExtendTimer');
+btnExtendTimer.addEventListener('click', async () => {
+
+  const context = SETTINGS.RECORDING.getContext();
+  if (!context || context.state != SETTINGS.RECORDING.STATE.MANUAL || !context.manual || !context.manual.timeoutAt) {
+    return;
+  }
+  else {
+    let secondsRemaining = SETTINGS.RECORDING.getManualSecondsRemaining();
+    secondsRemaining += SETTINGS.RECORDING.BOOST_MANUAL_SECONDS;
+    context.manual.timeoutAt = secondsRemaining;
+  }
+});
+
+const btnStartAutoRecording = document.getElementById('btnStartAutoRecording');
+btnStartAutoRecording.addEventListener('click', async () => {
+  
+  let site = document.getElementById('optAutoRecordViaNitter').checked == true ? SITE.NITTER : SITE.TWITTER;
+  let pageType = '';
+  let forTweets = false;
+  if (document.getElementById('optAutoRecordTweets').checked == true) {
+    forTweets = true;
+    pageType = PAGETYPE.TWITTER.TWEETS;
+  }
+  else if (document.getElementById('optAutoRecordFollowers').checked == true) {
+    pageType = PAGETYPE.TWITTER.FOLLOWERS;
+  }
+  else {
+    pageType = PAGETYPE.TWITTER.FOLLOWING;
+  }
+
+  const context = SETTINGS.RECORDING.getContext();
+  context.state = SETTINGS.RECORDING.STATE.AUTO;
+  context.auto = {};
+  context.auto.owner = document.getElementById('txtAutoRecordFor').value;
+  context.auto.site = site;
+  context.auto.pageType = pageType;
+  context.auto.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
+  context.auto.resolvesThreads = forTweets && document.getElementById('chkAutoRecordResolvesThreads').checked == true;
+  SETTINGS.RECORDING.saveContext(context);
+
+  window.close();
+});
+
+const btnEscapeAutoRecordingConfig = document.getElementById('btnEscapeAutoRecordingConfig');
+btnEscapeAutoRecordingConfig.addEventListener('click', async () => {
+  showRecordingDiv('notYetRecordingSection');
+});
+
+const updateAutoRecordingWhatDisplay = function(context) {
+  let display = 'Recording Twitter';
+  if (context && context.auto && context.auto.owner) {
+    switch (context.auto.pageType) {
+      case PAGETYPE.TWITTER.FOLLOWERS:
+        display = `Followers of ${STR.ensurePrefix(context.auto.owner, '@')}`;
+        break;
+      case PAGETYPE.TWITTER.FOLLOWING:
+        display = `Followed by ${STR.ensurePrefix(context.auto.owner, '@')}`;
+        break;
+      case PAGETYPE.TWITTER.TWEETS:
+        display = `${STR.ensurePrefix(context.auto.owner, '@')} tweets`;
+        break;
+      default:
+        break;
+    }
+
+    if (context.auto.site == SITE.NITTER) {
+      display = `${display} via Nitter`;
+    }
+  }
+
+  document.getElementById('autoRecordingStatus').textContent = display;
+}
+
+const showRecordingDiv = function(sectionId) {
+  document.getElementsByClassName('appRecordingSection').forEach(function(elm) {
+    if (elm.id != sectionId) {
+      elm.style.display = 'none';
+    }
+    else {
+      elm.style.display = 'block';
+    }
+  });
+}
 
 const reviewDb = async function() {
   let queryString = '';
@@ -94,8 +300,8 @@ const reviewDb = async function() {
 }
 
 const activateApp = function() {
-  termsSection.style.display = 'none';
-  appSection.style.display = 'block';
+  document.getElementById('termsSection').style.display = 'none';
+  document.getElementById('appSection').style.display = 'block';
 }
 
 const kickoffRecording = async function(record, auto) {
