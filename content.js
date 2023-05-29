@@ -39,16 +39,13 @@ chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
   }
 });
 
-// on startup, see if supposed to already be recording
-chrome.storage.local.get([SETTINGS.RECORDING], function(result) {
-  if (!_bgOnly && result.recording === true) {
-    // here at startup, extension is in a 'load if we can' state
-    const recorder = RECORDING.getRecorder();
-    if (recorder) {
-      recorder.startRecording();
-    }
+const tryRecording = function() {
+  const recorder = RECORDING.getRecorder();
+  if (recorder) {
+    console.log('record!');
+    //recorder.startRecording();
   }
-});
+}
 
 // toggle recording and auto-scroll on/off
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -57,3 +54,24 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     recorder.listenForRecordingToggle(request, sender, sendResponse);
   }
 });
+
+// on startup, see if supposed to already be recording
+const _startupContext = SETTINGS.RECORDING.getContext();
+if (_startupContext) {
+  switch (_startupContext.state) {
+    case SETTINGS.RECORDING.STATE.MANUAL:
+      if (SETTINGS.RECORDING.getManualSecondsRemaining() > 0) {
+        tryRecording();
+      }
+      break;
+    case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
+      const currentParsedUrl = URLPARSE.getParsedUrl();
+      const autoParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl();
+      if (URLPARSE.equivalentParsedUrl(currentParsedUrl, autoParsedUrl)) {
+        tryRecording();
+      }
+      break;
+    default:
+      break;
+  }
+}

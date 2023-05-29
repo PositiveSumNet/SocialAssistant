@@ -362,6 +362,17 @@ const kickoffRecording = async function(record, auto) {
   }
 }
 
+const btnTellAboutNitter = document.getElementById('btnTellAboutNitter');
+btnTellAboutNitter.addEventListener('click', async () => {
+  const elm = document.getElementById('tipAboutNitter');
+  if (elm.style.display == 'none') {
+    elm.style.display = 'block';
+  }
+  else {
+    elm.style.display = 'none';
+  }
+});
+
 const btnClose = document.getElementById('btnClose');
 btnClose.addEventListener('click', async () => {
   window.close();

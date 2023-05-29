@@ -7,7 +7,7 @@
     <link href="lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" >
   </head>
   <body class="p-4">
-    <a id="btnClose" href="#" style="display:block;float:right;top:0;"><i class="h3 bi-x"></i></a>
+    <a id="btnClose" href="#" style="display:block;float:right;top:0;" data-toggle='tooltip' title='Click to close this dialog box (it does not need to be open while you record data)'><i class="h3 bi-x"></i></a>
     <h1 style="font-family:Ink Free">Whosum Social Assistant</h1>
     <div id="termsSection">
       <h5>Terms of Use</h5>
@@ -33,7 +33,6 @@
         <h5><i class="bi-info-circle"></i> Notes</h5>
         <ul>
           <li>Requires a PC or Mac (not a tablet)</li>
-          <li>The database is local to your PC's browser</li>
           <li>The icon should increment (e.g. +20) as it records</li>
           <li>Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></li>
         </ul>
@@ -93,13 +92,13 @@
         <div class="indented-switches">
           <div class="form-check form-check-inline form-switch">
             <input class="form-check-input" type="radio" name="optAutoRecordVia" id="optAutoRecordViaNitter">
-            <label class="form-check-label" for="optAutoRecordViaNitter" data-toggle='tooltip' title='Nitter is a surveillance-free Twitter clone. We recommend this option.'>Use Nitter <i class="bi-info-circle"></i></label>
+            <label class="form-check-label" for="optAutoRecordViaNitter" data-toggle='tooltip' title='Nitter is a surveillance-free Twitter clone. We recommend this option.'>Use Nitter <a href="#" id="btnTellAboutNitter"><i class="bi-info-circle"></i></a></label>
           </div>
           <div class="form-check form-check-inline form-switch">
             <input class="form-check-input" type="radio" name="optAutoRecordVia" id="optAutoRecordViaTwitter">
             <label class="form-check-label" for="optAutoRecordViaTwitter" data-toggle='tooltip' title='We recommend using Nitter instead to avoid tracking.'>Use Twitter</label>
           </div>
-          <p class="mt-2 small" style="display:none;"><i class="bi-info-circle"></i> We recommend <a href="https://nitter.net" target="_blank">Nitter</a>, a surveillance-free Twitter clone. The Nitter servers we use are located in Germany, Netherlands, Finland, and Sweden. Learn more at <a href="https://nitter.net" target="_blank">nitter.net</a>... and consider sending a <a href="https://nitter.net" target="_blank">donation</a> their way! (Note: We are not affiliated with Nitter.)</p>
+          <div id="tipAboutNitter" class="mt-2 small" style="display:none;"><i class="bi-info-circle"></i> We recommend <a href="https://nitter.net" target="_blank">Nitter</a>, a surveillance-free Twitter clone. The Nitter servers we use are located in Germany, Netherlands, Finland, and Sweden. Learn more at <a href="https://nitter.net" target="_blank">nitter.net</a>... and consider sending a <a href="https://nitter.net" target="_blank">donation</a> their way! (Note: We are not affiliated with Nitter.)<br></div>
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="chkAutoRecordTweetImages" disabled>
             <label class="form-check-label" for="chkAutoRecordTweetImages">With images <span class="small">(more disk space)</span></label>
@@ -115,7 +114,7 @@
           <button id="btnEscapeAutoRecordingConfig" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Cancel</button>
         </div>
         <br>
-        <p><i class="bi-info-circle"></i> Recording may pause if you switch focus away from the Twitter tab.</p>
+        <p id="msgRecordingMayPause"><i class="bi-info-circle"></i> Recording may pause if you switch focus away from the Twitter tab.</p>
       </div>
       <div id="autoRecordingSection" class="appRecordingSection" style="display:none;">
         <h5><i class="bi-camera-reels-fill"></i> Recording Twitter with auto-scroll</h5>
