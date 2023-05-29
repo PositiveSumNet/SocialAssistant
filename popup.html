@@ -67,42 +67,43 @@
       <div id="configureAutoRecordingSection" class="appRecordingSection" style="display:none;">
         <h5>For <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span> User:</h5>
         <div class='input-group'>
-          <label for='txtAutoRecordFor' class='text-muted input-group-text'>@</label>
+          <label for='txtAutoRecordFor' id="lblAutoRecordFor" class='text-muted input-group-text'>@</label>
           <input id='txtAutoRecordFor' style="max-width:250px;" type='text' placeholder='username' class='form-control' >
         </div>
         <br>
         <h5>Auto-scroll and record:</h5>
         <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" name="optAutoRecord" id="optAutoRecordFollowing">
+          <input class="form-check-input optAutoHow" type="radio" name="optAutoRecord" id="optAutoRecordFollowing">
           <label class="form-check-label" for="optAutoRecordFollowing">Who they follow</label>
         </div>
         <div class="form-check form-switch">
-          <input class="form-check-input" name="optAutoRecord" type="radio" id="optAutoRecordFollowers">
+          <input class="form-check-input optAutoHow" name="optAutoRecord" type="radio" id="optAutoRecordFollowers">
           <label class="form-check-label" for="optAutoRecordFollowers">Who follows them</label>
         </div>
         <div class="form-check form-switch">
-          <input class="form-check-input" name="optAutoRecord" type="radio" id="optAutoRecordTweets">
+          <input class="form-check-input optAutoHow" name="optAutoRecord" type="radio" id="optAutoRecordTweets">
           <label class="form-check-label" for="optAutoRecordTweets">Their tweets</label> <span class="text-danger small" style="display:none;"> *choose Nitter or Twitter</span>
         </div>
         <div class="indented-switches">
           <div class="form-check form-check-inline form-switch">
-            <input class="form-check-input" type="radio" name="optAutoRecordVia" id="optAutoRecordViaNitter">
+            <input class="form-check-input optAutoTweetSetting" type="radio" name="optAutoRecordVia" id="optAutoRecordViaNitter">
             <label class="form-check-label" for="optAutoRecordViaNitter" data-toggle='tooltip' title='Nitter is a surveillance-free Twitter clone. We recommend this option.'>Use Nitter <a href="#" id="btnTellAboutNitter"><i class="bi-info-circle"></i></a></label>
           </div>
           <div class="form-check form-check-inline form-switch">
-            <input class="form-check-input" type="radio" name="optAutoRecordVia" id="optAutoRecordViaTwitter">
+            <input class="form-check-input optAutoTweetSetting" type="radio" name="optAutoRecordVia" id="optAutoRecordViaTwitter">
             <label class="form-check-label" for="optAutoRecordViaTwitter" data-toggle='tooltip' title='We recommend using Nitter instead to avoid tracking.'>Use Twitter</label>
           </div>
           <div id="tipAboutNitter" class="mt-2 small" style="display:none;"><i class="bi-info-circle"></i> We recommend <a href="https://nitter.net" target="_blank">Nitter</a>, a surveillance-free Twitter clone. The Nitter servers we use are located in Germany, Netherlands, Finland, and Sweden. Learn more at <a href="https://nitter.net" target="_blank">nitter.net</a>... and consider sending a <a href="https://nitter.net" target="_blank">donation</a> their way! (Note: We are not affiliated with Nitter.)<br></div>
           <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="chkAutoRecordTweetImages" disabled>
+            <input class="form-check-input optAutoTweetSetting" type="checkbox" id="chkAutoRecordTweetImages">
             <label class="form-check-label" for="chkAutoRecordTweetImages">With images <span class="small">(more disk space)</span></label>
           </div>
           <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="chkAutoRecordResolvesThreads" disabled>
+            <input class="form-check-input optAutoTweetSetting" type="checkbox" id="chkAutoRecordResolvesThreads">
             <label class="form-check-label" for="chkAutoRecordResolvesThreads" data-toggle='tooltip' title='Obtains additional posts of the thread that are hidden by default.'>Also get hidden replies <small>("show this thread")</small></label>
           </div>
         </div>
+        <div id="autoNonSelError" style="color:red;display:none;"></div>
         <br>
         <div class="d-grid gap-3">
           <button id="btnStartAutoRecording" class="btn btn-primary" data-toggle='tooltip' title='Click to close this dialog and start recording.'>Start Recording</button>

@@ -111,6 +111,8 @@ btnChooseAutoScroll.addEventListener('click', async () => {
     chkResolveThreads.disabled = true;
   }
 
+  onUpdateAutoOption();
+  onChangeAutoRecordViaNitter();
   // unveil the div
   showRecordingDiv('configureAutoRecordingSection');
 });
@@ -215,6 +217,12 @@ btnEscapeManualRecordingConfig.addEventListener('click', async () => {
   showRecordingDiv('notYetRecordingSection');
 });
 
+const btnStopManualRecording = document.getElementById('btnStopManualRecording');
+btnStopManualRecording.addEventListener('click', async () => {
+  await stopRecording();
+  window.close();
+});
+
 const btnExtendTimer = document.getElementById('btnExtendTimer');
 btnExtendTimer.addEventListener('click', async () => {
 
@@ -232,8 +240,10 @@ btnExtendTimer.addEventListener('click', async () => {
 
 const btnStartAutoRecording = document.getElementById('btnStartAutoRecording');
 btnStartAutoRecording.addEventListener('click', async () => {
-  
-  let site = document.getElementById('optAutoRecordViaNitter').checked == true ? SITE.NITTER : SITE.TWITTER;
+  let viaNitter = document.getElementById('optAutoRecordViaNitter').checked;
+  let viaTwitter = document.getElementById('optAutoRecordViaTwitter').checked;
+  const errDiv = document.getElementById('autoNonSelError');
+
   let pageType = '';
   let forTweets = false;
   if (document.getElementById('optAutoRecordTweets').checked == true) {
@@ -242,15 +252,46 @@ btnStartAutoRecording.addEventListener('click', async () => {
   }
   else if (document.getElementById('optAutoRecordFollowers').checked == true) {
     pageType = PAGETYPE.TWITTER.FOLLOWERS;
+    viaNitter = false;
+    viaTwitter = true;
   }
   else {
     pageType = PAGETYPE.TWITTER.FOLLOWING;
+    viaNitter = false;
+    viaTwitter = true;
+  }
+
+  if (forTweets == true && !viaNitter && !viaTwitter) {
+    errDiv.display = 'block';
+    errDiv.textContent = 'Decide whether to use Nitter or Twitter';
+    errDiv.style.display = 'block';
+    document.getElementById('tipAboutNitter').style.display = 'block';
+    return;
+  }
+
+  let site = (viaNitter == true) ? SITE.NITTER : SITE.TWITTER;
+  const owner = document.getElementById('txtAutoRecordFor').value;
+
+  const lblFor = document.getElementById('lblAutoRecordFor');
+  if (!owner || owner.length == 0) {
+    errDiv.style.display = 'block';
+    errDiv.textContent = 'Twitter username must be specified';
+    if (!lblFor.classList.contains('danger')) {
+      lblFor.classList.add('danger');
+    }
+    return;
+  }
+  else {
+    errDiv.style.display = 'none';
+    if (lblFor.classList.contains('danger')) {
+      lblFor.classList.remove('danger');
+    }
   }
 
   const context = await SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.AUTO;
   context.auto = {};
-  context.auto.owner = document.getElementById('txtAutoRecordFor').value;
+  context.auto.owner = owner;
   context.auto.site = site;
   context.auto.pageType = pageType;
   context.auto.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
@@ -301,11 +342,43 @@ const showRecordingDiv = function(sectionId) {
   });
 }
 
-const btnStopManualRecording = document.getElementById('btnStopManualRecording');
-btnStopManualRecording.addEventListener('click', async () => {
-  await stopRecording();
-  window.close();
+document.querySelectorAll('.optAutoHow').forEach(function(radio) {
+  radio.addEventListener('change', (event) => {
+    onUpdateAutoOption();
+  });
 });
+
+const onUpdateAutoOption = function() {
+  document.querySelectorAll('.optAutoTweetSetting').forEach(function(opt) {
+    if (document.getElementById('optAutoRecordTweets').checked == true) {
+      opt.disabled = false;
+    }
+    else {
+      opt.checked = false;
+      opt.disabled = true;
+    }
+  });
+}
+
+document.getElementById('optAutoRecordViaNitter').addEventListener('change', (event) => {
+  onChangeAutoRecordViaNitter();
+});
+document.getElementById('optAutoRecordViaTwitter').addEventListener('change', (event) => {
+  onChangeAutoRecordViaNitter();
+});
+
+const onChangeAutoRecordViaNitter = function() {
+  const optAutoRecordViaNitter = document.getElementById('optAutoRecordViaNitter');
+  const viaNitter = (optAutoRecordViaNitter.checked == true);
+  const msgRecordingMayPause = document.getElementById('msgRecordingMayPause');
+
+  if (viaNitter == true) {
+    msgRecordingMayPause.style.display = 'none';
+  }
+  else {
+    msgRecordingMayPause.style.display = 'block';
+  }
+}
 
 const btnStopAutoRecording = document.getElementById('btnStopAutoRecording');
 btnStopAutoRecording.addEventListener('click', async () => {
