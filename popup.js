@@ -1,19 +1,19 @@
 chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
-  onLoadReflectRecordingContext();
-  loopUpdateExpirationDisplay();
-  chrome.storage.local.get([SETTINGS.AGREED_TO_TERMS], function(result) {
+  chrome.storage.local.get([SETTINGS.AGREED_TO_TERMS], async function(result) {
     if (result.agreedToTerms == 'true') {
+      await onLoadReflectRecordingContext();
+      loopUpdateExpirationDisplay();
       activateApp();
     }
   });
 });
 
-const onLoadReflectRecordingContext = function() {
-  const context = SETTINGS.RECORDING.getContext();
+const onLoadReflectRecordingContext = async function() {
+  const context = await SETTINGS.RECORDING.getContext();
   switch (context.state) {
     case SETTINGS.RECORDING.STATE.MANUAL:
       updateManuallyRecordingWhatDisplay(context);
-      updateExpirationDisplay();
+      await updateExpirationDisplay();
       showRecordingDiv('manuallyRecordingSection');
       break;
     case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
@@ -34,7 +34,7 @@ btnAgreeToTerms.addEventListener('click', async () => {
 const btnChooseManual = document.getElementById('btnChooseManual');
 btnChooseManual.addEventListener('click', async () => {
   // prep the ui with default values
-  const context = SETTINGS.RECORDING.getContext();
+  const context = await SETTINGS.RECORDING.getContext();
   document.getElementById('chkManualRecordsFollowLists').checked = SETTINGS.RECORDING.getManualRecordsFollows(context);
   const manualRecordsTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
   document.getElementById('chkManualRecordsTweets').checked = manualRecordsTweets;
@@ -53,7 +53,7 @@ btnChooseManual.addEventListener('click', async () => {
 const btnChooseAutoScroll = document.getElementById('btnChooseAutoScroll');
 btnChooseAutoScroll.addEventListener('click', async () => {
   const parsedUrl = SETTINGS.RECORDING.getLastParsedUrl();
-  const context = SETTINGS.RECORDING.getContext();
+  const context = await SETTINGS.RECORDING.getContext();
   let recordTweets = false;
   if (parsedUrl && parsedUrl.owner) {
     document.getElementById('txtAutoRecordFor').value = parsedUrl.owner;
@@ -135,7 +135,7 @@ btnStartManualRecording.addEventListener('click', async () => {
     document.getElementById('manualNonSelError').style.display = 'none';
   }
 
-  const context = SETTINGS.RECORDING.getContext();
+  const context = await SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.MANUAL;
   context.manual = {};
   context.manual.timeoutAt = ES6.addSeconds(Date.now(), STR.fromFancyTimeToSeconds(document.getElementById('startClockFor').textContent));
@@ -150,20 +150,20 @@ btnStartManualRecording.addEventListener('click', async () => {
     chkWithImages.disabled = true;
   }
 
-  SETTINGS.RECORDING.saveContext(context);
+  await SETTINGS.RECORDING.saveContext(context);
 
   window.close();
 });
 
-const loopUpdateExpirationDisplay = function() {
-  updateExpirationDisplay();
-  setTimeout(() => {
-    loopUpdateExpirationDisplay();
+const loopUpdateExpirationDisplay = async function() {
+  await updateExpirationDisplay();
+  setTimeout(async () => {
+    await loopUpdateExpirationDisplay();
   }, 1000);
 }
 
-const updateExpirationDisplay = function() {
-  let secondsRemaining = SETTINGS.RECORDING.getManualSecondsRemaining();
+const updateExpirationDisplay = async function() {
+  let secondsRemaining = await SETTINGS.RECORDING.getManualSecondsRemaining();
   let secondsDisplay = STR.toFancyTimeFormat(secondsRemaining);
   document.getElementById('sessionExpiration').textContent = secondsDisplay;
 }
@@ -218,15 +218,15 @@ btnEscapeManualRecordingConfig.addEventListener('click', async () => {
 const btnExtendTimer = document.getElementById('btnExtendTimer');
 btnExtendTimer.addEventListener('click', async () => {
 
-  const context = SETTINGS.RECORDING.getContext();
+  const context = await SETTINGS.RECORDING.getContext();
   if (!context || context.state != SETTINGS.RECORDING.STATE.MANUAL || !context.manual || !context.manual.timeoutAt) {
     return;
   }
   else {
-    let secondsRemaining = SETTINGS.RECORDING.getManualSecondsRemaining();
+    let secondsRemaining = await SETTINGS.RECORDING.getManualSecondsRemaining();
     secondsRemaining += SETTINGS.RECORDING.BOOST_MANUAL_SECONDS;
     context.manual.timeoutAt = ES6.addSeconds(Date.now(), secondsRemaining);
-    SETTINGS.RECORDING.saveContext(context);
+    await SETTINGS.RECORDING.saveContext(context);
   }
 });
 
@@ -247,7 +247,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
     pageType = PAGETYPE.TWITTER.FOLLOWING;
   }
 
-  const context = SETTINGS.RECORDING.getContext();
+  const context = await SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.AUTO;
   context.auto = {};
   context.auto.owner = document.getElementById('txtAutoRecordFor').value;
@@ -255,7 +255,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
   context.auto.pageType = pageType;
   context.auto.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
   context.auto.resolvesThreads = forTweets && document.getElementById('chkAutoRecordResolvesThreads').checked == true;
-  SETTINGS.RECORDING.saveContext(context);
+  await SETTINGS.RECORDING.saveContext(context);
 
   window.close();
 });
@@ -314,10 +314,10 @@ btnStopAutoRecording.addEventListener('click', async () => {
 });
 
 const stopRecording = async function() {
-  const context = SETTINGS.RECORDING.getContext();
+  const context = await SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.OFF;
   context.manual.timeoutAt = Date.now();
-  SETTINGS.RECORDING.saveContext(context);
+  await SETTINGS.RECORDING.saveContext(context);
   await reviewDb();
 }
 

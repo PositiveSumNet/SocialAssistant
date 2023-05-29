@@ -56,22 +56,23 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 // on startup, see if supposed to already be recording
-const _startupContext = SETTINGS.RECORDING.getContext();
-if (_startupContext) {
-  switch (_startupContext.state) {
-    case SETTINGS.RECORDING.STATE.MANUAL:
-      if (SETTINGS.RECORDING.getManualSecondsRemaining() > 0) {
-        tryRecording();
-      }
-      break;
-    case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
-      const currentParsedUrl = URLPARSE.getParsedUrl();
-      const autoParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl();
-      if (URLPARSE.equivalentParsedUrl(currentParsedUrl, autoParsedUrl)) {
-        tryRecording();
-      }
-      break;
-    default:
-      break;
-  }
-}
+chrome.storage.local.get([SETTINGS.RECORDING.CONTEXT], function(result) {
+  console.log('write context');
+  console.log(result);
+  // switch (_startupContext.state) {
+  //   case SETTINGS.RECORDING.STATE.MANUAL:
+  //     if (SETTINGS.RECORDING.getManualSecondsRemaining() > 0) {
+  //       tryRecording();
+  //     }
+  //     break;
+  //   case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
+  //     const currentParsedUrl = URLPARSE.getParsedUrl();
+  //     const autoParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl();
+  //     if (URLPARSE.equivalentParsedUrl(currentParsedUrl, autoParsedUrl)) {
+  //       tryRecording();
+  //     }
+  //     break;
+  //   default:
+  //     break;
+  // }
+});
