@@ -35,7 +35,6 @@ const btnChooseManual = document.getElementById('btnChooseManual');
 btnChooseManual.addEventListener('click', async () => {
   // prep the ui with default values
   const context = SETTINGS.RECORDING.getContext();
-
   document.getElementById('chkManualRecordsFollowLists').checked = SETTINGS.RECORDING.getManualRecordsFollows(context);
   const manualRecordsTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
   document.getElementById('chkManualRecordsTweets').checked = manualRecordsTweets;
@@ -362,3 +361,10 @@ const kickoffRecording = async function(record, auto) {
       });
   }
 }
+
+const btnClose = document.getElementById('btnClose');
+btnClose.addEventListener('click', async () => {
+  window.close();
+  return false;
+});
+
