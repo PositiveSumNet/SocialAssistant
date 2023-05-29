@@ -16,11 +16,11 @@
       <p>I understand and agree that THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN MSGTYPE OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
       <button class="btn btn-primary" id="btnAgreeToTerms">I Agree</button>
     </div>
-    <div id="appSection">
+    <div id="appSection" style="display:none;">
       <div id="notYetRecordingSection" class="appRecordingSection" style="display:none;">
         <h5>Record <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span> to a personal database...</h5>
         <div class="d-grid gap-3">
-          <button id="btnChooseManualScroll" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can decide what content to record as you use Twitter.'>As I scroll manually...</button>
+          <button id="btnChooseManual" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can decide what content to record as you use Twitter.'>As I scroll manually...</button>
           <button id="btnChooseAutoScroll" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can set up an automated Twitter recording.'>With auto-scroll...</button>
         </div>
         <br>
@@ -29,19 +29,19 @@
           <button id="btnReviewDb" class="btn btn-primary" data-toggle='tooltip' title='The database lets you work with Twitter data you recorded and lets you pull in Mastodon data.'>Review the Database!</button>
         </div>
         <br>
-        <h5><i class="bi-info-circle"></i> Tips</h5>
+        <h5><i class="bi-info-circle"></i> Notes</h5>
         <ul>
           <li>Requires a PC or Mac (not a tablet)</li>
-          <li>The icon should increment (e.g. +20) as it records</li>
           <li>The database is local to your PC's browser</li>
-          <li>Need more help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></li>
+          <li>The icon should increment (e.g. +20) as it records</li>
+          <li>Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></li>
         </ul>
       </div>
       <div id="configureManualRecordingSection" class="appRecordingSection" style="display:none;">
         <h5>While using <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span>, privately record:</h5>
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="chkManualRecordsFollowLists">
-          <label class="form-check-label" for="chkManualRecordsFollowLists">Follow lists <a href="https://twitter.com/positivesumnet/following/">(example page)</a></label>
+          <label class="form-check-label" for="chkManualRecordsFollowLists">Follow lists <a href="https://twitter.com/positivesumnet/following/" target="_blank">(example page)</a></label>
         </div>
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="chkManualRecordsTweets">
@@ -135,6 +135,7 @@
       <div class="text-center"><img src="/images/possum800.png" style="width:255px; height:170px;" alt="possum-mascot"></div>
     </div>
     <script src="lib/shared/constants.js"></script>
+    <script src="lib/shared/es6lib.js"></script>
     <script src="lib/shared/pagetypes.js"></script>
     <script src="lib/shared/settingslib.js"></script>
     <script src="lib/shared/strlib.js"></script>

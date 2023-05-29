@@ -1,47 +1,19 @@
 chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   onLoadReflectRecordingContext();
-  chrome.storage.sync.get([SETTINGS.AGREED_TO_TERMS], function(result) {
+  loopUpdateExpirationDisplay();
+  chrome.storage.local.get([SETTINGS.AGREED_TO_TERMS], function(result) {
     if (result.agreedToTerms == 'true') {
       activateApp();
     }
   });
 });
 
-const updateManuallyRecordingWhatDisplay = function(context) {
-  const shouldRecordFollows = SETTINGS.RECORDING.getManualRecordsFollows(context);
-  document.getElementById('chkManualRecordsFollowLists').checked == shouldRecordFollows;
-  
-  const shouldRecordTweets = SETTINGS.RECORDING.shouldRecordTweets(context);
-  document.getElementById('chkManualRecordsTweets').checked == shouldRecordTweets;
-  
-  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
-  if (shouldRecordTweets) {
-    chkWithImages.checked = SETT.RECORDING.getManualRecordsTweetImages(context);
-    chkWithImages.disabled = false;
-  }
-  else {
-    chkWithImages.checked = false;
-    chkWithImages.disabled = true;
-  }
-
-  let display = '';
-  if (shouldRecordFollows == true && shouldRecordTweets) {
-    display = ' (follows and tweets)';
-  }
-  else if (shouldRecordFollows == true) {
-    display = ' (follows)';
-  }
-  else if (shouldRecordTweets == true) {
-    display = ' (tweets)';
-  }
-  document.getElementById('manuallyRecordingWhat').textContent = display;
-}
-
 const onLoadReflectRecordingContext = function() {
   const context = SETTINGS.RECORDING.getContext();
   switch (context.state) {
     case SETTINGS.RECORDING.STATE.MANUAL:
       updateManuallyRecordingWhatDisplay(context);
+      updateExpirationDisplay();
       showRecordingDiv('manuallyRecordingSection');
       break;
     case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
@@ -56,11 +28,11 @@ const onLoadReflectRecordingContext = function() {
 
 const btnAgreeToTerms = document.getElementById('btnAgreeToTerms');
 btnAgreeToTerms.addEventListener('click', async () => {
-  chrome.storage.sync.set({ agreedToTerms: 'true' }).then(() => activateApp());
+  chrome.storage.local.set({ agreedToTerms: 'true' }).then(() => activateApp());
 });
 
-const btnChooseManualScroll = document.getElementById('btnChooseManualScroll');
-btnChooseManualScroll.addEventListener('click', async () => {
+const btnChooseManual = document.getElementById('btnChooseManual');
+btnChooseManual.addEventListener('click', async () => {
   // prep the ui with default values
   const context = SETTINGS.RECORDING.getContext();
 
@@ -70,10 +42,7 @@ btnChooseManualScroll.addEventListener('click', async () => {
   const manualRecordsTweetImages = SETTINGS.RECORDING.getManualRecordsTweetImages(context);
   const tweetImagesElm = document.getElementById('chkManualRecordsTweetImages');
   tweetImagesElm.checked = manualRecordsTweetImages;
-
-  if (manualRecordsTweets == false) {
-    tweetImagesElm.disabled = true;
-  }
+  tweetImagesElm.disabled = !manualRecordsTweets;
 
   // now the timer
   document.getElementById('startClockFor').textContent = STR.toFancyTimeFormat(SETTINGS.RECORDING.DEFAULT_MANUAL_SECONDS);
@@ -170,20 +139,35 @@ btnStartManualRecording.addEventListener('click', async () => {
   const context = SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.MANUAL;
   context.manual = {};
-  context.manual.timeoutAt = STR.fromFancyTimeToSeconds(document.getElementById('startClockFor').textContent);
+  context.manual.timeoutAt = ES6.addSeconds(Date.now(), STR.fromFancyTimeToSeconds(document.getElementById('startClockFor').textContent));
   context.manual.recordsFollows = shouldRecordFollows;
   context.manual.recordsTweets = shouldRecordTweets;
-  context.manual.recordsTweetImages = document.getElementById('chkManualRecordsTweetImages').checked == true;
+  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
+  context.manual.recordsTweetImages = chkWithImages.checked == true;
+  if (shouldRecordTweets == true) {
+    chkWithImages.disabled = false;
+  }
+  else {
+    chkWithImages.disabled = true;
+  }
+
   SETTINGS.RECORDING.saveContext(context);
 
   window.close();
 });
 
-setTimeout(() => {
+const loopUpdateExpirationDisplay = function() {
+  updateExpirationDisplay();
+  setTimeout(() => {
+    loopUpdateExpirationDisplay();
+  }, 1000);
+}
+
+const updateExpirationDisplay = function() {
   let secondsRemaining = SETTINGS.RECORDING.getManualSecondsRemaining();
   let secondsDisplay = STR.toFancyTimeFormat(secondsRemaining);
   document.getElementById('sessionExpiration').textContent = secondsDisplay;
-}, 1000);
+}
 
 const chkManualRecordsTweets = document.getElementById('chkManualRecordsTweets');
 chkManualRecordsTweets.addEventListener('change', (event) => {
@@ -196,6 +180,36 @@ chkManualRecordsTweets.addEventListener('change', (event) => {
     chkWithImages.checked = false;
   }
 });
+
+const updateManuallyRecordingWhatDisplay = function(context) {
+  const shouldRecordFollows = SETTINGS.RECORDING.getManualRecordsFollows(context);
+  document.getElementById('chkManualRecordsFollowLists').checked == shouldRecordFollows;
+  
+  const shouldRecordTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
+  document.getElementById('chkManualRecordsTweets').checked == shouldRecordTweets;
+  
+  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
+  if (shouldRecordTweets) {
+    chkWithImages.checked = SETTINGS.RECORDING.getManualRecordsTweetImages(context);
+    chkWithImages.disabled = false;
+  }
+  else {
+    chkWithImages.checked = false;
+    chkWithImages.disabled = true;
+  }
+
+  let display = '';
+  if (shouldRecordFollows == true && shouldRecordTweets) {
+    display = ' (follows and tweets)';
+  }
+  else if (shouldRecordFollows == true) {
+    display = ' (follows)';
+  }
+  else if (shouldRecordTweets == true) {
+    display = ' (tweets)';
+  }
+  document.getElementById('manuallyRecordingWhat').textContent = display;
+}
 
 const btnEscapeManualRecordingConfig = document.getElementById('btnEscapeManualRecordingConfig');
 btnEscapeManualRecordingConfig.addEventListener('click', async () => {
@@ -212,7 +226,8 @@ btnExtendTimer.addEventListener('click', async () => {
   else {
     let secondsRemaining = SETTINGS.RECORDING.getManualSecondsRemaining();
     secondsRemaining += SETTINGS.RECORDING.BOOST_MANUAL_SECONDS;
-    context.manual.timeoutAt = secondsRemaining;
+    context.manual.timeoutAt = ES6.addSeconds(Date.now(), secondsRemaining);
+    SETTINGS.RECORDING.saveContext(context);
   }
 });
 
@@ -277,7 +292,7 @@ const updateAutoRecordingWhatDisplay = function(context) {
 }
 
 const showRecordingDiv = function(sectionId) {
-  document.getElementsByClassName('appRecordingSection').forEach(function(elm) {
+  document.querySelectorAll('.appRecordingSection').forEach(function(elm) {
     if (elm.id != sectionId) {
       elm.style.display = 'none';
     }
@@ -302,7 +317,8 @@ btnStopAutoRecording.addEventListener('click', async () => {
 const stopRecording = async function() {
   const context = SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.OFF;
-  context.manualTimeoutAt = Date.now();
+  context.manual.timeoutAt = Date.now();
+  SETTINGS.RECORDING.saveContext(context);
   await reviewDb();
 }
 
