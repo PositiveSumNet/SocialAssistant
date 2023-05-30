@@ -23,6 +23,9 @@ chrome.runtime.onMessage.addListener(handleMessages);
 
 async function handleMessages(message) {
   switch (message.actionType) {
+    case MSGTYPE.TO_OFFSCREEN.NAV_FRAME_URLS:
+      await navFrameUrls(message);
+      break;
     case MSGTYPE.TO_OFFSCREEN.NAV_FRAME_URL:
       await navFrameUrl(message);
       break;
@@ -31,11 +34,27 @@ async function handleMessages(message) {
   }
 }
 
+async function navFrameUrls(message) {
+  removeFrames();
+  for (let i = 0; i < message.urls.length; i++) {
+    let url = message.urls[i];
+    attachFrameUrl(url);
+  }
+}
+
 async function navFrameUrl(message) {
-  const oldFrame = document.getElementById('extUrlFrame');
-  oldFrame.parentElement.removeChild(oldFrame);
+  removeFrames();
+  attachFrameUrl(message.url);
+}
+
+function attachFrameUrl(url) {
   const newFrame = document.createElement('iframe');
-  newFrame.setAttribute('id', 'extUrlFrame');
-  newFrame.src = message.url;
+  newFrame.src = url;
   document.body.appendChild(newFrame);
+}
+
+function removeFrames() {
+  document.querySelectorAll('iframe').forEach(function(fram) {
+    fram.parentElement.removeChild(fram);
+  });
 }

@@ -43,7 +43,6 @@
         "https://twitter.com/*",
         "https://mobile.twitter.com/*",
         "https://nitter.net/*",
-        "https://nitter.nl/*",
         "https://nitter.at/*",
         "https://nitter.it/*",
         "https://nitter.one/*"
@@ -63,7 +62,6 @@
   ],
   "host_permissions": [
     "https://nitter.net/",
-    "https://nitter.nl/",
     "https://nitter.at/",
     "https://nitter.it/",
     "https://nitter.one/"

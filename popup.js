@@ -4,9 +4,16 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
       await onLoadReflectRecordingContext();
       loopUpdateExpirationDisplay();
       activateApp();
+      kickoffNitterSpeedTest();
     }
   });
 });
+
+const kickoffNitterSpeedTest = function() {
+  chrome.runtime.sendMessage({ 
+    actionType: MSGTYPE.TOBACKGROUND.NITTER_SPEED_TEST
+  });
+}
 
 const onLoadReflectRecordingContext = async function() {
   const context = await SETTINGS.RECORDING.getContext();
@@ -297,7 +304,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
   context.auto.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
   context.auto.resolvesThreads = forTweets && document.getElementById('chkAutoRecordResolvesThreads').checked == true;
   await SETTINGS.RECORDING.saveContext(context);
-
+// TODO: navigate there
   window.close();
 });
 

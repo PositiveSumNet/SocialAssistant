@@ -16,6 +16,24 @@
   
 */
 
+// on startup, see if it's a speed-test situation
+chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result) {
+  const speedTest = result[SETTINGS.NITTER.SPEED_TEST.CACHE_KEY];
+  if (document.location.href.indexOf(SETTINGS.NITTER.SPEED_TEST.URL_SUFFIX) > -1) {
+    if (!speedTest[SETTINGS.NITTER.SPEED_TEST.END]) {
+      // test isn't over yet; first to finish "wins"
+      const start = parseInt(speedTest[SETTINGS.NITTER.SPEED_TEST.START]);
+      if (Date.now() - start < 5000) {
+        // valid if within 5 seconds
+        speedTest[SETTINGS.NITTER.SPEED_TEST.END] = Date.now();
+        const domain = STR.extractDomain(document.location.href);
+        speedTest[SETTINGS.NITTER.SPEED_TEST.WINNER] = domain;
+        chrome.storage.local.set({ [SETTINGS.NITTER.SPEED_TEST.CACHE_KEY]: JSON.stringify(speedTest) });
+      }
+    }
+  }
+});
+
 let _bgOnly = false;
 // on startup, see if it's a background scrape request
 chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {

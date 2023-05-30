@@ -2,6 +2,13 @@
 var _bgScrapeRequests = [];
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
+const _nitterDomains = [
+  'nitter.net',
+  'nitter.at',
+  'nitter.it',
+  'nitter.one'
+];
+
 /**************************/
 // ON-INSTALL
 /**************************/
@@ -59,6 +66,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case 'setBadge':
         chrome.action.setBadgeText({text: request.badgeText});
         return returnsData;
+      case 'nitterSpeedTest':
+        await kickoffNitterSpeedTest();
+        return returnsData;
       case 'letsScrape':
         await ensureQueuedScrapeRequests(request.nitterUrl, request.lastScrape);
         return returnsData;
@@ -79,13 +89,7 @@ chrome.runtime.onInstalled.addListener(() => {
     id: 1,
     condition: {
       initiatorDomains: [chrome.runtime.id],
-      requestDomains: [
-        'nitter.net',
-        'nitter.nl',
-        'nitter.at',
-        'nitter.it',
-        'nitter.one'
-      ],
+      requestDomains: _nitterDomains,
       resourceTypes: ['sub_frame'],
     },
     action: {
@@ -289,6 +293,20 @@ const scrapeNext = async function(nitterUrl) {
     default:
       break;
   }
+}
+
+// to help subsequent nitter calls to know which server is best to use
+const kickoffNitterSpeedTest = async function() {
+  await ensureOffscreenDocument();
+
+  // see SETTINGS.NITTER.SPEED_TEST
+  await chrome.storage.local.set({'nitterSpeedTest': { 'start': Date.now() }});
+  const testUrls = _nitterDomains.map(function(domain) { return `https://${domain}/search?f=users&q=jack`; });
+
+  chrome.runtime.sendMessage({
+    actionType: 'navFrameUrls',
+    urls: testUrls
+  });
 }
 
 const ensureOffscreenDocument = async function() {
