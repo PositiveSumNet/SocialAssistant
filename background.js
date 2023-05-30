@@ -70,7 +70,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         await kickoffNitterSpeedTest();
         return returnsData;
       case 'letsScrape':
-        await ensureQueuedScrapeRequests(request.nitterUrl, request.lastScrape);
+        await ensureQueuedScrapeRequests(request.lastScrape);
         return returnsData;
       default:
         return returnsData;
@@ -233,13 +233,13 @@ const processLastScrape = function(parsedUrl) {
 }
 
 // pass in an optional parsedUrl for a scrape that just completed
-const ensureQueuedScrapeRequests = async function(nitterUrl, lastScrape) {
+const ensureQueuedScrapeRequests = async function(lastScrape) {
   // pull the last scrape out of the in-memory variable
   // and if it was the last one, remove the cacheKey holding its batch
   processLastScrape(lastScrape);
   if (_bgScrapeRequests.length > 0) { 
     // if there are more items already in the in-memory-queue to process, then we can just kick off the next one
-    await scrapeNext(nitterUrl);
+    await scrapeNext();
   }
   else {
     const all = await chrome.storage.local.get();
@@ -279,7 +279,7 @@ const enqueueScrapeRequests = function(handles, pageType, cacheKey) {
   }
 }
 
-const scrapeNext = async function(nitterUrl) {
+const scrapeNext = async function() {
   if (_bgScrapeRequests.length === 0) {
     //console.log('Done processing scrape queue for now');
     return;
@@ -288,7 +288,7 @@ const scrapeNext = async function(nitterUrl) {
   const request = _bgScrapeRequests[0];
   switch (request.pageType) {
     case 'nitterProfile':
-      await scrapeNitterProfile(request, nitterUrl);
+      await scrapeNitterProfile(request);
       break;
     default:
       break;
@@ -336,9 +336,32 @@ const navigateOffscreenDocument = async function(url) {
   });
 }
 
+// repeated at settingslib.js (not ready for background to be a 'module', so not DRY yet)
+const getNitterDomain = async function() {
+  // see if a speed-test has happened
+  const speedTestSetting = await chrome.storage.local.get(['nitterSpeedTest']);
+  const defaultDomain = 'nitter.net';
+  
+  if (!speedTestSetting) { 
+    // surprising, since we run speed test
+    console.log('Defaulting nitter');
+    return defaultDomain; 
+  }
+  
+  const speedTest = JSON.parse(speedTestSetting['nitterSpeedTest']);
+  if (!speedTest || !speedTest['winner']) {
+    // surprising, since we run speed test
+    console.log('Default for nitter');
+    return defaultDomain;
+  }
+
+  return speedTest['winner'];
+}
+
 // see notes at offscreen.js
-const scrapeNitterProfile = async function(request, nitterUrl) {
+const scrapeNitterProfile = async function(request) {
+  const nitterDomain = await getNitterDomain();
   const handleOnly = request.handle.substring(1); // sans-@
-  const url = `${nitterUrl}/${handleOnly}`;
+  const url = `https://${nitterDomain}/${handleOnly}`;
   await navigateOffscreenDocument(url);
 }

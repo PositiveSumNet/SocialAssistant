@@ -57,7 +57,8 @@ chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
   }
 });
 
-const tryRecording = function() {
+const tryRecording = async function() {
+  const nitterDomain = await SETTINGS.NITTER.getNitterDomain();
   const recorder = RECORDING.getRecorder();
   if (recorder) {
     console.log('record!');
@@ -74,9 +75,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 // on startup, see if supposed to already be recording
-chrome.storage.local.get([SETTINGS.RECORDING.CONTEXT], function(result) {
-  console.log('write context');
-  console.log(result);
+chrome.storage.local.get([SETTINGS.RECORDING.CONTEXT], async function(result) {
+  const context = JSON.parse(result[SETTINGS.RECORDING.CONTEXT]);
+  console.log(context);
   // switch (_startupContext.state) {
   //   case SETTINGS.RECORDING.STATE.MANUAL:
   //     if (SETTINGS.RECORDING.getManualSecondsRemaining() > 0) {

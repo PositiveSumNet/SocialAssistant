@@ -1052,8 +1052,7 @@ const processUpload = function(file) {
 
 const kickoffBackgroundScraping = function() {
   chrome.runtime.sendMessage({ 
-    actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE,
-    nitterUrl: SETTINGS.NITTER.getNitterUrl()
+    actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE
   });
 }
 
