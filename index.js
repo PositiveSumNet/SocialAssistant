@@ -288,7 +288,7 @@ const initUi = function(owner, pageType) {
   updateForSite();
   // pageType/direction
   pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
-  
+
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWERS:
     case PAGETYPE.MASTODON.FOLLOWERS:

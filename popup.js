@@ -4,12 +4,13 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
       await onLoadReflectRecordingContext();
       loopUpdateExpirationDisplay();
       activateApp();
-      kickoffNitterSpeedTest();
+      await kickoffNitterSpeedTest();
     }
   });
 });
 
-const kickoffNitterSpeedTest = function() {
+// each time the popup loads up, we kick off a background race to see which nitter instance is fastest
+const kickoffNitterSpeedTest = async function() {
   chrome.runtime.sendMessage({ 
     actionType: MSGTYPE.TOBACKGROUND.NITTER_SPEED_TEST
   });
@@ -24,7 +25,11 @@ const onLoadReflectRecordingContext = async function() {
       showRecordingDiv('manuallyRecordingSection');
       break;
     case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
+      updateAutoRecordingWhatDisplay(context);
       showRecordingDiv('autoRecordingSection');
+      const autoParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
+      // we're about to display what we're recording; make sure we are!
+      await activateOrLaunchParsedUrlTab(autoParsedUrl);
       break;
     case SETTINGS.RECORDING.STATE.OFF:
     default:
@@ -59,7 +64,7 @@ btnChooseManual.addEventListener('click', async () => {
 
 const btnChooseAutoScroll = document.getElementById('btnChooseAutoScroll');
 btnChooseAutoScroll.addEventListener('click', async () => {
-  const parsedUrl = SETTINGS.RECORDING.getLastParsedUrl();
+  const parsedUrl = await SETTINGS.RECORDING.getLastParsedUrl();
   const context = await SETTINGS.RECORDING.getContext();
   let recordTweets = false;
   if (parsedUrl && parsedUrl.owner) {
@@ -89,7 +94,7 @@ btnChooseAutoScroll.addEventListener('click', async () => {
   const chkWithImages = document.getElementById('chkAutoRecordTweetImages');
   const chkResolveThreads = document.getElementById('chkAutoRecordResolvesThreads');
   if (recordTweets == true) {
-    let viaNitter = SETTINGS.RECORDING.getAutoViaNitter(getAutoViaNitter);
+    let viaNitter = SETTINGS.RECORDING.getAutoViaNitter(context);
     optViaNitter.disabled = false;
     optViaTwitter.disabled = false;
 
@@ -296,15 +301,17 @@ btnStartAutoRecording.addEventListener('click', async () => {
   }
 
   const context = await SETTINGS.RECORDING.getContext();
-  context.state = SETTINGS.RECORDING.STATE.AUTO;
+  context.state = SETTINGS.RECORDING.STATE.AUTO_SCROLL;
   context.auto = {};
-  context.auto.owner = owner;
+  context.auto.owner = STR.stripPrefix(owner, '@');
   context.auto.site = site;
   context.auto.pageType = pageType;
   context.auto.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
   context.auto.resolvesThreads = forTweets && document.getElementById('chkAutoRecordResolvesThreads').checked == true;
   await SETTINGS.RECORDING.saveContext(context);
-// TODO: navigate there
+  const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
+  SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
+  activateOrLaunchParsedUrlTab(parsedUrl);
   window.close();
 });
 
@@ -335,7 +342,7 @@ const updateAutoRecordingWhatDisplay = function(context) {
     }
   }
 
-  document.getElementById('autoRecordingStatus').textContent = display;
+  document.getElementById('btnAutoRecordingWhat').textContent = display;
 }
 
 const showRecordingDiv = function(sectionId) {
@@ -396,7 +403,11 @@ btnStopAutoRecording.addEventListener('click', async () => {
 const stopRecording = async function() {
   const context = await SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.OFF;
-  context.manual.timeoutAt = Date.now();
+
+  if (context.manual) {
+    context.manual.timeoutAt = Date.now();
+  }
+
   await SETTINGS.RECORDING.saveContext(context);
   await reviewDb();
 }
@@ -418,28 +429,34 @@ const activateApp = function() {
   document.getElementById('appSection').style.display = 'block';
 }
 
-const kickoffRecording = async function(record, auto) {
-  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+const btnAutoRecordingWhat = document.getElementById('btnAutoRecordingWhat');
+btnAutoRecordingWhat.addEventListener('click', async () => {
+  const recordingContext = await SETTINGS.RECORDING.getContext();
+  const contextParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(recordingContext);
+  await activateOrLaunchParsedUrlTab(contextParsedUrl);
+  window.close();
+});
 
-  if (tab && tab.id) {
-    
-    let actionType = '';
-    if (record === true) {
-      chrome.storage.local.set({ recording: true });
-      actionType = MSGTYPE.RECORDING.START;
+// activate the tab that has the corresponding url...
+// OR open a new tab having it
+const activateOrLaunchParsedUrlTab = async function(parsedUrl) {
+  const tabs = await chrome.tabs.query({ });
+  for (let i = 0; i < tabs.length; i++) {
+    let tab = tabs[i];
+    // we can only see the tabs that match our manifest pattern and where user has clicked for the popup
+    if (tab.url) {
+      let tabParsedUrl = URLPARSE.parseUrl(tab.url);
+      if (URLPARSE.equivalentParsedUrl(parsedUrl, tabParsedUrl) == true) {
+        activated = true;
+        chrome.tabs.update(tab.id, {selected: true});
+        return;
+      }
     }
-    else {
-      chrome.storage.local.remove('recording');
-      actionType = MSGTYPE.RECORDING.STOP;
-    }
-    
-    let response = await chrome.tabs.sendMessage(
-      tab.id, 
-      {
-        actionType: actionType,
-        auto: auto
-      });
   }
+
+  // none found; launch tab
+  const builtUrl = URLPARSE.buildUrl(parsedUrl);
+  chrome.tabs.create({ url: builtUrl });
 }
 
 const btnTellAboutNitter = document.getElementById('btnTellAboutNitter');

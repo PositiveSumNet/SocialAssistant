@@ -19,9 +19,11 @@ chrome.runtime.onInstalled.addListener((details) => {
   const previousVersion = details.previousVersion;
   const reason = details.reason;
   
-  console.log(`Previous Version: ${previousVersion }`);
-  console.log(`Current Version: ${currentVersion }`);
-
+  if (previousVersion != currentVersion) {
+    console.log(`Previous Version: ${previousVersion }`);
+    console.log(`Current Version: ${currentVersion }`);
+  }
+  
   switch (reason) {
     case 'install':
       console.log('New User installed the extension.');
