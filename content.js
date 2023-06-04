@@ -5,7 +5,7 @@
   APPLICATION FLOW:
   
   On Startup
-    tryStartRecording() if cached setting suggests we should
+    tryRecordAsNeeded() if cached setting suggests we should
   
   On click 'record' or stop recording from the popup
     timer checks for updated recordingContext
@@ -17,6 +17,8 @@
 */
 
 var _invalidatedContext = false;
+var _bgOnly = false;
+var _recorder = null;
 
 // scenario 1) on startup, see if it's a speed-test situation
 chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result) {
@@ -36,7 +38,6 @@ chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result
   }
 });
 
-let _bgOnly = false;
 // scenario 2) on startup, see if it's a matched background scrape request
 chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
   const bgUrl = result[SETTINGS.BG_SCRAPE.SCRAPE_URL];
@@ -58,10 +59,7 @@ chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
   }
 });
 
-let _recording = false;
-// on startup, set up a timer to periodically check recordingContext
-// records if we're in a scenario matching that context
-const pollRecordingContext = async function() {
+const kickoffPollForRecording = async function() {
   if (_bgOnly == true) {
     // this polling is only meant for the primary focus recording tab.
     // background scraping is a separate story
@@ -71,26 +69,8 @@ const pollRecordingContext = async function() {
   // handle scenario of an old tab lying around post-update
   // stackoverflow.com/questions/53939205/how-to-avoid-extension-context-invalidated-errors-when-messaging-after-an-exte
   try {
-    const recordingContext = await SETTINGS.RECORDING.getContext();
-    const shouldRecord = RECORDING.shouldRecord(recordingContext);
-    const recorder = RECORDING.getRecorder();
-  
-    if (recorder && _recording == true && shouldRecord == false) {
-      console.log('STOP recording ' + document.location.href);
-      _recording = false;
-    }
-    else if (recorder && _recording == false && shouldRecord == true) {
-      console.log('START recording ' + document.location.href);
-      //recorder.tryStartRecording();
-      // const nitterDomain = await SETTINGS.NITTER.getNitterDomain();
-      _recording = true;
-    }
-  
-    setTimeout(async () => {
-      if (_invalidatedContext == false) {
-        await pollRecordingContext();
-      }
-    }, 1500);
+    _recorder = RECORDING.getRecorder();
+    await _recorder.pollForRecording();
   }
   catch(error) {
     if (error.toString().includes("Extension context invalidated")) {
@@ -100,5 +80,4 @@ const pollRecordingContext = async function() {
   }
 }
 
-// start listening...
-pollRecordingContext();
+kickoffPollForRecording();
