@@ -16,7 +16,6 @@
   
 */
 
-var _invalidatedContext = false;
 var _bgOnly = false;
 var _recorder = null;
 
@@ -66,17 +65,12 @@ const kickoffPollForRecording = async function() {
     return;
   }
   
-  // handle scenario of an old tab lying around post-update
-  // stackoverflow.com/questions/53939205/how-to-avoid-extension-context-invalidated-errors-when-messaging-after-an-exte
-  try {
-    _recorder = RECORDING.getRecorder();
+  _recorder = RECORDING.getRecorder();
+  if (_recorder) {
     await _recorder.pollForRecording();
   }
-  catch(error) {
-    if (error.toString().includes("Extension context invalidated")) {
-      console.log('page refresh is required! disabling this tab for now...');
-      _invalidatedContext = true;
-    }
+  else {
+    // not every twitter page is meant to get recorded
   }
 }
 

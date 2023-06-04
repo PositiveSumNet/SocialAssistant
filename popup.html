@@ -36,7 +36,7 @@
         <h5>While using <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span>, privately record:</h5>
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="chkManualRecordsFollowLists">
-          <label class="form-check-label" for="chkManualRecordsFollowLists">Follow lists <a href="https://twitter.com/positivesumnet/following/" target="_blank">(example page)</a></label>
+          <label class="form-check-label" for="chkManualRecordsFollowLists">Follow lists</label>
         </div>
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="chkManualRecordsTweets">
@@ -53,6 +53,7 @@
         <p><i class="bi-info-circle"></i> Recording will stop in <code id="startClockFor">10:00</code> minutes -- or sooner if you return here and click 'Stop Recording'.</p>
         <div class="d-grid gap-3">
           <button id="btnStartManualRecording" class="btn btn-primary" data-toggle='tooltip' title='Click to close this dialog and start recording.'>Start Recording</button>
+          <button id="btnManualPreviewExamplePage" class="btn btn-secondary" data-toggle='tooltip' title='Click to view an example page.'>View Example Page</button>
           <button id="btnEscapeManualRecordingConfig" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Cancel</button>
         </div>
       </div>
@@ -60,8 +61,9 @@
         <h5><i class="bi-camera-reels-fill"></i> Recording Twitter<span id="manuallyRecordingWhat"> (follows and tweets)</span></h5>
         <p>Session expiration: <code id="sessionExpiration">10:00</code></p>
         <div class="d-grid gap-3">
-          <button id="btnExtendTimer" class="btn btn-secondary">Extend Timer</button>
           <button class="btn btn-primary" id="btnStopManualRecording" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
+          <button id="btnExtendTimer" class="btn btn-secondary">Extend Timer</button>
+          <button id="btnManualViewExamplePage" class="btn btn-secondary" data-toggle='tooltip' title='Click to view an example page.'>View Example Page</button>
         </div>
       </div>
       <div id="configureAutoRecordingSection" class="appRecordingSection" style="display:none;">

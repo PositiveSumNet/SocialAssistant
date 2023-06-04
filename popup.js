@@ -64,13 +64,15 @@ btnChooseManual.addEventListener('click', async () => {
 
 const btnChooseAutoScroll = document.getElementById('btnChooseAutoScroll');
 btnChooseAutoScroll.addEventListener('click', async () => {
-  const parsedUrl = await SETTINGS.RECORDING.getLastParsedUrl();
+  const lastParsedUrl = await SETTINGS.RECORDING.getLastParsedUrl();
+  const currentParsedUrl = await getActiveTabParsedUrl();
+  const owner = URLPARSE.equivalentParsedUrl(lastParsedUrl, currentParsedUrl, true) == true ? currentParsedUrl.owner : lastParsedUrl.owner;
   const context = await SETTINGS.RECORDING.getContext();
   let recordTweets = false;
-  if (parsedUrl && parsedUrl.owner) {
-    document.getElementById('txtAutoRecordFor').value = parsedUrl.owner;
+  if (lastParsedUrl && owner) {
+    document.getElementById('txtAutoRecordFor').value = owner;
 
-    switch (parsedUrl.pageType) {
+    switch (lastParsedUrl.pageType) {
       case PAGETYPE.TWITTER.TWEETS:
       case PAGETYPE.NITTER.TWEETS:
         document.getElementById('optAutoRecordTweets').checked = true;
@@ -134,6 +136,31 @@ btnReviewDb.addEventListener('click', async () => {
   await reviewDb();
   window.close();
 });
+
+const btnManualViewExamplePage = document.getElementById('btnManualViewExamplePage');
+btnManualViewExamplePage.addEventListener('click', async () => {
+  const context = await SETTINGS.RECORDING.getContext();
+  const forTweets = context.manual.recordsTweets;
+  await viewExamplePage(forTweets);
+});
+const btnManualPreviewExamplePage = document.getElementById('btnManualPreviewExamplePage');
+btnManualPreviewExamplePage.addEventListener('click', async () => {
+  const forTweets = document.getElementById('chkManualRecordsTweets').checked == true;
+  await viewExamplePage(forTweets);
+});
+
+const viewExamplePage = async function(forTweets) {
+  let url = '';
+  if (forTweets == true) {
+    url = 'https://twitter.com/positivesumnet/with_replies';
+  }
+  else {
+    url = 'https://twitter.com/positivesumnet/following';
+  }
+
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  chrome.tabs.update(tab.id, {url: url});
+}
 
 const btnStartManualRecording = document.getElementById('btnStartManualRecording');
 btnStartManualRecording.addEventListener('click', async () => {
@@ -412,12 +439,17 @@ const stopRecording = async function() {
   await reviewDb();
 }
 
+const getActiveTabParsedUrl = async function() {
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  return URLPARSE.parseUrl(tab.url);
+}
+
 const reviewDb = async function() {
   let queryString = '';
-  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-  const urlInfo = URLPARSE.parseUrl(tab.url);
-  if (urlInfo) {
-    queryString = `?pageType=${urlInfo.pageType}&owner=${urlInfo.owner}`;
+  const parsedUrl = await getActiveTabParsedUrl();
+
+  if (parsedUrl) {
+    queryString = `?pageType=${parsedUrl.pageType}&owner=${parsedUrl.owner}`;
   }
   chrome.tabs.create({url: `index.html${queryString}`});
   
