@@ -27,9 +27,6 @@ const onLoadReflectRecordingContext = async function() {
     case SETTINGS.RECORDING.STATE.AUTO_SCROLL:
       updateAutoRecordingWhatDisplay(context);
       showRecordingDiv('autoRecordingSection');
-      const autoParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
-      // we're about to display what we're recording; make sure we are!
-      await activateOrLaunchParsedUrlTab(autoParsedUrl);
       break;
     case SETTINGS.RECORDING.STATE.OFF:
     default:
@@ -142,11 +139,13 @@ btnManualViewExamplePage.addEventListener('click', async () => {
   const context = await SETTINGS.RECORDING.getContext();
   const forTweets = context.manual.recordsTweets;
   await viewExamplePage(forTweets);
+  window.close();
 });
 const btnManualPreviewExamplePage = document.getElementById('btnManualPreviewExamplePage');
 btnManualPreviewExamplePage.addEventListener('click', async () => {
   const forTweets = document.getElementById('chkManualRecordsTweets').checked == true;
   await viewExamplePage(forTweets);
+  window.close();
 });
 
 const viewExamplePage = async function(forTweets) {
@@ -472,6 +471,9 @@ btnAutoRecordingWhat.addEventListener('click', async () => {
 // activate the tab that has the corresponding url...
 // OR open a new tab having it
 const activateOrLaunchParsedUrlTab = async function(parsedUrl) {
+  const nitterDomain = await SETTINGS.NITTER.getNitterDomain();
+  const builtUrl = URLPARSE.buildUrl(parsedUrl, nitterDomain);
+  
   const tabs = await chrome.tabs.query({ });
   for (let i = 0; i < tabs.length; i++) {
     let tab = tabs[i];
@@ -479,7 +481,6 @@ const activateOrLaunchParsedUrlTab = async function(parsedUrl) {
     if (tab.url) {
       let tabParsedUrl = URLPARSE.parseUrl(tab.url);
       if (URLPARSE.equivalentParsedUrl(parsedUrl, tabParsedUrl) == true) {
-        activated = true;
         chrome.tabs.update(tab.id, {selected: true});
         return;
       }
@@ -487,7 +488,6 @@ const activateOrLaunchParsedUrlTab = async function(parsedUrl) {
   }
 
   // none found; launch tab
-  const builtUrl = URLPARSE.buildUrl(parsedUrl);
   chrome.tabs.create({ url: builtUrl });
 }
 
