@@ -33,7 +33,9 @@
         "lib/content/recordinglib.js", 
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
-        "lib/content/twitter/twitterfollowrecorder.js", 
+        "lib/content/twitter/twitterfollowrecorder.js",
+        "lib/content/twitter/twittertweetrecorder.js",
+        "lib/content/nitter/nittertweetrecorder.js",
         "lib/content/nitter/nitterprofileparsing.js", 
         "lib/content/recorderfactory.js",
         "content.js"
