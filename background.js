@@ -69,7 +69,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.action.setBadgeText({text: request.badgeText});
         return returnsData;
       case 'nitterSpeedTest':
-        await kickoffNitterSpeedTest();
+        await kickoffNitterSpeedTestAsNeeded();
         return returnsData;
       case 'letsScrape':
         await ensureQueuedScrapeRequests(request.lastScrape);
@@ -297,18 +297,57 @@ const scrapeNext = async function() {
   }
 }
 
+const shouldRunSpeedTest = async function() {
+  const speedTestSetting = await chrome.storage.local.get('nitterSpeedTest');
+  if (!speedTestSetting) { return true; }
+  const speedTest = JSON.parse(speedTestSetting['nitterSpeedTest']);
+  if (!speedTest || !speedTest['end']) {
+    return true;
+  }
+
+  const lastEnd = parseInt(speedTest['end']);
+  return Date.now() - lastEnd > 30000;  // re-check every 30 seconds
+}
+
+const getNitterDomainsNeedingSettingsFix = async function() {
+  const needingFixDomains = [];
+  for (let i = 0; i < _nitterDomains.length; i++) {
+    let nitterDomain = _nitterDomains[i];
+    // SETTINGS.FIXED_SETTINGS_PREFIX:
+    let settingName = `fixedSettings-${nitterDomain}`;
+    let setting = await chrome.storage.local.get(settingName);
+    if (!setting || !setting[settingName]) {
+      needingFixDomains.push(nitterDomain);
+    }
+  }
+
+  return needingFixDomains;
+}
+
+const getNitterSettingFixUrls = async function() {
+  const domains = await getNitterDomainsNeedingSettingsFix();
+  // see REASON_CLEAR_ALT_URLS
+  const fixUrls = domains.map(function(domain) { return `https://${domain}/settings?reason=clearAltUrls`; });
+  return fixUrls;
+}
+
 // to help subsequent nitter calls to know which server is best to use
-const kickoffNitterSpeedTest = async function() {
+const kickoffNitterSpeedTestAsNeeded = async function() {
   await ensureOffscreenDocument();
 
-  // see SETTINGS.NITTER.SPEED_TEST
-  await chrome.storage.local.set({'nitterSpeedTest': { 'start': Date.now() }});
-  const testUrls = _nitterDomains.map(function(domain) { return `https://${domain}/search?f=users&q=jack`; });
-
-  chrome.runtime.sendMessage({
-    actionType: 'navFrameUrls',
-    urls: testUrls
-  });
+  const needSpeedTest = await shouldRunSpeedTest();
+  if (needSpeedTest == true) {
+    // see SETTINGS.NITTER.SPEED_TEST
+    await chrome.storage.local.set({'nitterSpeedTest': { 'start': Date.now() }});
+    const testUrls = _nitterDomains.map(function(domain) { return `https://${domain}/search?f=users&q=jack`; });
+    const settingFixUrls = await getNitterSettingFixUrls();
+    testUrls.push(...settingFixUrls);
+    
+    chrome.runtime.sendMessage({
+      actionType: 'navFrameUrls',
+      urls: testUrls
+    });
+  }
 }
 
 const ensureOffscreenDocument = async function() {

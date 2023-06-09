@@ -58,6 +58,24 @@ chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
   }
 });
 
+// scenario 3) adjust nitter settings (once)
+window.onload = function() {
+  const href = document.location.href;
+  // https://nitter.one/settings?reason=clearAltUrls
+  if (href.indexOf('https://nitter') > -1 && href.indexOf('/settings') > -1 && href.indexOf(REASON_CLEAR_ALT_URLS) > -1) {
+    // remove the query string parm so the refresh excludes it
+    window.history.pushState({}, "", href.split("?")[0]);
+    document.querySelector('input[name="replaceTwitter"]').value = '';
+    document.querySelector('input[name="replaceYouTube"]').value = '';
+    document.querySelector('input[name="replaceReddit"]').value = '';
+    document.querySelector('button[type="submit"]').click();
+    const domain = STR.extractDomain(href);
+    const key = `${SETTINGS.FIXED_SETTINGS_PREFIX}${domain}`;
+    chrome.storage.local.set({ [key]: true });
+  }
+};
+
+// main scenario: recording
 const kickoffPollForRecording = async function() {
   if (_bgOnly == true) {
     // this polling is only meant for the primary focus recording tab.
