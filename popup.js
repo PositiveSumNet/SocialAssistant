@@ -47,7 +47,7 @@ btnChooseManual.addEventListener('click', async () => {
   document.getElementById('chkManualRecordsFollowLists').checked = SETTINGS.RECORDING.getManualRecordsFollows(context);
   const manualRecordsTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
   document.getElementById('chkManualRecordsTweets').checked = manualRecordsTweets;
-  const manualRecordsTweetImages = SETTINGS.RECORDING.getManualRecordsTweetImages(context);
+  const manualRecordsTweetImages = SETTINGS.RECORDING.getRecordsTweetImages(context);
   const tweetImagesElm = document.getElementById('chkManualRecordsTweetImages');
   tweetImagesElm.checked = manualRecordsTweetImages;
   tweetImagesElm.disabled = !manualRecordsTweets;
@@ -63,13 +63,24 @@ const btnChooseAutoScroll = document.getElementById('btnChooseAutoScroll');
 btnChooseAutoScroll.addEventListener('click', async () => {
   const lastParsedUrl = await SETTINGS.RECORDING.getLastParsedUrl();
   const currentParsedUrl = await getActiveTabParsedUrl();
-  const owner = URLPARSE.equivalentParsedUrl(lastParsedUrl, currentParsedUrl, true) == true ? currentParsedUrl.owner : lastParsedUrl.owner;
+  
+  let owner = undefined;
+  let pageType = undefined;
+  if (currentParsedUrl && !lastParsedUrl) {
+    owner = currentParsedUrl.owner;
+    pageType = currentParsedUrl.pageType;
+  }
+  else if (lastParsedUrl && currentParsedUrl) {
+    owner = URLPARSE.equivalentParsedUrl(lastParsedUrl, currentParsedUrl, true) == true ? currentParsedUrl.owner : lastParsedUrl.owner;
+    pageType = lastParsedUrl.pageType;
+  }
+
   const context = await SETTINGS.RECORDING.getContext();
   let recordTweets = false;
-  if (lastParsedUrl && owner) {
+  if (pageType && owner) {
     document.getElementById('txtAutoRecordFor').value = owner;
 
-    switch (lastParsedUrl.pageType) {
+    switch (pageType) {
       case PAGETYPE.TWITTER.TWEETS:
       case PAGETYPE.NITTER.TWEETS:
         document.getElementById('optAutoRecordTweets').checked = true;
@@ -110,7 +121,7 @@ btnChooseAutoScroll.addEventListener('click', async () => {
         break;
     }
 
-    chkWithImages.checked = SETTINGS.RECORDING.getAutoRecordsTweetImages(context);
+    chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
     chkWithImages.disabled = false;
     chkResolveThreads.checked = SETTINGS.RECORDING.getAutoRecordResolvesThreads(context);
     chkResolveThreads.disabled = false;
@@ -182,7 +193,7 @@ btnStartManualRecording.addEventListener('click', async () => {
   context.manual.recordsFollows = shouldRecordFollows;
   context.manual.recordsTweets = shouldRecordTweets;
   const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
-  context.manual.recordsTweetImages = chkWithImages.checked == true;
+  context.recordsTweetImages = chkWithImages.checked == true;
   if (shouldRecordTweets == true) {
     chkWithImages.disabled = false;
   }
@@ -229,7 +240,7 @@ const updateManuallyRecordingWhatDisplay = function(context) {
   
   const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
   if (shouldRecordTweets) {
-    chkWithImages.checked = SETTINGS.RECORDING.getManualRecordsTweetImages(context);
+    chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
     chkWithImages.disabled = false;
   }
   else {
@@ -332,7 +343,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
   context.auto.owner = STR.stripPrefix(owner, '@');
   context.auto.site = site;
   context.auto.pageType = pageType;
-  context.auto.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
+  context.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
   context.auto.resolvesThreads = forTweets && document.getElementById('chkAutoRecordResolvesThreads').checked == true;
   await SETTINGS.RECORDING.saveContext(context);
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);

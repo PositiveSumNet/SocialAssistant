@@ -117,10 +117,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 const processSave = async function(request) {
   const records = request.payload;
-
-  if (request.skipImg64 != true) {
-    await injectImageBase64s(records);
-  }
+  await injectImageBase64s(records);
 
   saveToTempStorage(records);
   return {saved: records, success: true};
@@ -132,26 +129,27 @@ const processSave = async function(request) {
 const injectImageBase64s = async function(records) {
   for (let i = 0; i < records.length; i++) {
     let item = records[i];
-
-    // a) the first way we can inject is simplest (by convention, imgCdnUrl gets an img64Url companion property)
-    if (item.imgCdnUrl) {
-      try {
-        item.img64Url = await getImageBase64(item.imgCdnUrl);
-      } catch (error) {
-        console.error(error);
+    if (!item.skipImg64) {
+      // a) the first way we can inject is simplest (by convention, imgCdnUrl gets an img64Url companion property)
+      if (item.imgCdnUrl) {
+        try {
+          item.img64Url = await getImageBase64(item.imgCdnUrl);
+        } catch (error) {
+          console.error(error);
+        }
       }
-    }
 
-    // b) the other way we can inject is setting the img64Url companion property from RECORDING.infuseImgCdns
-    // (so that background.js can avoid knowledge of specific savable entities... especially since we don't yet use 'module' approach)
-    if (item.imgInfos && item.imgInfos.length > 0) {
-      for (let j = 0; j < item.imgInfos.length; j++) {
-        let imgInfo = item.imgInfos[j];
-        if (imgInfo.imgCdnUrl) {
-          try {
-            imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
-          } catch (error) {
-            console.error(error);
+      // b) the other way we can inject is setting the img64Url companion property from RECORDING.infuseImgCdns
+      // (so that background.js can avoid knowledge of specific savable entities... especially since we don't yet use 'module' approach)
+      if (item.imgInfos && item.imgInfos.length > 0) {
+        for (let j = 0; j < item.imgInfos.length; j++) {
+          let imgInfo = item.imgInfos[j];
+          if (imgInfo.imgCdnUrl) {
+            try {
+              imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
+            } catch (error) {
+              console.error(error);
+            }
           }
         }
       }
