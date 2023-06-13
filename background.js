@@ -1,6 +1,6 @@
 // background scraping
 var _bgScrapeRequests = [];
-var _bgInProcessUrl = undefined;
+var _bgDequeuedSet = new Set();
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
 const _nitterDomains = [
@@ -309,13 +309,26 @@ const enqueueScrapeRequests = function(records, pageType, cacheKey) {
   }
 }
 
+const buildScrapeRequestKey = function(pageType, record) {
+  if (!pageType) { return null; }
+  // record is a string, e.g. a handle (for profile scraping) or a tweet thread urlKey
+  return `${pageType}-${record}`;
+}
+
 const scrapeNext = async function() {
   if (_bgScrapeRequests.length === 0) {
     //console.log('Done processing scrape queue for now');
     return;
   }
 
-  const request = _bgScrapeRequests[0];
+  // find the first one not already dequeued
+  const request = _bgScrapeRequests.find(function(r) {
+    let key = buildScrapeRequestKey(r.pageType, r.record);
+    return !_bgDequeuedSet.has(key);
+  });
+
+  if (!request) { return; }
+
   switch (request.pageType) {
     case 'twitterProfile':
       await scrapeTwitterProfile(request);
@@ -396,13 +409,8 @@ const navigateOffscreenDocument = async function(url) {
   
   await ensureOffscreenDocument();
 
-  if (url == _bgInProcessUrl) {
-    return;
-  }
-
   // this will help the content.js to know it's a background scrape request
   await chrome.storage.local.set({ ['bgScrapeUrl']: url });
-  _bgInProcessUrl = url;
 
   // send a message to be picked up by offscreen.js
   // and provided that the url is recognized by the manifest, 
@@ -438,6 +446,11 @@ const getNitterDomain = async function() {
 // see notes at offscreen.js
 // request.record is an urlKey e.g. '/username/status/12345'
 const scrapeTweetThread = async function(request) {
+  const bgKey = buildScrapeRequestKey('tweets', request.record);
+  if (_bgDequeuedSet.has(bgKey)) {
+    return;
+  }
+  _bgDequeuedSet.add(bgKey);
   const nitterDomain = await getNitterDomain();
   // request.record is tweet urlKey
   const url = `https://${nitterDomain}${request.record}`;
@@ -446,6 +459,11 @@ const scrapeTweetThread = async function(request) {
 
 // see notes at offscreen.js
 const scrapeTwitterProfile = async function(request) {
+  const bgKey = buildScrapeRequestKey('twitterProfile', request.record);
+  if (_bgDequeuedSet.has(bgKey)) {
+    return;
+  }
+  _bgDequeuedSet.add(bgKey);
   const nitterDomain = await getNitterDomain();
   const handleOnly = request.record.substring(1); // sans-@
   const url = `https://${nitterDomain}/${handleOnly}`;
