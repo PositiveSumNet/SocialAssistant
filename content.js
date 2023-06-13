@@ -46,11 +46,12 @@ chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
     const thisDocParsedUrl = URLPARSE.getParsedUrl();
     if (thisDocParsedUrl && URLPARSE.equivalentParsedUrl(bgParsedUrl, thisDocParsedUrl)) {
       switch (thisDocParsedUrl.pageType) {
-        // todo: more bg types here
         case PAGETYPE.TWITTER.PROFILE:
           _bgOnly = true;
           NITTER_PROFILE_PARSER.parseToTempStorage();
           break;
+        case PAGETYPE.TWITTER.TWEETS:
+          // YOU ARE HERE
         default:
           break;
       }

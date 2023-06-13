@@ -172,7 +172,7 @@ const ensureCopiedToDb = async function() {
     initialRender();
 
     // having fully copied into the db, we can also make sure background fetching is underway
-    kickoffBackgroundScraping();
+    BGFETCH_REQUEST.kickoffBackgroundScraping();
   }
 }
 
@@ -990,7 +990,7 @@ const handleUploadFiles = function(files) {
   switch(uploadContext) {
     case UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE:
       // make sure the background worker knows we want it to look for scrape requests
-      kickoffBackgroundScraping();
+      BGFETCH_REQUEST.kickoffBackgroundScraping();
       break;
     default:
       break;
@@ -1048,12 +1048,6 @@ const processUpload = function(file) {
 
   // start reading
   reader.readAsText(file);
-}
-
-const kickoffBackgroundScraping = function() {
-  chrome.runtime.sendMessage({ 
-    actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE
-  });
 }
 
 const onProcessedUploadBatch = function() {

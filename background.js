@@ -204,7 +204,7 @@ const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
   }
   
   switch (request.pageType) {
-    case 'nitterProfile':
+    case 'twitterProfile':
       return handlesMatch(request.handle, parsedUrl.owner);
     default:
       return false;
@@ -249,7 +249,6 @@ const processLastScrape = function(parsedUrl) {
     });
 }
 
-// pass in an optional parsedUrl for a scrape that just completed
 const ensureQueuedScrapeRequests = async function(lastScrape) {
   // pull the last scrape out of the in-memory variable
   // and if it was the last one, remove the cacheKey holding its batch
@@ -274,11 +273,10 @@ const ensureQueuedScrapeRequests = async function(lastScrape) {
           //chrome.storage.local.remove(key);
         }
         else {
-          // we only want to kick off one set of handles at a time, so...
-          // add handles to queue
-          enqueueScrapeRequests(val.data, val.pageType, key);
+          // we only want to kick off one set at a time, so... add to queue
+          enqueueScrapeRequests(val.records, val.pageType, key);
           // kick off first scrape and
-          await scrapeNext(nitterUrl);
+          await scrapeNext();
           // exit without looping further
           return;
         }
@@ -290,9 +288,9 @@ const ensureQueuedScrapeRequests = async function(lastScrape) {
 
 // for now, the background scrape request always provides a set of handles as its data payload
 // if this changes, we'll build a switch statement on pageType
-const enqueueScrapeRequests = function(handles, pageType, cacheKey) {
-  for (let i = 0; i < handles.length; i++) {
-    _bgScrapeRequests.push({pageType: pageType, handle: handles[i], cacheKey: cacheKey});
+const enqueueScrapeRequests = function(records, pageType, cacheKey) {
+  for (let i = 0; i < records.length; i++) {
+    _bgScrapeRequests.push({pageType: pageType, record: records[i], cacheKey: cacheKey});
   }
 }
 
@@ -304,8 +302,11 @@ const scrapeNext = async function() {
 
   const request = _bgScrapeRequests[0];
   switch (request.pageType) {
-    case 'nitterProfile':
-      await scrapeNitterProfile(request);
+    case 'twitterProfile':
+      await scrapeTwitterProfile(request);
+      break;
+    case 'tweets':
+      await scrapeTweetThread(request);
       break;
     default:
       break;
@@ -415,9 +416,16 @@ const getNitterDomain = async function() {
 }
 
 // see notes at offscreen.js
-const scrapeNitterProfile = async function(request) {
+const scrapeTweetThread = async function(request) {
   const nitterDomain = await getNitterDomain();
-  const handleOnly = request.handle.substring(1); // sans-@
+  const url = `https://${nitterDomain}${request.record.urlKey}`;
+  await navigateOffscreenDocument(url);
+}
+
+// see notes at offscreen.js
+const scrapeTwitterProfile = async function(request) {
+  const nitterDomain = await getNitterDomain();
+  const handleOnly = request.record.substring(1); // sans-@
   const url = `https://${nitterDomain}/${handleOnly}`;
   await navigateOffscreenDocument(url);
 }
