@@ -82,7 +82,6 @@ btnChooseAutoScroll.addEventListener('click', async () => {
 
     switch (pageType) {
       case PAGETYPE.TWITTER.TWEETS:
-      case PAGETYPE.NITTER.TWEETS:
         document.getElementById('optAutoRecordTweets').checked = true;
         recordTweets = true;
         break;
