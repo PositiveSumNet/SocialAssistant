@@ -1,5 +1,6 @@
 // background scraping
 var _bgScrapeRequests = [];
+var _bgInProcessUrl = undefined;
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
 const _nitterDomains = [
@@ -205,10 +206,24 @@ const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
   
   switch (request.pageType) {
     case 'twitterProfile':
-      return handlesMatch(request.handle, parsedUrl.owner);
+      // request.record is a handle
+      return handlesMatch(request.record, parsedUrl.owner);
+    case 'tweets':
+      // request.record is an urlKey, i.e. '/username/status/12345'
+      return tweetUrlsMatch(request.record, parsedUrl);
     default:
       return false;
   }
+}
+
+const tweetUrlsMatch = function(urlKey, parsedUrl) {
+  // construct urlKey for a tweet thread
+  if (!urlKey || !parsedUrl || !parsedUrl.owner || !parsedUrl.threadDetailId) {
+    return false;
+  }
+
+  const owner = parsedUrl.owner.replace('@', '');
+  return urlKey.toLowerCase() == `/${owner}/${parsedUrl.threadDetailId}`.toLowerCase();
 }
 
 const handlesMatch = function(h1, h2) {
@@ -381,8 +396,13 @@ const navigateOffscreenDocument = async function(url) {
   
   await ensureOffscreenDocument();
 
+  if (url == _bgInProcessUrl) {
+    return;
+  }
+
   // this will help the content.js to know it's a background scrape request
-  chrome.storage.local.set({ ['bgScrapeUrl']: url });
+  await chrome.storage.local.set({ ['bgScrapeUrl']: url });
+  _bgInProcessUrl = url;
 
   // send a message to be picked up by offscreen.js
   // and provided that the url is recognized by the manifest, 
@@ -416,9 +436,11 @@ const getNitterDomain = async function() {
 }
 
 // see notes at offscreen.js
+// request.record is an urlKey e.g. '/username/status/12345'
 const scrapeTweetThread = async function(request) {
   const nitterDomain = await getNitterDomain();
-  const url = `https://${nitterDomain}${request.record.urlKey}`;
+  // request.record is tweet urlKey
+  const url = `https://${nitterDomain}${request.record}`;
   await navigateOffscreenDocument(url);
 }
 

@@ -119,18 +119,10 @@ btnChooseAutoScroll.addEventListener('click', async () => {
         // neither selected yet; make user choose
         break;
     }
+  }
 
-    chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
-    chkWithImages.disabled = false;
-    chkResolveThreads.checked = SETTINGS.RECORDING.getAutoRecordResolvesThreads(context);
-    chkResolveThreads.disabled = false;
-  }
-  else {
-    chkWithImages.checked = false;
-    chkWithImages.disabled = true;
-    chkResolveThreads.checked = false;
-    chkResolveThreads.disabled = true;
-  }
+  chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
+  chkResolveThreads.checked = SETTINGS.RECORDING.getAutoRecordResolvesThreads(context);
 
   onUpdateAutoOption();
   onChangeAutoRecordViaNitter();
@@ -226,7 +218,6 @@ chkManualRecordsTweets.addEventListener('change', (event) => {
   }
   else {
     chkWithImages.disabled = true;
-    chkWithImages.checked = false;
   }
 });
 
@@ -243,7 +234,6 @@ const updateManuallyRecordingWhatDisplay = function(context) {
     chkWithImages.disabled = false;
   }
   else {
-    chkWithImages.checked = false;
     chkWithImages.disabled = true;
   }
 
@@ -404,7 +394,6 @@ const onUpdateAutoOption = function() {
       opt.disabled = false;
     }
     else {
-      opt.checked = false;
       opt.disabled = true;
     }
   });

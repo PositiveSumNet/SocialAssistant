@@ -172,7 +172,7 @@ const ensureCopiedToDb = async function() {
     initialRender();
 
     // having fully copied into the db, we can also make sure background fetching is underway
-    BGFETCH_REQUEST.kickoffBackgroundScraping();
+    BGFETCH_REQUEST.kickoffBackgroundScrapingAsNeeded();
   }
 }
 
@@ -990,7 +990,7 @@ const handleUploadFiles = function(files) {
   switch(uploadContext) {
     case UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE:
       // make sure the background worker knows we want it to look for scrape requests
-      BGFETCH_REQUEST.kickoffBackgroundScraping();
+      BGFETCH_REQUEST.kickoffBackgroundScrapingAsNeeded();
       break;
     default:
       break;

@@ -16,7 +16,7 @@
   
 */
 
-var _bgOnly = false;
+var _shuntRecorder = false;
 var _recorder = null;
 
 // scenario 1) on startup, see if it's a speed-test situation
@@ -37,21 +37,22 @@ chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result
   }
 });
 
-// scenario 2) on startup, see if it's a matched background scrape request
+// scenario 2) on startup, see if it's a SPECIAL matched background scrape request
+// (special in that we don't want recorder to do its thing; this is really just a story for uploaded profile scrape requests, for now)
 chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
   const bgUrl = result[SETTINGS.BG_SCRAPE.SCRAPE_URL];
 
   if (bgUrl) {
+    _isBackgroundRecordingUrl = STR.sameText(STR.getUrlSansHashAndQueryString(document.location.href), STR.getUrlSansHashAndQueryString(bgUrl));
     const bgParsedUrl = URLPARSE.parseUrl(bgUrl);
     const thisDocParsedUrl = URLPARSE.getParsedUrl();
     if (thisDocParsedUrl && URLPARSE.equivalentParsedUrl(bgParsedUrl, thisDocParsedUrl)) {
       switch (thisDocParsedUrl.pageType) {
         case PAGETYPE.TWITTER.PROFILE:
-          _bgOnly = true;
+          _shuntRecorder = true;
           NITTER_PROFILE_PARSER.parseToTempStorage();
           break;
-        case PAGETYPE.TWITTER.TWEETS:
-          // YOU ARE HERE
+        // note that TWITTER.TWEETS falls through b/c the recorder is relevant instead
         default:
           break;
       }
@@ -78,9 +79,7 @@ window.onload = function() {
 
 // main scenario: recording
 const kickoffPollForRecording = async function() {
-  if (_bgOnly == true) {
-    // this polling is only meant for the primary focus recording tab.
-    // background scraping is a separate story
+  if (_shuntRecorder == true) {
     return;
   }
   
