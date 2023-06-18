@@ -3,6 +3,7 @@ var _bgScrapeRequests = [];
 var _bgDequeuedSet = new Set();
 var _bgInProcessSet = new Set();  // built using buildScrapeRequestKeyFromRecord
 var _bgLastKickoff;
+var _lastSetBadgeText;
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
 const _nitterDomains = [
@@ -70,6 +71,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return returnsData;
       case 'setBadge':
         chrome.action.setBadgeText({text: request.badgeText});
+        _lastSetBadgeText = Date.now();
         return returnsData;
       case 'nitterSpeedTest':
         await kickoffNitterSpeedTestAsNeeded();
@@ -526,3 +528,18 @@ const scrapeTwitterProfile = async function(request) {
   const url = `https://${nitterDomain}/${handleOnly}`;
   await navigateOffscreenDocument(url);
 }
+
+const checkIfShouldAssumeDone = function() {
+
+  chrome.action.getBadgeText({}, function(result) {
+    if (result && result.startsWith('+') && _lastSetBadgeText && (Date.now() -_lastSetBadgeText) > 8000) {
+      chrome.action.setBadgeText({text: 'DONE'});
+    }
+  });
+  
+  // a long enough time period that we can really believe it's done
+  setTimeout(() => {
+    checkIfShouldAssumeDone();
+  }, 10000);  
+}
+checkIfShouldAssumeDone();

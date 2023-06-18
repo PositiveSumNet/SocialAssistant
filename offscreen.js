@@ -46,10 +46,6 @@ async function handleMessages(message) {
   }
 }
 
-function closeFrame(message) {
-
-}
-
 async function navFrameUrls(message) {
   removeFrames();
   for (let i = 0; i < message.urls.length; i++) {
