@@ -453,10 +453,8 @@ const ensureOffscreenDocument = async function() {
 
 const navigateOffscreenDocument = async function(url) {
   
-  console.log('in-proc');
+  console.log('in-process');
   console.log(..._bgInProcessSet);
-  console.log('dqd');
-  console.log(..._bgDequeuedSet);
 
   await ensureOffscreenDocument();
 
