@@ -1,6 +1,8 @@
 // background scraping
 var _bgScrapeRequests = [];
 var _bgDequeuedSet = new Set();
+var _bgInProcessSet = new Set();  // built using buildScrapeRequestKeyFromRecord
+var _bgLastKickoff;
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
 const _nitterDomains = [
@@ -73,7 +75,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         await kickoffNitterSpeedTestAsNeeded();
         return returnsData;
       case 'letsScrape':
-        await ensureQueuedScrapeRequests(request.lastScrape);
+        await ensureQueuedScrapeRequests(request.lastScrapedParsedUrl);
+        return returnsData;
+      case 'logMe':
+        console.log(request.data);
         return returnsData;
       default:
         return returnsData;
@@ -216,14 +221,19 @@ const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
   }
 }
 
+const makeTweetUrlKey = function(parsedUrl) {
+  const owner = parsedUrl.owner.replace('@', '');
+  return `/${owner}/status/${parsedUrl.threadDetailId}`.toLowerCase();
+}
+
 const tweetUrlsMatch = function(urlKey, parsedUrl) {
   // construct urlKey for a tweet thread
   if (!urlKey || !parsedUrl || !parsedUrl.owner || !parsedUrl.threadDetailId) {
     return false;
   }
 
-  const owner = parsedUrl.owner.replace('@', '');
-  return urlKey.toLowerCase() == `/${owner}/${parsedUrl.threadDetailId}`.toLowerCase();
+  const urlKey2 = makeTweetUrlKey(parsedUrl);
+  return urlKey.toLowerCase() == urlKey2;
 }
 
 const handlesMatch = function(h1, h2) {
@@ -239,13 +249,25 @@ const handlesMatch = function(h1, h2) {
   return h1.toLowerCase() == h2.toLowerCase();
 }
 
-const processLastScrape = function(parsedUrl) {
-  if (!parsedUrl) { return; }
-  
+// pull the last scrape out of the in-memory variable
+// and if it was the last one, remove the cacheKey holding its batch
+const processLastScrape = async function(lastScrapedParsedUrl) {
+  if (!lastScrapedParsedUrl) { return; }
+
+  // if the dequeued list has gotten absurdly large, can clear it (causing more harm than good if huge; no big deal if we waste time on already-covered ground)
+  if (_bgDequeuedSet.length > 1000) {
+    _bgDequeuedSet = new Set();
+  }
+
+  let lastScrapedRequestKey = buildScrapeRequestKeyFromParsedUrl(lastScrapedParsedUrl);
+  if (_bgInProcessSet.has(lastScrapedRequestKey)) {
+    _bgInProcessSet.delete(lastScrapedRequestKey);
+  }
+
   let removalCacheKey = '';
   for (let i = 0; i < _bgScrapeRequests.length; i++) {
     let request = _bgScrapeRequests[i];
-    if (scrapeRequestMatchesParsedUrl(request, parsedUrl) == true) {
+    if (scrapeRequestMatchesParsedUrl(request, lastScrapedParsedUrl) == true) {
       _bgScrapeRequests.splice(i, 1);
       removalCacheKey = request.cacheKey;
       break;
@@ -254,20 +276,32 @@ const processLastScrape = function(parsedUrl) {
 
   // if we've now processed the last item, that storage item can be removed
   if (_bgScrapeRequests.length == 0 && removalCacheKey.length > 0) {
-    chrome.storage.local.remove(removalCacheKey);
+    await chrome.storage.local.remove(removalCacheKey);
   }
+
   // tell listeners we just scraped this
   chrome.runtime.sendMessage(
     {
       actionType: 'bgScraped',
-      parsedUrl: parsedUrl
+      parsedUrl: lastScrapedParsedUrl
     });
 }
 
-const ensureQueuedScrapeRequests = async function(lastScrape) {
+// lastScrapedParsedUrl is in the form of 
+const ensureQueuedScrapeRequests = async function(lastScrapedParsedUrl) {
+  // if we weren't passed a lastScrapedParsedUrl and there are _bgInProcessSet records,
+  // then let's finish processing them first (abandoning hope on completion after 5 seconds)
+  if (!lastScrapedParsedUrl && _bgInProcessSet.length > 0 && _bgLastKickoff && (Date.now() - _bgLastKickoff > 5000)) {
+    console.log('cannot Q a new one yet');
+    return;
+  }
+
   // pull the last scrape out of the in-memory variable
   // and if it was the last one, remove the cacheKey holding its batch
-  processLastScrape(lastScrape);
+  if (lastScrapedParsedUrl) {
+    await processLastScrape(lastScrapedParsedUrl);
+  }
+
   if (_bgScrapeRequests.length > 0) { 
     // if there are more items already in the in-memory-queue to process, then we can just kick off the next one
     await scrapeNext();
@@ -276,25 +310,15 @@ const ensureQueuedScrapeRequests = async function(lastScrape) {
     const all = await chrome.storage.local.get();
     const entries = Object.entries(all);
   
-    const clearCacheForTesting = false; // temporary aid to debugging
-  
     for (const [key, val] of entries) {
       // i.e. STORAGE_PREFIX.BG_SCRAPE
       if (key.startsWith('bgscrape-')) {
-        if (clearCacheForTesting == true) {
-          // only relevant while testing
-          //console.log(key);
-          //console.log(val);
-          //chrome.storage.local.remove(key);
-        }
-        else {
-          // we only want to kick off one set at a time, so... add to queue
-          enqueueScrapeRequests(val.records, val.pageType, key);
-          // kick off first scrape and
-          await scrapeNext();
-          // exit without looping further
-          return;
-        }
+        // we only want to kick off one set at a time, so... add to queue
+        enqueueScrapeRequests(val.records, val.pageType, key);
+        // kick off first scrape and
+        await scrapeNext();
+        // exit without looping further
+        return;
       }
     }
   }
@@ -309,10 +333,30 @@ const enqueueScrapeRequests = function(records, pageType, cacheKey) {
   }
 }
 
-const buildScrapeRequestKey = function(pageType, record) {
+const buildScrapeRequestKeyFromParsedUrl = function(parsedUrl) {
+  if (!parsedUrl) { return null; }
+  let record;
+
+  switch (parsedUrl.pageType) {
+    case 'tweets':
+      record = makeTweetUrlKey(parsedUrl);
+      break;
+    case 'twitterProfile':
+      record = parsedUrl.owner;
+      break;
+    default:
+      return null;
+  }
+
+  return buildScrapeRequestKeyFromRecord(parsedUrl.pageType, record);
+}
+
+const buildScrapeRequestKeyFromRecord = function(pageType, record) {
   if (!pageType) { return null; }
   // record is a string, e.g. a handle (for profile scraping) or a tweet thread urlKey
-  return `${pageType}-${record}`;
+  // content.js needs to use same approach when it checks for BG_SCRAPE.SCRAPE_KEYS
+  // chose a unique delimiter (BG_SCRAPE.DELIMITER)
+  return `${pageType}::${record}`.toLowerCase();
 }
 
 const scrapeNext = async function() {
@@ -323,7 +367,7 @@ const scrapeNext = async function() {
 
   // find the first one not already dequeued
   const request = _bgScrapeRequests.find(function(r) {
-    let key = buildScrapeRequestKey(r.pageType, r.record);
+    let key = buildScrapeRequestKeyFromRecord(r.pageType, r.record);
     return !_bgDequeuedSet.has(key);
   });
 
@@ -407,10 +451,16 @@ const ensureOffscreenDocument = async function() {
 
 const navigateOffscreenDocument = async function(url) {
   
+  console.log('in-proc');
+  console.log(..._bgInProcessSet);
+  console.log('dqd');
+  console.log(..._bgDequeuedSet);
+
   await ensureOffscreenDocument();
 
   // this will help the content.js to know it's a background scrape request
-  await chrome.storage.local.set({ ['bgScrapeUrl']: url });
+  // caller already added key to the set
+  await chrome.storage.local.set({ ['bgScrapeKeys']: Array.from(_bgInProcessSet) });
 
   // send a message to be picked up by offscreen.js
   // and provided that the url is recognized by the manifest, 
@@ -423,6 +473,9 @@ const navigateOffscreenDocument = async function(url) {
 
 // repeated at settingslib.js (not ready for background to be a 'module', so not DRY yet)
 const getNitterDomain = async function() {
+  // TEMPORARY
+  return 'nitter.net';
+
   // see if a speed-test has happened
   const speedTestSetting = await chrome.storage.local.get(['nitterSpeedTest']);
   const defaultDomain = 'nitter.net';
@@ -446,11 +499,13 @@ const getNitterDomain = async function() {
 // see notes at offscreen.js
 // request.record is an urlKey e.g. '/username/status/12345'
 const scrapeTweetThread = async function(request) {
-  const bgKey = buildScrapeRequestKey('tweets', request.record);
+  const bgKey = buildScrapeRequestKeyFromRecord('tweets', request.record);
   if (_bgDequeuedSet.has(bgKey)) {
     return;
   }
   _bgDequeuedSet.add(bgKey);
+  _bgInProcessSet.add(bgKey);
+  _bgLastKickoff = Date.now();
   const nitterDomain = await getNitterDomain();
   // request.record is tweet urlKey
   const url = `https://${nitterDomain}${request.record}`;
@@ -459,11 +514,13 @@ const scrapeTweetThread = async function(request) {
 
 // see notes at offscreen.js
 const scrapeTwitterProfile = async function(request) {
-  const bgKey = buildScrapeRequestKey('twitterProfile', request.record);
+  const bgKey = buildScrapeRequestKeyFromRecord('twitterProfile', request.record);
   if (_bgDequeuedSet.has(bgKey)) {
     return;
   }
   _bgDequeuedSet.add(bgKey);
+  _bgInProcessSet.add(bgKey);
+  _bgLastKickoff = Date.now();
   const nitterDomain = await getNitterDomain();
   const handleOnly = request.record.substring(1); // sans-@
   const url = `https://${nitterDomain}/${handleOnly}`;

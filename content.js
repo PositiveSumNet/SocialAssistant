@@ -19,7 +19,7 @@
 var _shuntRecorder = false;
 var _recorder = null;
 
-// scenario 1) on startup, see if it's a speed-test situation
+// on startup, see if it's a speed-test situation
 chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result) {
   const speedTest = result[SETTINGS.NITTER.SPEED_TEST.CACHE_KEY];
   if (document.location.href.indexOf(SETTINGS.NITTER.SPEED_TEST.URL_SUFFIX) > -1) {
@@ -37,25 +37,23 @@ chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result
   }
 });
 
-// scenario 2) on startup, see if it's a SPECIAL matched background scrape request
-// (special in that we don't want recorder to do its thing; this is really just a story for uploaded profile scrape requests, for now)
-chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_URL], function(result) {
-  const bgUrl = result[SETTINGS.BG_SCRAPE.SCRAPE_URL];
+// on startup, see if it's a SPECIAL matched background scrape request
+chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_KEYS], function(result) {
 
-  if (bgUrl) {
-    _isBackgroundRecordingUrl = STR.sameText(STR.getUrlSansHashAndQueryString(document.location.href), STR.getUrlSansHashAndQueryString(bgUrl));
-    const bgParsedUrl = URLPARSE.parseUrl(bgUrl);
-    const thisDocParsedUrl = URLPARSE.getParsedUrl();
-    if (thisDocParsedUrl && URLPARSE.equivalentParsedUrl(bgParsedUrl, thisDocParsedUrl)) {
-      switch (thisDocParsedUrl.pageType) {
-        case PAGETYPE.TWITTER.PROFILE:
-          _shuntRecorder = true;
-          NITTER_PROFILE_PARSER.parseToTempStorage();
-          break;
+  const bgScrapeKeys = result[SETTINGS.BG_SCRAPE.SCRAPE_KEYS];
+  if (!bgScrapeKeys || bgScrapeKeys.length == 0) { return;}
+  
+  _isBackgroundRecordingUrl = URLPARSE.currentPageIsBackgroundRecordingUrl(bgScrapeKeys);
+  if (_isBackgroundRecordingUrl == true) {
+    const parsedUrl = URLPARSE.parseUrl();
+    switch (parsedUrl.pageType) {
+      case PAGETYPE.TWITTER.PROFILE:
+        _shuntRecorder = true;
+        NITTER_PROFILE_PARSER.parseToTempStorage();
+        break;
+      default:
         // note that TWITTER.TWEETS falls through b/c the recorder is relevant instead
-        default:
-          break;
-      }
+        break;
     }
   }
 });
