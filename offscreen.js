@@ -39,9 +39,15 @@ async function handleMessages(message) {
     case MSGTYPE.TO_OFFSCREEN.NAV_FRAME_URL:
       await navFrameUrl(message);
       break;
+    case MSGTYPE.TO_OFFSCREEN.CLOSE_FRAME:
+      removeFrame(message.url);
     default:
       break;
   }
+}
+
+function closeFrame(message) {
+
 }
 
 async function navFrameUrls(message) {
@@ -66,5 +72,13 @@ function attachFrameUrl(url) {
 function removeFrames() {
   document.querySelectorAll('iframe').forEach(function(fram) {
     fram.parentElement.removeChild(fram);
+  });
+}
+
+function removeFrame(url) {
+  document.querySelectorAll('iframe').forEach(function(fram) {
+    if (fram.src.toLowerCase() == url.toLowerCase()) {
+      fram.parentElement.removeChild(fram);
+    }
   });
 }
