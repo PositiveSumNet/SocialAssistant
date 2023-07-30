@@ -388,10 +388,10 @@ const scrapeNext = async function() {
 }
 
 const shouldRunSpeedTest = async function() {
-  const speedTestSetting = await chrome.storage.local.get('nitterSpeedTest');
+  let speedTestSetting = await chrome.storage.local.get('nitterSpeedTest');
   if (!speedTestSetting) { return true; }
-  const speedTest = JSON.parse(speedTestSetting['nitterSpeedTest']);
-  if (!speedTest || !speedTest['end']) {
+  speedTestSetting = speedTestSetting['nitterSpeedTest'];
+  if (!speedTestSetting || !speedTestSetting['end']) {
     return true;
   }
 
@@ -473,9 +473,6 @@ const navigateOffscreenDocument = async function(url) {
 
 // repeated at settingslib.js (not ready for background to be a 'module', so not DRY yet)
 const getNitterDomain = async function() {
-  // TEMPORARY
-  return 'nitter.net';
-
   // see if a speed-test has happened
   const speedTestSetting = await chrome.storage.local.get(['nitterSpeedTest']);
   const defaultDomain = 'nitter.net';

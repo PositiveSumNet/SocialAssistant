@@ -1,9 +1,9 @@
 chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   chrome.storage.local.get([SETTINGS.AGREED_TO_TERMS], async function(result) {
     if (result.agreedToTerms == 'true') {
+      activateApp();
       await onLoadReflectRecordingContext();
       loopUpdateExpirationDisplay();
-      activateApp();
       await kickoffNitterSpeedTest();
     }
   });
@@ -457,6 +457,8 @@ const reviewDb = async function() {
 const activateApp = function() {
   document.getElementById('termsSection').style.display = 'none';
   document.getElementById('appSection').style.display = 'block';
+  showRecordingDiv('notYetRecordingSection');
+  window.scrollTo(0, 0);
 }
 
 const btnAutoRecordingWhat = document.getElementById('btnAutoRecordingWhat');
