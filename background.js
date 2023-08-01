@@ -140,11 +140,7 @@ const injectImageBase64s = async function(records) {
     if (!item.skipImg64) {
       // a) the first way we can inject is simplest (by convention, imgCdnUrl gets an img64Url companion property)
       if (item.imgCdnUrl) {
-        try {
-          item.img64Url = await getImageBase64(item.imgCdnUrl);
-        } catch (error) {
-          console.error(error);
-        }
+        item.img64Url = await getImageBase64(item.imgCdnUrl);
       }
 
       // b) the other way we can inject is setting the img64Url companion property from RECORDING.infuseImgCdns
@@ -153,11 +149,7 @@ const injectImageBase64s = async function(records) {
         for (let j = 0; j < item.imgInfos.length; j++) {
           let imgInfo = item.imgInfos[j];
           if (imgInfo.imgCdnUrl) {
-            try {
-              imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
-            } catch (error) {
-              console.error(error);
-            }
+            imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
           }
         }
       }
@@ -178,15 +170,21 @@ const saveToTempStorage = function(records) {
 
 // stackoverflow.com/questions/57346889/how-to-return-base64-data-from-a-fetch-promise
 const getImageBase64 = async function(url) {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const reader = new FileReader();
-  await new Promise((resolve, reject) => {
-    reader.onload = resolve;
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-  return reader.result.replace(/^data:.+;base64,/, '')
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const reader = new FileReader();
+    await new Promise((resolve, reject) => {
+      reader.onload = resolve;
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return reader.result.replace(/^data:.+;base64,/, '')
+  }
+  catch(err) {
+    console.log(`img64err: ${err}`);
+    return undefined;
+  }
 }
 
 /******************************************/
@@ -454,7 +452,6 @@ const navigateOffscreenDocument = async function(url) {
   
   console.log('in-process');
   console.log(..._bgInProcessSet);
-
   await ensureOffscreenDocument();
 
   // this will help the content.js to know it's a background scrape request

@@ -73,6 +73,9 @@ const _script8Entities = [
   APPSCHEMA.SocialPostReplyToUrlKey,
   APPSCHEMA.SocialPostReposter,
   APPSCHEMA.SocialPostQuoteOf,
+  APPSCHEMA.SocialPostText,
+  APPSCHEMA.SocialPostSearchBlob,
+  APPSCHEMA.SocialPostCardSearchBlob,
   APPSCHEMA.SocialPostCardText,
   APPSCHEMA.SocialPostCardShortUrl,
   APPSCHEMA.SocialPostCardFullUrl,
@@ -117,7 +120,10 @@ const getMigrationScripts = function() {
   scripts.push(DBORM.MIGRATION.newScript(sql5, 5));
 
   // script 6 is because tables were case-sensitive before and should be case inensitive
-  const sql6 = `${writeMakeTablesCaseInsensitiveSql()}
+  const entsToMakeCaseInsensitive = [];
+  entsToMakeCaseInsensitive.push(..._initialEntities);
+  entsToMakeCaseInsensitive.push(..._script4Entities);
+  const sql6 = `${writeMakeTablesCaseInsensitiveSql(entsToMakeCaseInsensitive)}
     ${DBORM.MIGRATION.writeUpdateMigrationVersionSql(6)}`;
 
   scripts.push(DBORM.MIGRATION.newScript(sql6, 6));
@@ -197,9 +203,7 @@ const migrateToCaseInsensitiveSql = function(entity) {
   return sql;
 }
 
-const writeMakeTablesCaseInsensitiveSql = function() {
-  const entities = getAllEntities();
-
+const writeMakeTablesCaseInsensitiveSql = function(entities) {
   let sql = '';
   for (let i = 0; i < entities.length; i++) {
     let entity = entities[i];

@@ -82,6 +82,11 @@ window.onload = function() {
 
 // main scenario: recording
 const kickoffPollForRecording = async function() {
+  if (document.location.href.indexOf('nitter') > -1 && document.location.href.toLowerCase().indexOf(SETTINGS.NITTER.SPEED_TEST.URL_SUFFIX.toLowerCase()) > -1) {
+    // nitter speed test
+    return;
+  }
+  
   if (_shuntRecorder == true) {
     return;
   }
