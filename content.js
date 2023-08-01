@@ -20,18 +20,23 @@ var _shuntRecorder = false;
 var _recorder = null;
 
 // on startup, see if it's a speed-test situation
-chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], function(result) {
+chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], async function(result) {
   const speedTest = result[SETTINGS.NITTER.SPEED_TEST.CACHE_KEY];
   if (document.location.href.indexOf(SETTINGS.NITTER.SPEED_TEST.URL_SUFFIX) > -1) {
     if (!speedTest[SETTINGS.NITTER.SPEED_TEST.END]) {
       // test isn't over yet; first to finish "wins"
       const start = parseInt(speedTest[SETTINGS.NITTER.SPEED_TEST.START]);
+      // only valid if loads within 5 seconds
       if (Date.now() - start < 5000) {
-        // valid if within 5 seconds
-        speedTest[SETTINGS.NITTER.SPEED_TEST.END] = Date.now();
-        const domain = STR.extractDomain(document.location.href);
-        speedTest[SETTINGS.NITTER.SPEED_TEST.WINNER] = domain;
-        chrome.storage.local.set({ [SETTINGS.NITTER.SPEED_TEST.CACHE_KEY]: JSON.stringify(speedTest) });
+        // only valid if loads more than just the pinned tweet (when nitter is broken, sometimes that's all that loads)
+        const tweetElms = NPARSE.getTweetElms(document.body);
+        const isValid = tweetElms.length > 1;
+        if (isValid == true) {
+          speedTest[SETTINGS.NITTER.SPEED_TEST.END] = Date.now();
+          const domain = STR.extractDomain(document.location.href);
+          speedTest[SETTINGS.NITTER.SPEED_TEST.WINNER] = domain;
+          await chrome.storage.local.set({ [SETTINGS.NITTER.SPEED_TEST.CACHE_KEY]: speedTest });
+        }
       }
     }
   }

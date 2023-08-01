@@ -24,6 +24,7 @@ importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
 importScripts('/lib/worker/twitterprofilesavemapper.js');
 importScripts('/lib/worker/twitterconnsavemapper.js');
+importScripts('/lib/worker/tweetsavemapper.js');
 importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
 importScripts('/lib/worker/connfetcher.js');
@@ -66,11 +67,27 @@ const _script4Entities = [
   APPSCHEMA.SocialSourceIdentifier
 ];
 
+const _script8Entities = [
+  APPSCHEMA.SocialPostTime,
+  APPSCHEMA.SocialPostAuthorHandle,
+  APPSCHEMA.SocialPostReplyToUrlKey,
+  APPSCHEMA.SocialPostReposter,
+  APPSCHEMA.SocialPostQuoteOf,
+  APPSCHEMA.SocialPostCardText,
+  APPSCHEMA.SocialPostCardShortUrl,
+  APPSCHEMA.SocialPostCardFullUrl,
+  APPSCHEMA.SocialPostCardImgSourceUrl,
+  APPSCHEMA.SocialPostCardImgBinary,
+  APPSCHEMA.SocialPostRegImgSourceUrl,
+  APPSCHEMA.SocialPostRegImgBinary
+];
+
 const getAllEntities = function() {
   const arr = [];
   // as we add more entities beyond the initial set, this array will be a superset
   arr.push(..._initialEntities);
   arr.push(..._script4Entities);
+  arr.push(..._script8Entities);
   return arr;
 }
 
@@ -108,6 +125,9 @@ const getMigrationScripts = function() {
   // script 7 is because import tables were case-sensitive before and should be case insensitive
   scripts.push(DBORM.MIGRATION.writeEnsureImportTablesScript(7, APPNAME, true));
 
+  const sql8 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script8Entities, 8);
+  scripts.push(DBORM.MIGRATION.newScript(sql8, 8));
+  
   return scripts;
 }
 

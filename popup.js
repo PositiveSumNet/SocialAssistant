@@ -63,7 +63,7 @@ const btnChooseAutoScroll = document.getElementById('btnChooseAutoScroll');
 btnChooseAutoScroll.addEventListener('click', async () => {
   const lastParsedUrl = await SETTINGS.RECORDING.getLastParsedUrl();
   const currentParsedUrl = await getActiveTabParsedUrl();
-  
+
   let owner = undefined;
   let pageType = undefined;
   if (currentParsedUrl && !lastParsedUrl) {
@@ -72,6 +72,10 @@ btnChooseAutoScroll.addEventListener('click', async () => {
   }
   else if (lastParsedUrl && currentParsedUrl) {
     owner = URLPARSE.equivalentParsedUrl(lastParsedUrl, currentParsedUrl, true) == true ? currentParsedUrl.owner : lastParsedUrl.owner;
+    pageType = lastParsedUrl.pageType;
+  }
+  else if (lastParsedUrl) {
+    owner = lastParsedUrl.owner;
     pageType = lastParsedUrl.pageType;
   }
 

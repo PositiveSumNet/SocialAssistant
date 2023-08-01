@@ -388,14 +388,13 @@ const scrapeNext = async function() {
 }
 
 const shouldRunSpeedTest = async function() {
-  let speedTestSetting = await chrome.storage.local.get('nitterSpeedTest');
-  if (!speedTestSetting) { return true; }
-  speedTestSetting = speedTestSetting['nitterSpeedTest'];
+  const speedTestSetting = await getStorageValue('nitterSpeedTest');
+
   if (!speedTestSetting || !speedTestSetting['end']) {
     return true;
   }
 
-  const lastEnd = parseInt(speedTest['end']);
+  const lastEnd = parseInt(speedTestSetting['end']);
   return Date.now() - lastEnd > 30000;  // re-check every 30 seconds
 }
 
@@ -429,7 +428,7 @@ const kickoffNitterSpeedTestAsNeeded = async function() {
   if (needSpeedTest == true) {
     // see SETTINGS.NITTER.SPEED_TEST
     await chrome.storage.local.set({'nitterSpeedTest': { 'start': Date.now() }});
-    const testUrls = _nitterDomains.map(function(domain) { return `https://${domain}/search?f=users&q=jack`; });
+    const testUrls = _nitterDomains.map(function(domain) { return `https://${domain}/jack/with_replies`; });
     const settingFixUrls = await getNitterSettingFixUrls();
     testUrls.push(...settingFixUrls);
     
@@ -473,24 +472,18 @@ const navigateOffscreenDocument = async function(url) {
 
 // repeated at settingslib.js (not ready for background to be a 'module', so not DRY yet)
 const getNitterDomain = async function() {
-  // see if a speed-test has happened
-  const speedTestSetting = await chrome.storage.local.get(['nitterSpeedTest']);
   const defaultDomain = 'nitter.net';
+
+  // see if a speed-test has happened
+  const speedTestSetting = await getStorageValue('nitterSpeedTest');
   
-  if (!speedTestSetting) { 
-    // surprising, since we run speed test
-    console.log('Defaulting nitter');
-    return defaultDomain; 
-  }
-  
-  const speedTest = JSON.parse(speedTestSetting['nitterSpeedTest']);
-  if (!speedTest || !speedTest['winner']) {
+  if (!speedTestSetting || !speedTestSetting['winner']) {
     // surprising, since we run speed test
     console.log('Default for nitter');
     return defaultDomain;
   }
 
-  return speedTest['winner'];
+  return speedTestSetting['winner'];
 }
 
 // see notes at offscreen.js
@@ -553,3 +546,9 @@ const checkIfShouldAssumeDone = function() {
   }, 10000);  
 }
 checkIfShouldAssumeDone();
+
+const getStorageValue = async function(key) {
+  const setting = await chrome.storage.local.get(key);
+  if (!setting) { return null; }
+  return setting[key];
+}
