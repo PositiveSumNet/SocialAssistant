@@ -41,6 +41,11 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(re
   // console.log('userauth: ' + _mdonUserAuthToken);
 });
 
+// each time this page loads/refreshes, we make sure background tasks are running (as needed) for offscreen scraping
+chrome.runtime.sendMessage({ 
+  actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE
+});
+
 // listen for messages (aside from worker messages which are handled separately)
 chrome.runtime.onMessage.addListener(handleMessages);
 async function handleMessages(message) {

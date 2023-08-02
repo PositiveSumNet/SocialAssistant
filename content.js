@@ -36,6 +36,10 @@ chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], async function(
           const domain = STR.extractDomain(document.location.href);
           speedTest[SETTINGS.NITTER.SPEED_TEST.WINNER] = domain;
           await chrome.storage.local.set({ [SETTINGS.NITTER.SPEED_TEST.CACHE_KEY]: speedTest });
+          // now that speed test is done, tell the background process to ensure that it gets going on background/offscreen scraping, as needed
+          chrome.runtime.sendMessage({ 
+            actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE
+          });
         }
       }
     }
@@ -43,14 +47,14 @@ chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], async function(
 });
 
 // on startup, see if it's a SPECIAL matched background scrape request
-chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_KEYS], function(result) {
+chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_KEYS], async function(result) {
 
   const bgScrapeKeys = result[SETTINGS.BG_SCRAPE.SCRAPE_KEYS];
   if (!bgScrapeKeys || bgScrapeKeys.length == 0) { return;}
   
   _isBackgroundRecordingUrl = URLPARSE.currentPageIsBackgroundRecordingUrl(bgScrapeKeys);
   if (_isBackgroundRecordingUrl == true) {
-    const parsedUrl = URLPARSE.parseUrl();
+    const parsedUrl = RECORDING.getParsedUrl();
     switch (parsedUrl.pageType) {
       case PAGETYPE.TWITTER.PROFILE:
         _shuntRecorder = true;

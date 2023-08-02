@@ -49,8 +49,8 @@
         "https://mobile.twitter.com/*",
         "https://nitter.net/*",
         "https://nitter.at/*",
-        "https://nitter.it/*",
-        "https://nitter.one/*"
+        "https://nitter.one/*",
+        "https://nitter.cz/*"
       ]
     }
   ],
@@ -68,8 +68,8 @@
   "host_permissions": [
     "https://nitter.net/",
     "https://nitter.at/",
-    "https://nitter.it/",
-    "https://nitter.one/"
+    "https://nitter.one/",
+    "https://nitter.cz/"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"

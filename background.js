@@ -10,8 +10,8 @@ const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 const _nitterDomains = [
   'nitter.net',
   'nitter.at',
-  'nitter.it',
-  'nitter.one'
+  'nitter.one',
+  'nitter.cz'
 ];
 
 /**************************/
@@ -287,8 +287,17 @@ const processLastScrape = async function(lastScrapedParsedUrl) {
     });
 }
 
-// lastScrapedParsedUrl is in the form of 
 const ensureQueuedScrapeRequests = async function(lastScrapedParsedUrl) {
+  const context = await chrome.storage.local.get('recordingContext');
+  if (!context || !context.recordingContext || !context.recordingContext.auto) { 
+    // they never did auto-recording
+    return; 
+  }
+  // if "resolve full threads" is false (which is *not* the default btw), then don't do this
+  if (context.recordingContext.auto.resolvesThreads === false) {
+    return;
+  }
+  
   // if we weren't passed a lastScrapedParsedUrl and there are _bgInProcessSet records,
   // then let's finish processing them first (abandoning hope on completion after 5 seconds)
   if (!lastScrapedParsedUrl && _bgInProcessSet.length > 0 && _bgLastKickoff && (Date.now() - _bgLastKickoff > 5000)) {
@@ -420,6 +429,12 @@ const getNitterSettingFixUrls = async function() {
 
 // to help subsequent nitter calls to know which server is best to use
 const kickoffNitterSpeedTestAsNeeded = async function() {
+  if (_bgInProcessSet.size == 0) {
+    // to get the storage key (our way of communicating with content.js) to be in line with our empty in-memory variable
+    // instead of holding over from the last session... and since it's async, we didn't have an easy opportunity "on startup" of background.js
+    await chrome.storage.local.remove('bgScrapeKeys');
+  }
+
   await ensureOffscreenDocument();
 
   const needSpeedTest = await shouldRunSpeedTest();
