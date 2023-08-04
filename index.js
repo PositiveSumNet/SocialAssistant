@@ -297,11 +297,15 @@ const initUi = function(owner, pageType) {
   switch (pageType) {
     case PAGETYPE.TWITTER.FOLLOWERS:
     case PAGETYPE.MASTODON.FOLLOWERS:
-        document.getElementById('optFollowers').checked = true;
+        document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWERS;
       break;
     case PAGETYPE.TWITTER.FOLLOWING:
     case PAGETYPE.MASTODON.FOLLOWING:
-        document.getElementById('optFollowing').checked = true;
+        document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWING;
+      break;
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      document.getElementById('cmbType').value = POSTS;
       break;
     default:
       break;
@@ -386,8 +390,6 @@ const getUiValue = function(id) {
   switch (id) {
     case 'txtOwnerHandle':
       return txtOwnerHandle.value;
-    case 'optFollowDirection':
-      return document.getElementById('optFollowers').checked ? CONN_DIRECTION.FOLLOWERS : CONN_DIRECTION.FOLLOWING;
     case 'txtConnSearch':
       return txtConnSearch.value;
     case 'txtPageNum':
@@ -407,10 +409,23 @@ const getUiValue = function(id) {
   }
 }
 
-const getPageType = function(direction) {
-  direction = direction || getUiValue('optFollowDirection');
+const getPageType = function() {
   const site = SETTINGS.getCachedSite();
-  return PAGETYPE.getPageType(site, direction);
+  let type = document.getElementById('cmbType').value;
+
+  if (type == POSTS) {
+    switch (site) {
+      case SITE.TWITTER:
+        return PAGETYPE.TWEETS;
+      case SITE.MASTODON:
+        return PAGETYPE.TOOTS;
+      default:
+        return undefined;
+    }
+  }
+  else {
+    return PAGETYPE.getPageType(site, type);
+  }
 }
 
 const resetPage = function() {
@@ -561,7 +576,7 @@ const requestTotalCount = function() {
     const counter = _counters.find(function(c) { return c.key === key; });
     if (counter && counter.value) {
       // we already have this count cached; apply it
-      setFollowLabelCaption(pageType, counter.value);
+      displayTotalCount(counter.value);
     }
     // else wait for fetch to finish; either way, we're done
     return;
@@ -596,21 +611,6 @@ const networkSearch = function(forceRefresh) {
   worker.postMessage(msg);
 }
 
-const setFollowLabelCaption = function(pageType, count) {
-  switch (pageType) {
-    case PAGETYPE.TWITTER.FOLLOWING:
-    case PAGETYPE.MASTODON.FOLLOWING:
-      document.getElementById('optFollowingLabel').textContent = `following (${count})`;
-      return;
-    case PAGETYPE.TWITTER.FOLLOWERS:
-    case PAGETYPE.MASTODON.FOLLOWERS:
-      document.getElementById('optFollowersLabel').textContent = `followers (${count})`;
-      return;
-    default:
-      return;
-  }
-}
-
 const renderNetworkSize = function(payload) {
   const uiPageType = getPageType();
   const uiOwner = getOwnerFromUi();
@@ -630,13 +630,13 @@ const renderNetworkSize = function(payload) {
   
   const count = payload.totalCount;
   counter.value = count;  // cached for later
-  setFollowLabelCaption(uiPageType, count);
+  displayTotalCount(count);
 }
 
 const clearConnectionUiElms = function() {
   document.getElementById('paginated-list').replaceChildren();
   document.getElementById('listOwnerPivotPicker').replaceChildren();
-  clearFollowCounters();
+  clearTotalCount();
 }
 
 const canRenderMastodonFollowOneButtons = function() {
@@ -722,8 +722,6 @@ ES6.TRISTATE.initAll();
 
 const txtOwnerHandle = document.getElementById('txtOwnerHandle');
 const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
-const optFollowing = document.getElementById('optFollowing');
-const optFollowers = document.getElementById('optFollowers');
 const followSearch = document.getElementById('txtConnSearch');
 const txtPageNum = document.getElementById('txtPageNum');
 
@@ -752,12 +750,9 @@ const optClear = document.getElementById('optClear');
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
 const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
 
-optFollowing.addEventListener('change', (event) => {
+document.getElementById('cmbType').addEventListener('change', (event) => {
   resetPage();
-  networkSearch();
-});
-optFollowers.addEventListener('change', (event) => {
-  resetPage();
+  setOptionVisibility();
   networkSearch();
 });
 
@@ -911,15 +906,17 @@ listOwnerPivotPicker.onclick = function(event) {
   onChooseOwner();
 };
 
-const clearFollowCounters = function() {
-  // the nbsp values are to be less jarring with width changes
-  document.getElementById('optFollowersLabel').innerHTML = `followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-  document.getElementById('optFollowingLabel').innerHTML = `following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+const clearTotalCount = function() {
+  document.getElementById('txtConnSearch').setAttribute('placeholder', 'search...');
+}
+
+const displayTotalCount = function(count) {
+  document.getElementById('txtConnSearch').setAttribute('placeholder', `search (${count} total)...`);
 }
 
 const onChooseOwner = function() {
   // when owner changes, we need to reset the counts and then request a refreshed count
-  clearFollowCounters();
+  clearTotalCount();
   listOwnerPivotPicker.replaceChildren();
   resetPage();
   networkSearch();
@@ -1319,7 +1316,6 @@ const updateForSite = function() {
   stopExport();
   
   const site = SETTINGS.getCachedSite();
-  SETTINGS.cacheSite(site);
   // clear what's there now
   clearConnectionUiElms();
   _lastRenderedFollowsRequest = '';
@@ -1332,7 +1328,7 @@ const updateForSite = function() {
   const mastodonApiUi = document.getElementById('mdonApiUi');
 
   setOptionVisibility();
-  
+
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
     
@@ -1369,6 +1365,16 @@ const updateForSite = function() {
 }
 
 const setOptionVisibility = function() {
+  const queryOptions = document.getElementById('queryOptions');
+  const cmbType = document.getElementById('cmbType');
+
+  if (cmbType.value == POSTS) {
+    queryOptions.style.display = 'none';
+    return;
+  }
+  
+  queryOptions.style.display = 'block';
+
   // default to undefined (no filter applied) for the tri-state
   const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
   ES6.TRISTATE.setValue(chkMdonImFollowing, undefined);
@@ -1381,6 +1387,7 @@ const setOptionVisibility = function() {
   const filterMdonImFollowing = document.getElementById('filterMdonImFollowing');
   const filterWithEmail = document.getElementById('filterWithEmail');
   const btnFollowAllOnMastodon = document.getElementById('btnFollowAllOnMastodon');
+  const optPosts = document.getElementById('optPosts');
 
   if (site === SITE.MASTODON || mdonMode === true) {
     // cell (1,2) switches from the Mastodon radio button (which is already true) to the 'Where I'm following' filter
@@ -1389,12 +1396,14 @@ const setOptionVisibility = function() {
     // cell (1,3) switches from 'w/ Email' to the 'Follow on Mastodon!' button
     filterWithEmail.style.display = 'none';
     btnFollowAllOnMastodon.style.display = 'inline-block';
+    optPosts.style.display = 'none';
   }
   else {
     filterTwitterWithMdonLink.style.display = 'block';
     filterMdonImFollowing.style.display = 'none';
     filterWithEmail.style.display = 'block';
     btnFollowAllOnMastodon.style.display = 'none';
+    optPosts.style.display = 'inline';
   }
 }
 

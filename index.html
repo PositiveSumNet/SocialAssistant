@@ -140,7 +140,7 @@
             <label class="form-check-label" for="optImportContextTwitterProfilesToScrape">(advanced) Twitter profiles to scrape and save</label>
           </div>
         </div>
-        <br/>
+        <br>
         <div id="drop-area">
           <form class="my-form">
             <p>Upload multiple files (click or drag & drop)</p>
@@ -226,20 +226,17 @@
       </div>
       <div id="dbui" class="row pb-2 container-fluid">
         <div id="listFilterSet" class='row'>
+          <div id='followDirection' class='col-sm-auto pt-2'>
+            <select id="cmbType" class="form-select">
+              <option id="optFollowedByWhom" value="following">Followed by</option>
+              <option id="optFollowersOfWhom" value="followers">Followers of</option>
+              <option id="optPosts" value="posts">Posts</option>
+            </select>
+          </div>
           <div class='pt-2 col-2'>
             <div class='input-group' style="margin-bottom:20px;">
               <label for='txtOwnerHandle' class='text-muted input-group-text'>@</label>
               <input id='txtOwnerHandle' type='text' placeholder='account' class='form-control' >
-            </div>
-          </div>
-          <div id='followDirection' class='col-sm-auto'>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing">
-              <label class="form-check-label" id="optFollowingLabel" for="optFollowing">following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
-              <label class="form-check-label" id="optFollowersLabel" for="optFollowers">followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
             </div>
           </div>
           <div class='pt-2 col-2'>
