@@ -411,14 +411,13 @@ const getUiValue = function(id) {
 
 const getPageType = function() {
   const site = SETTINGS.getCachedSite();
-  let type = document.getElementById('cmbType').value;
-
+  const type = document.getElementById('cmbType').value;
   if (type == POSTS) {
     switch (site) {
       case SITE.TWITTER:
-        return PAGETYPE.TWEETS;
+        return PAGETYPE.TWITTER.TWEETS;
       case SITE.MASTODON:
-        return PAGETYPE.TOOTS;
+        return PAGETYPE.MASTODON.TOOTS;
       default:
         return undefined;
     }
@@ -513,7 +512,7 @@ const buildSearchRequestFromUi = function() {
   const mdonFollowing = ES6.TRISTATE.getValue(chkMdonImFollowing);
   
   const msg = { 
-    actionType: MSGTYPE.TODB.NETWORK_SEARCH, 
+    actionType: MSGTYPE.TODB.EXECUTE_SEARCH, 
     pageType: pageType,
     site: site,
     networkOwner: owner, 

@@ -233,8 +233,8 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.INPUT_FOLLOW_OWNER:
       CONNFETCHER.inputFollowOwner(evt.data);
       break;
-    case MSGTYPE.TODB.NETWORK_SEARCH:
-      CONNFETCHER.executeSearch(evt.data);
+    case MSGTYPE.TODB.EXECUTE_SEARCH:
+      executeSearch(evt.data);
       break;
     case MSGTYPE.TODB.GET_NETWORK_SIZE:
       CONNFETCHER.getNetworkSize(evt.data);
@@ -255,6 +255,18 @@ onmessage = (evt) => {
       break;
   }
 };
+
+const executeSearch = function(request) {
+  switch (request.pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      console.log('todo: search posts');
+      break;
+    default:
+      CONNFETCHER.networkSearch(request);
+      break;
+  }
+}
 
 const savePageRecords = function(data) {
   const recordCount = DBORM.SAVING.saveRecords(data);
