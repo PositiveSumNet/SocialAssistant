@@ -291,6 +291,7 @@ const initUi = function(owner, pageType) {
   }
 
   updateForSite();
+
   // pageType/direction
   pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
 
@@ -326,6 +327,8 @@ const initUi = function(owner, pageType) {
     waitForOwnerCallback = true;
     worker.postMessage(msg);
   }
+
+  setOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   

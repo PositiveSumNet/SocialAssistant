@@ -28,6 +28,7 @@ importScripts('/lib/worker/tweetsavemapper.js');
 importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
 importScripts('/lib/worker/connfetcher.js');
+importScripts('/lib/worker/postfetcher.js');
 
 self
   .sqlite3InitModule({
@@ -260,7 +261,7 @@ const executeSearch = function(request) {
   switch (request.pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
-      console.log('todo: search posts');
+      POSTFETCHER.postSearch(request);
       break;
     default:
       CONNFETCHER.networkSearch(request);
