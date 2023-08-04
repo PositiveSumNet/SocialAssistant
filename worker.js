@@ -234,7 +234,7 @@ onmessage = (evt) => {
       CONNFETCHER.inputFollowOwner(evt.data);
       break;
     case MSGTYPE.TODB.NETWORK_SEARCH:
-      CONNFETCHER.networkSearch(evt.data);
+      CONNFETCHER.executeSearch(evt.data);
       break;
     case MSGTYPE.TODB.GET_NETWORK_SIZE:
       CONNFETCHER.getNetworkSize(evt.data);

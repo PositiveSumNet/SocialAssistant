@@ -330,7 +330,7 @@ const initUi = function(owner, pageType) {
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
-    networkSearch(owner, pageType);
+    executeSearch(owner, pageType);
   }
 }
 
@@ -382,7 +382,7 @@ const renderSuggestedOwner = function(payload) {
     document.getElementById('txtOwnerHandle').value = owner.Handle;
     // we're doing a page init and so far it's empty, so let's
     resetPage();
-    networkSearch();
+    executeSearch();
   }
 }
 
@@ -460,7 +460,7 @@ const onClickedMdonOption = function() {
 
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
-  networkSearch();  
+  executeSearch();  
 }
 
 const ensureAskedMdonServer = function() {
@@ -491,7 +491,7 @@ const getOwnerFromUi = function() {
   return owner;
 }
 
-const buildNetworkSearchRequestFromUi = function() {
+const buildSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
   const site = PAGETYPE.getSite(pageType);
@@ -535,7 +535,7 @@ const buildNetworkSearchRequestFromUi = function() {
   return msg;
 }
 
-const showNetworkSearchProgress = function(show) {
+const showSearchProgress = function(show) {
   const elm = document.getElementById('connListProgress');
   if (show === true) {
     elm.style.visibility = 'visible';
@@ -591,8 +591,8 @@ const requestTotalCount = function() {
   _counters.push({key: key});   // value not set yet; will be when called back
 }
 
-const networkSearch = function(forceRefresh) {
-  const msg = buildNetworkSearchRequestFromUi();
+const executeSearch = function(forceRefresh) {
+  const msg = buildSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
   
   SETTINGS.cachePageState(msg);
@@ -607,7 +607,7 @@ const networkSearch = function(forceRefresh) {
     clearCachedCountForCurrentRequest();
   }
 
-  showNetworkSearchProgress(true);
+  showSearchProgress(true);
   worker.postMessage(msg);
 }
 
@@ -667,7 +667,7 @@ const renderConnections = function(payload) {
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
   
-  showNetworkSearchProgress(false);
+  showSearchProgress(false);
   onAddedFollows(plist);
   requestTotalCount();
   
@@ -753,43 +753,43 @@ const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivot
 document.getElementById('cmbType').addEventListener('change', (event) => {
   resetPage();
   setOptionVisibility();
-  networkSearch();
+  executeSearch();
 });
 
 chkMutual.addEventListener('change', (event) => {
   resetPage();
-  networkSearch();
+  executeSearch();
 });
 chkFavorited.addEventListener('change', (event) => {
   resetPage();
-  networkSearch();
+  executeSearch();
 });
 optWithMdon.addEventListener('change', (event) => {
   onClickedMdonOption();
 });
 optWithEmail.addEventListener('change', (event) => {
   resetPage();
-  networkSearch();
+  executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
   setOptionVisibility();
   resetPage();
-  networkSearch();
+  executeSearch();
 });
 chkMdonImFollowing.addEventListener('change', (event) => {
   resetPage();
-  networkSearch();
+  executeSearch();
 });
 optClear.addEventListener('change', (event) => {
   setOptionVisibility();
   resetPage();
-  networkSearch();
+  executeSearch();
 });
 
 // searching
 const handleTypeSearch = ES6.debounce((event) => {
   resetPage();
-  networkSearch();
+  executeSearch();
 }, 250);
 // ... uses debounce
 followSearch.addEventListener('input', handleTypeSearch);
@@ -798,7 +798,7 @@ followSearch.addEventListener('input', handleTypeSearch);
 txtPageNum.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     event.preventDefault();
-    networkSearch();
+    executeSearch();
   }
 });
 
@@ -856,7 +856,7 @@ document.getElementById('priorPage').onclick = function(event) {
   const pageNum = getUiValue('txtPageNum');
   if (pageNum > 1) {
     txtPageNum.value = pageNum - 1;
-    networkSearch();
+    executeSearch();
   }
   return false;
 };
@@ -864,7 +864,7 @@ document.getElementById('priorPage').onclick = function(event) {
 document.getElementById('nextPage').onclick = function(event) {
   const pageNum = getPageNum();
   txtPageNum.value = pageNum + 1;
-  networkSearch();
+  executeSearch();
   return false;
 };
 
@@ -883,7 +883,7 @@ document.getElementById('pageGear').onclick = function(event) {
     else {
       localStorage.setItem('pageSize', intVal);
       resetPage();
-      networkSearch();
+      executeSearch();
     }
   }
   return false;
@@ -895,7 +895,7 @@ document.getElementById('mdonGear').onclick = function(event) {
   if (mdonServer != null) {
     // re-render
     optWithMdon.checked = true;
-    networkSearch();
+    executeSearch();
   }
   return false;
 };
@@ -919,7 +919,7 @@ const onChooseOwner = function() {
   clearTotalCount();
   listOwnerPivotPicker.replaceChildren();
   resetPage();
-  networkSearch();
+  executeSearch();
 }
 
 /************************/
@@ -1291,7 +1291,7 @@ document.getElementById('twitterLensBtn').onclick = function(event) {
   if (site != SITE.TWITTER) {
     SETTINGS.cacheSite(SITE.TWITTER);
     updateForSite();
-    networkSearch();
+    executeSearch();
   }
 
   return false;
@@ -1308,7 +1308,7 @@ const activateMastodonTab = function() {
   if (site != SITE.MASTODON) {
     SETTINGS.cacheSite(SITE.MASTODON);
     updateForSite();
-    networkSearch();
+    executeSearch();
   }
 }
 
