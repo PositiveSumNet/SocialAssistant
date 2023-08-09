@@ -261,6 +261,9 @@ worker.onmessage = function ({ data }) {
     case MSGTYPE.FROMDB.RENDER.CONNECTIONS:
       renderConnections(data.payload);
       break;
+    case MSGTYPE.FROMDB.RENDER.POST_STREAM:
+      renderPostStream(data.payload);
+      break;
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       renderNetworkSize(data.payload);
       break;
@@ -293,6 +296,7 @@ const initUi = function(owner, pageType) {
   updateForSite();
 
   // pageType/direction
+  let autoResolveOwner = true;
   pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
 
   switch (pageType) {
@@ -307,25 +311,31 @@ const initUi = function(owner, pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
       document.getElementById('cmbType').value = POSTS;
+      autoResolveOwner = false;
       break;
     default:
       break;
   }
 
   // set owner
-  owner = owner || SETTINGS.getCachedOwner();
   let waitForOwnerCallback = false;
-  
-  if (!owner || owner.length === 0) {
-    // we'll initialize to empty string, but 
-    // we'll tell the worker to call us back with the most sensible initial value
-    const msg = { 
-      actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
-      pageType: pageType
-    };
+  if (autoResolveOwner) {
+    owner = owner || SETTINGS.getCachedOwner();
     
-    waitForOwnerCallback = true;
-    worker.postMessage(msg);
+    if (!owner || owner.length === 0) {
+      // we'll initialize to empty string, but 
+      // we'll tell the worker to call us back with the most sensible initial value
+      const msg = { 
+        actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
+        pageType: pageType
+      };
+      
+      waitForOwnerCallback = true;
+      worker.postMessage(msg);
+    }
+  }
+  else {
+    owner = '';
   }
 
   setOptionVisibility();
@@ -339,6 +349,10 @@ const initUi = function(owner, pageType) {
 
 const detailReflectsFilter = function() {
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
+}
+
+const renderPost = function(post) {
+  return RENDER.POST.renderPost(post);
 }
 
 const renderPerson = function(person, context) {
@@ -520,7 +534,7 @@ const buildSearchRequestFromUi = function() {
     site: site,
     networkOwner: owner, 
     searchText: searchText, 
-    orderBy: 'Handle',  // Handle or DisplayName
+    orderBy: 'Handle',
     skip: skip,
     take: pageSize,
     // filters
@@ -635,10 +649,13 @@ const renderNetworkSize = function(payload) {
   displayTotalCount(count);
 }
 
-const clearConnectionUiElms = function() {
+const initMainListUiElms = function() {
   document.getElementById('paginated-list').replaceChildren();
   document.getElementById('listOwnerPivotPicker').replaceChildren();
   clearTotalCount();
+
+  const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
+  document.getElementById('pageGear').setAttribute("title", pageGearTip);
 }
 
 const canRenderMastodonFollowOneButtons = function() {
@@ -647,9 +664,23 @@ const canRenderMastodonFollowOneButtons = function() {
   return site === SITE.MASTODON || mdonMode === true;
 }
 
-const renderConnections = function(payload) {
-  clearConnectionUiElms();
+const renderPostStream = function(payload) {
+  initMainListUiElms();
+  const plist = document.getElementById('paginated-list');
   
+  // rows
+  const rows = payload.rows;
+  for (let i = 0; i < rows.length; i++) {
+    let row = rows[i];
+      // renderPost uses DOMPurify.sanitize
+      plist.innerHTML += renderPost(row);
+  }
+
+  showSearchProgress(false);
+}
+
+const renderConnections = function(payload) {
+  initMainListUiElms();
   const plist = document.getElementById('paginated-list');
   
   // rows
@@ -661,13 +692,9 @@ const renderConnections = function(payload) {
   }
 
   IMAGE.resolveDeferredLoadImages(plist);
-
   if (canRenderMastodonFollowOneButtons() === true) {
     MASTODON.renderFollowOnMastodonButtons(plist);
   }
-  
-  const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
-  document.getElementById('pageGear').setAttribute("title", pageGearTip);
   
   showSearchProgress(false);
   onAddedFollows(plist);
@@ -1319,7 +1346,7 @@ const updateForSite = function() {
   
   const site = SETTINGS.getCachedSite();
   // clear what's there now
-  clearConnectionUiElms();
+  initMainListUiElms();
   _lastRenderedFollowsRequest = '';
   
   const owner = SETTINGS.getCachedOwner(site);
