@@ -229,10 +229,10 @@ onmessage = (evt) => {
       DBORM.SAVING.xferCacheToDb(evt.data);
       break;
     case MSGTYPE.TODB.SUGGEST_OWNER:
-      CONNFETCHER.suggestOwner(evt.data);
+      suggestOwner(evt.data);
       break;
     case MSGTYPE.TODB.INPUT_FOLLOW_OWNER:
-      CONNFETCHER.inputFollowOwner(evt.data);
+      inputFollowOwner(evt.data);
       break;
     case MSGTYPE.TODB.EXECUTE_SEARCH:
       executeSearch(evt.data);
@@ -256,6 +256,30 @@ onmessage = (evt) => {
       break;
   }
 };
+
+const inputFollowOwner = function(request) {
+  switch (request.pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      // to-do
+      break;
+    default:
+      CONNFETCHER.inputFollowOwner(request);
+      break;
+  }
+}
+
+const suggestOwner = function(request) {
+  switch (request.pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      // to-do
+      break;
+    default:
+      CONNFETCHER.suggestOwner(request);
+      break;
+  }
+}
 
 const executeSearch = function(request) {
   switch (request.pageType) {
