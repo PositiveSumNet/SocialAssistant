@@ -352,7 +352,9 @@ const detailReflectsFilter = function() {
 }
 
 const renderPost = function(post) {
-  return RENDER.POST.renderPost(post);
+  const pageType = getPageType();
+  const site = PAGETYPE.getSite(pageType);
+  return RENDER.POST.renderPost(post, site);
 }
 
 const renderPerson = function(person, context) {
