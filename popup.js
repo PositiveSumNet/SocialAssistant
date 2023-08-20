@@ -426,6 +426,7 @@ const onChangeAutoRecordViaNitter = function() {
 const btnStopAutoRecording = document.getElementById('btnStopAutoRecording');
 btnStopAutoRecording.addEventListener('click', async () => {
   await stopRecording();
+  // while debugging save, can comment out next line
   window.close();
 });
 
@@ -438,6 +439,7 @@ const stopRecording = async function() {
   }
 
   await SETTINGS.RECORDING.saveContext(context);
+  // while debugging save, can comment out next line
   await reviewDb();
 }
 
