@@ -72,6 +72,7 @@ const _script8Entities = [
   APPSCHEMA.SocialPostTime,
   APPSCHEMA.SocialPostAuthorHandle,
   APPSCHEMA.SocialPostReplyToUrlKey,
+  APPSCHEMA.SocialPostThreadUrlKey,
   APPSCHEMA.SocialPostReposter,
   APPSCHEMA.SocialPostQuoteOf,
   APPSCHEMA.SocialPostText,
