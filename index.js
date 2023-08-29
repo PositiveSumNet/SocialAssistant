@@ -409,8 +409,8 @@ const getUiValue = function(id) {
   switch (id) {
     case 'txtOwnerHandle':
       return txtOwnerHandle.value;
-    case 'txtConnSearch':
-      return txtConnSearch.value;
+    case 'txtSearch':
+      return txtSearch.value;
     case 'txtPageNum':
       return parseInt(txtPageNum.value);
     case 'chkMutual':
@@ -514,7 +514,7 @@ const buildSearchRequestFromUi = function() {
   const pageType = getPageType();
   const site = PAGETYPE.getSite(pageType);
   const pageSize = SETTINGS.getPageSize();
-  const searchText = getUiValue('txtConnSearch');
+  const searchText = getUiValue('txtSearch');
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
@@ -753,7 +753,7 @@ ES6.TRISTATE.initAll();
 
 const txtOwnerHandle = document.getElementById('txtOwnerHandle');
 const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
-const followSearch = document.getElementById('txtConnSearch');
+const followSearch = document.getElementById('txtSearch');
 const txtPageNum = document.getElementById('txtPageNum');
 
 // FILTERS
@@ -845,7 +845,7 @@ const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
   
   worker.postMessage({
-    actionType: MSGTYPE.TODB.INPUT_FOLLOW_OWNER,
+    actionType: MSGTYPE.TODB.INPUT_OWNER,
     pageType: pageType,
     searchText: userInput,
     limit: 5
@@ -938,11 +938,11 @@ listOwnerPivotPicker.onclick = function(event) {
 };
 
 const clearTotalCount = function() {
-  document.getElementById('txtConnSearch').setAttribute('placeholder', 'search...');
+  document.getElementById('txtSearch').setAttribute('placeholder', 'search...');
 }
 
 const displayTotalCount = function(count) {
-  document.getElementById('txtConnSearch').setAttribute('placeholder', `search (${count} total)...`);
+  document.getElementById('txtSearch').setAttribute('placeholder', `search (${count} total)...`);
 }
 
 const onChooseOwner = function() {

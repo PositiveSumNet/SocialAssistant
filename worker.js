@@ -232,8 +232,8 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.SUGGEST_OWNER:
       suggestOwner(evt.data);
       break;
-    case MSGTYPE.TODB.INPUT_FOLLOW_OWNER:
-      inputFollowOwner(evt.data);
+    case MSGTYPE.TODB.INPUT_OWNER:
+      inputOwner(evt.data);
       break;
     case MSGTYPE.TODB.EXECUTE_SEARCH:
       executeSearch(evt.data);
@@ -258,14 +258,14 @@ onmessage = (evt) => {
   }
 };
 
-const inputFollowOwner = function(request) {
+const inputOwner = function(request) {
   switch (request.pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
       // to-do
       break;
     default:
-      CONNFETCHER.inputFollowOwner(request);
+      CONNFETCHER.inputOwner(request);
       break;
   }
 }
