@@ -509,6 +509,18 @@ const getOwnerFromUi = function() {
   return owner;
 }
 
+// TO-DO
+const getOrderByFromUi = function() {
+  const pageType = getPageType();
+  switch (pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      return ORDER_BY.POST_LIKE_COUNT_DESC;
+    default:
+      return ORDER_BY.HANDLE;
+  }
+}
+
 const buildSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
@@ -530,13 +542,15 @@ const buildSearchRequestFromUi = function() {
 
   const mdonFollowing = ES6.TRISTATE.getValue(chkMdonImFollowing);
   
+  const orderBy = getOrderByFromUi();
+
   const msg = { 
     actionType: MSGTYPE.TODB.EXECUTE_SEARCH, 
     pageType: pageType,
     site: site,
     networkOwner: owner, 
     searchText: searchText, 
-    orderBy: 'Handle',
+    orderBy: orderBy,
     skip: skip,
     take: pageSize,
     // filters
@@ -843,7 +857,20 @@ const handleFromClickedOwner = function(event) {
 
 const suggestAccountOwner = function(userInput) {
   const pageType = getPageType();
-  
+  switch (pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      if (!userInput || userInput.length === 0) {
+        // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
+        listOwnerPivotPicker.replaceChildren();
+        executeSearch();
+        return;
+      }
+      break;
+    default:
+      break;
+  }
+
   worker.postMessage({
     actionType: MSGTYPE.TODB.INPUT_OWNER,
     pageType: pageType,

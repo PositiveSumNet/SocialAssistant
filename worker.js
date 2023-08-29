@@ -84,7 +84,10 @@ const _script8Entities = [
   APPSCHEMA.SocialPostCardImgSourceUrl,
   APPSCHEMA.SocialPostCardImgBinary,
   APPSCHEMA.SocialPostRegImgSourceUrl,
-  APPSCHEMA.SocialPostRegImgBinary
+  APPSCHEMA.SocialPostRegImgBinary,
+  APPSCHEMA.SocialPostReplyCount,
+  APPSCHEMA.SocialPostLikeCount,
+  APPSCHEMA.SocialPostReshareCount
 ];
 
 const getAllEntities = function() {
@@ -262,7 +265,7 @@ const inputOwner = function(request) {
   switch (request.pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
-      // to-do
+      POSTFETCHER.inputOwner(request);
       break;
     default:
       CONNFETCHER.inputOwner(request);

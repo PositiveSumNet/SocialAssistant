@@ -15,7 +15,6 @@
   When the DB UI is opened, records are flushed from localStorage to the SQLite database.
   
 */
-
 var _shuntRecorder = false;
 var _recorder = null;
 

@@ -299,3 +299,16 @@ input.textinput:focus {
 .indented-switches {
   margin-left: 40px;
 }
+
+.postAuthorImg {
+  width: 60px;
+  height: 60px;
+}
+
+.nameHandleSep {
+ color: #ced4da;
+}
+
+.postAuthorName, .nameHandleSep, .postAuthorHandle {
+  vertical-align: top;
+}
