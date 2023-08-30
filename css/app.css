@@ -301,14 +301,47 @@ input.textinput:focus {
 }
 
 .postAuthorImg {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
 }
 
-.nameHandleSep {
+.basicSep, .lightfont {
  color: #ced4da;
 }
 
-.postAuthorName, .nameHandleSep, .postAuthorHandle {
+.postHeadline * {
   vertical-align: top;
+}
+
+.socialPost a {
+  color: #14416A;
+}
+
+.socialPost a:hover {
+  color: #0071c1;
+}
+
+.postAuthorName {
+  font-weight:bold;
+}
+
+.replyToPost, .quotedPost {
+  border-top: solid 1px #ced4da;
+}
+
+.quotedPost {
+  padding-top: .5rem!important;
+}
+
+.postHeadline, .replyToPost, .postContent, .postDirectText {
+  padding-bottom: .5rem!important;
+}
+
+#continuePaging {
+  text-align: center;
+  padding-left: auto;
+  padding-right: auto;
+  padding-top: 2px;
+  padding-bottom: 6px;
+  background-color: #e9ecef;
 }

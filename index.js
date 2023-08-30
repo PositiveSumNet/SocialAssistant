@@ -515,7 +515,7 @@ const getOrderByFromUi = function() {
   switch (pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
-      return ORDER_BY.POST_LIKE_COUNT_DESC;
+      return ORDER_BY.POST_TIME_DESC;
     default:
       return ORDER_BY.HANDLE;
   }
@@ -683,29 +683,33 @@ const canRenderMastodonFollowOneButtons = function() {
 const renderPostStream = function(payload) {
   initMainListUiElms();
   const plist = document.getElementById('paginated-list');
-  
+  let html = '';
   // rows
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
       // renderPost uses DOMPurify.sanitize
-      plist.innerHTML += renderPost(row);
+      html += renderPost(row);
   }
 
+  plist.innerHTML = html;
   showSearchProgress(false);
 }
 
 const renderConnections = function(payload) {
   initMainListUiElms();
   const plist = document.getElementById('paginated-list');
-  
+  let html = '';
+
   // rows
   const rows = payload.rows;
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
       // renderPerson uses DOMPurify.sanitize
-      plist.innerHTML += renderPerson(row, 'followResult');
+      html += renderPerson(row, 'followResult');
   }
+
+  plist.innerHTML = html;
 
   IMAGE.resolveDeferredLoadImages(plist);
   if (canRenderMastodonFollowOneButtons() === true) {
@@ -919,10 +923,18 @@ document.getElementById('priorPage').onclick = function(event) {
   return false;
 };
 
-document.getElementById('nextPage').onclick = function(event) {
+const navToNextPage = function() {
   const pageNum = getPageNum();
   txtPageNum.value = pageNum + 1;
   executeSearch();
+}
+
+document.getElementById('nextPage').onclick = function(event) {
+  navToNextPage();
+  return false;
+};
+document.getElementById('continuePaging').onclick = function(event) {
+  navToNextPage();
   return false;
 };
 
