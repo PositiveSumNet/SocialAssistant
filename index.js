@@ -185,23 +185,11 @@ const initialRender = function() {
   // app version
   document.getElementById('manifestVersion').textContent = chrome.runtime.getManifest().version;
   
-  const urlParams = new URLSearchParams(location.search);
-  // defaults
-  let owner;
-  let pageType;
-  let mode;
+  const parms = URLPARSE.getQueryParms();
 
-  for (const [key, value] of urlParams) {
-    if (key === 'owner') {
-      owner = value;
-    }
-    else if (key === 'pageType') {
-      pageType = value;
-    }
-    else if (key === 'mode') {
-      mode = value;
-    }
-  }
+  let owner = parms[URL_PARM.OWNER];
+  let pageType = parms[URL_PARM.PAGE_TYPE];
+  let mode = parms[URL_PARM.MODE];
   
   // power user mode (undocumented; exposes some advanced features)
   if (mode) {
@@ -218,18 +206,90 @@ const initialRender = function() {
     }
   }
 
-  if (owner || pageType) {
-    // clear url parms so that a page refresh going forward respects the UI state instead of the query string
-    // stackoverflow.com/questions/38625654/remove-url-parameter-without-page-reloading
-    const url= document.location.href;
-    window.history.pushState({}, "", url.split("?")[0]);
-  }
-  
   if (!pageType) {
     pageType = SETTINGS.getCachedPageType();
   }
   
-  initUi(owner, pageType);
+  let site;
+  if (pageType) {
+    site = PAGETYPE.getSite(pageType);
+    SETTINGS.cacheSite(site);
+  }
+  else {
+    site = SETTINGS.getCachedSite();
+  }
+
+  updateForSite();
+
+  // pageType/direction
+  let autoResolveOwner = true;
+  pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
+
+  switch (pageType) {
+    case PAGETYPE.TWITTER.FOLLOWERS:
+    case PAGETYPE.MASTODON.FOLLOWERS:
+        document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWERS;
+      break;
+    case PAGETYPE.TWITTER.FOLLOWING:
+    case PAGETYPE.MASTODON.FOLLOWING:
+        document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWING;
+      break;
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      document.getElementById('cmbType').value = POSTS;
+      autoResolveOwner = false;
+      break;
+    default:
+      break;
+  }
+
+  // set owner
+  let waitForOwnerCallback = false;
+  if (autoResolveOwner) {
+    owner = owner || SETTINGS.getCachedOwner();
+    
+    if (!owner || owner.length === 0) {
+      // we'll initialize to empty string, but 
+      // we'll tell the worker to call us back with the most sensible initial value
+      const msg = { 
+        actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
+        pageType: pageType
+      };
+      
+      waitForOwnerCallback = true;
+      worker.postMessage(msg);
+    }
+  }
+
+  // SEARCH
+  if (STR.hasLen(parms[URL_PARM.SEARCH])) {
+    txtSearch.value = parms[URL_PARM.SEARCH];
+  }
+
+  // PAGING
+  let page = parms[URL_PARM.PAGE];
+  if (!page || isNaN(page) == true) {
+    page = 1;
+  }
+  txtPageNum.value = page;
+
+  setOptionVisibility();
+
+  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
+  
+  if (waitForOwnerCallback === false) {
+    executeSearch(owner, pageType);
+  }
+}
+
+const conformQueryStringToUi = function() {
+  const urlParms = new URLSearchParams(document.location.search);
+  urlParms.set(URL_PARM.OWNER, getOwnerFromUi() || '');
+  urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
+  urlParms.set(URL_PARM.SEARCH, getUiValue('txtSearch') || '');
+  urlParms.set(URL_PARM.SIZE, SETTINGS.getPageSize() || 50);
+  urlParms.set(URL_PARM.PAGE, getPageNum() || 1);
+  history.replaceState(null, null, "?"+urlParms.toString());
 }
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
@@ -281,71 +341,6 @@ worker.onmessage = function ({ data }) {
       break;
   }
 };
-
-// handles optionally passing in query string parameters
-const initUi = function(owner, pageType) {
-  let site;
-  if (pageType) {
-    site = PAGETYPE.getSite(pageType);
-    SETTINGS.cacheSite(site);
-  }
-  else {
-    site = SETTINGS.getCachedSite();
-  }
-
-  updateForSite();
-
-  // pageType/direction
-  let autoResolveOwner = true;
-  pageType = pageType || SETTINGS.getCachedPageType() || PAGETYPE.TWITTER.FOLLOWING;
-
-  switch (pageType) {
-    case PAGETYPE.TWITTER.FOLLOWERS:
-    case PAGETYPE.MASTODON.FOLLOWERS:
-        document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWERS;
-      break;
-    case PAGETYPE.TWITTER.FOLLOWING:
-    case PAGETYPE.MASTODON.FOLLOWING:
-        document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWING;
-      break;
-    case PAGETYPE.TWITTER.TWEETS:
-    case PAGETYPE.MASTODON.TOOTS:
-      document.getElementById('cmbType').value = POSTS;
-      autoResolveOwner = false;
-      break;
-    default:
-      break;
-  }
-
-  // set owner
-  let waitForOwnerCallback = false;
-  if (autoResolveOwner) {
-    owner = owner || SETTINGS.getCachedOwner();
-    
-    if (!owner || owner.length === 0) {
-      // we'll initialize to empty string, but 
-      // we'll tell the worker to call us back with the most sensible initial value
-      const msg = { 
-        actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
-        pageType: pageType
-      };
-      
-      waitForOwnerCallback = true;
-      worker.postMessage(msg);
-    }
-  }
-  else {
-    owner = '';
-  }
-
-  setOptionVisibility();
-
-  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
-  
-  if (waitForOwnerCallback === false) {
-    executeSearch(owner, pageType);
-  }
-}
 
 const detailReflectsFilter = function() {
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
@@ -567,13 +562,18 @@ const buildSearchRequestFromUi = function() {
   return msg;
 }
 
-const showSearchProgress = function(show) {
-  const elm = document.getElementById('connListProgress');
-  if (show === true) {
-    elm.style.visibility = 'visible';
+const showSearchProgress = function(showProgressBar) {
+  const progressElm = document.getElementById('connListProgress');
+  const continuePaging = document.getElementById('continuePaging');
+  if (showProgressBar === true) {
+    progressElm.style.visibility = 'visible';
+    continuePaging.style.display = 'none';
   }
   else {
-    elm.style.visibility = 'hidden';
+    progressElm.style.visibility = 'hidden';
+    // see if there are any list elements
+    const listElmCount = Array.from(document.querySelectorAll('#paginated-list div')).length;
+    continuePaging.style.display = listElmCount > 0 ? 'block' : 'none';
   }
 }
 
@@ -624,6 +624,7 @@ const requestTotalCount = function() {
 }
 
 const executeSearch = function(forceRefresh) {
+  conformQueryStringToUi();
   const msg = buildSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
   
