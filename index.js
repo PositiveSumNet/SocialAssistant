@@ -273,7 +273,7 @@ const initialRender = function() {
   }
   txtPageNum.value = page;
 
-  setOptionVisibility();
+  setConnOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
@@ -469,7 +469,7 @@ const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
   ensureAskedMdonServer();
   
-  setOptionVisibility();
+  setConnOptionVisibility();
 
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
@@ -802,7 +802,7 @@ const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivot
 
 document.getElementById('cmbType').addEventListener('change', (event) => {
   resetPage();
-  setOptionVisibility();
+  setConnOptionVisibility();
   executeSearch();
 });
 
@@ -822,7 +822,7 @@ optWithEmail.addEventListener('change', (event) => {
   executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
-  setOptionVisibility();
+  setConnOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -831,7 +831,7 @@ chkMdonImFollowing.addEventListener('change', (event) => {
   executeSearch();
 });
 optClear.addEventListener('change', (event) => {
-  setOptionVisibility();
+  setConnOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -1398,7 +1398,7 @@ const updateForSite = function() {
   const mastodonBtn = document.getElementById('mastodonLensBtn');
   const mastodonApiUi = document.getElementById('mdonApiUi');
 
-  setOptionVisibility();
+  setConnOptionVisibility();
 
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
@@ -1435,16 +1435,16 @@ const updateForSite = function() {
   resetFilters();
 }
 
-const setOptionVisibility = function() {
-  const queryOptions = document.getElementById('queryOptions');
+const setConnOptionVisibility = function() {
+  const connQueryOptions = document.getElementById('connQueryOptions');
   const cmbType = document.getElementById('cmbType');
 
   if (cmbType.value == POSTS) {
-    queryOptions.style.display = 'none';
+    connQueryOptions.style.display = 'none';
     return;
   }
   
-  queryOptions.style.display = 'block';
+  connQueryOptions.style.display = 'block';
 
   // default to undefined (no filter applied) for the tri-state
   const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');

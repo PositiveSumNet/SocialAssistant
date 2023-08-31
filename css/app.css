@@ -191,13 +191,13 @@ a.canstar:hover i.bi-star-fill {
   display: none;
 }
 
-#queryOptions td {
+#connQueryOptions td {
   padding-left: 4px;
   padding-right: 4px;
   text-align: top;
 }
 
-#queryOptions label {
+#connQueryOptions label {
   white-space:nowrap!important;
 }
 
