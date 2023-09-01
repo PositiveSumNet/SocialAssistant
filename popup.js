@@ -157,10 +157,10 @@ btnManualPreviewExamplePage.addEventListener('click', async () => {
 const viewExamplePage = async function(forTweets) {
   let url = '';
   if (forTweets == true) {
-    url = 'https://twitter.com/positivesumnet/with_replies';
+    url = 'https://x.com/positivesumnet/with_replies';
   }
   else {
-    url = 'https://twitter.com/positivesumnet/following';
+    url = 'https://x.com/positivesumnet/following';
   }
 
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});

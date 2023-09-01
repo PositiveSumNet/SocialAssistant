@@ -45,8 +45,8 @@
       ],
       "all_frames": true,
       "matches": [
-        "https://twitter.com/*",
-        "https://mobile.twitter.com/*",
+        "https://*.twitter.com/*",
+        "https://*.x.com/*",
         "https://nitter.net/*",
         "https://nitter.at/*",
         "https://nitter.one/*",

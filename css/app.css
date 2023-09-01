@@ -205,7 +205,7 @@ a.canstar:hover i.bi-star-fill {
   border: none;
 }
 
-#paging label, #paging input, #paging a {
+#paging label, #paging input, #paging a, a.optToggle {
   white-space:nowrap!important;
   display: inline-block;
   align-items: center;
@@ -216,7 +216,12 @@ a.canstar:hover i.bi-star-fill {
   margin-left: -4px;
 }
 
-#paging a:hover {
+a.optToggle {
+  border-left: 1px solid #ced4da;
+  color: #ced4da;
+}
+
+#paging a:hover, a.optToggle:hover {
   color: #216CB1;
 }
 
@@ -224,8 +229,18 @@ a.canstar:hover i.bi-star-fill {
   border-left: 1px solid #ced4da;
 }
 
-#pageGear {
+#pageGear, a.optToggle {
   border-right: 1px solid #ced4da;
+}
+
+a.optToggle:hover, a.optToggle.toggledOn {
+  border: 1px solid #216CB1;
+  color: #216CB1;
+}
+
+a.optToggle.toggledOn:hover {
+  border: 1px solid #ced4da;
+  color: #ced4da;
 }
 
 #paging input {

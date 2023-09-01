@@ -3,7 +3,7 @@ const _starOffCls = 'bi-star';
 const _starOnCls = 'bi-star-fill'
 
 // avoid double-submit
-var _lastRenderedFollowsRequest = '';
+var _lastRenderedRequest = '';
 
 // improves experience of deleting in owner textbox
 var _deletingOwner = false;
@@ -273,12 +273,24 @@ const initialRender = function() {
   }
   txtPageNum.value = page;
 
-  setConnOptionVisibility();
+  // post toggles
+  setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS]);
+
+  setOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
     executeSearch(owner, pageType);
+  }
+}
+
+const setOptToggleBtn = function(elm, toggledOn) {
+  if (toggledOn == true || toggledOn == 'true') {
+    elm.classList.add('toggledOn');
+  }
+  else {
+    elm.classList.remove('toggledOn');
   }
 }
 
@@ -289,6 +301,8 @@ const conformQueryStringToUi = function() {
   urlParms.set(URL_PARM.SEARCH, getUiValue('txtSearch') || '');
   urlParms.set(URL_PARM.SIZE, SETTINGS.getPageSize() || 50);
   urlParms.set(URL_PARM.PAGE, getPageNum() || 1);
+  urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
+
   history.replaceState(null, null, "?"+urlParms.toString());
 }
 
@@ -418,6 +432,8 @@ const getUiValue = function(id) {
       return optWithEmail.checked;
     case 'optWithUrl':
       return optWithUrl.checked;
+    case 'optWithRetweets':
+      return optWithRetweets.classList.contains('toggledOn');
     default:
       return undefined;
   }
@@ -469,7 +485,7 @@ const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
   ensureAskedMdonServer();
   
-  setConnOptionVisibility();
+  setOptionVisibility();
 
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
@@ -525,6 +541,7 @@ const buildSearchRequestFromUi = function() {
   const skip = calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
+  const withRetweets = getUiValue('optWithRetweets');
 
   // conditional filters
   let withUrl = getUiValue('optWithUrl');
@@ -548,7 +565,9 @@ const buildSearchRequestFromUi = function() {
     orderBy: orderBy,
     skip: skip,
     take: pageSize,
-    // filters
+    // post filters
+    withRetweets: withRetweets,
+    // conn filters
     mutual: mutual,
     list: LIST_FAVORITES,
     requireList: favorited,
@@ -630,7 +649,7 @@ const executeSearch = function(forceRefresh) {
   
   SETTINGS.cachePageState(msg);
 
-  if (!forceRefresh && _lastRenderedFollowsRequest === requestJson) {
+  if (!forceRefresh && _lastRenderedRequest === requestJson) {
     // we already have this rendered; avoid double-submission
     return;
   }
@@ -695,6 +714,9 @@ const renderPostStream = function(payload) {
 
   plist.innerHTML = html;
   showSearchProgress(false);
+  onAddedRows(plist);
+
+  _lastRenderedRequest = JSON.stringify(payload.request);
 }
 
 const renderConnections = function(payload) {
@@ -718,10 +740,10 @@ const renderConnections = function(payload) {
   }
   
   showSearchProgress(false);
-  onAddedFollows(plist);
+  onAddedRows(plist);
   requestTotalCount();
   
-  _lastRenderedFollowsRequest = JSON.stringify(payload.request);
+  _lastRenderedRequest = JSON.stringify(payload.request);
 }
 
 const configureFavoriting = function(a) {
@@ -762,7 +784,7 @@ const configureFavoriting = function(a) {
   };
 }
 
-const onAddedFollows = function(container) {
+const onAddedRows = function(container) {
   // favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
@@ -796,13 +818,16 @@ const optWithUrl = document.getElementById('optWithUrl');
 // cell (2,3)
 const optClear = document.getElementById('optClear');
 
+// post option buttons
+const optWithRetweets = document.getElementById('optWithRetweets');
+
 // mastodon account typeahead hitting api
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
 const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
 
 document.getElementById('cmbType').addEventListener('change', (event) => {
   resetPage();
-  setConnOptionVisibility();
+  setOptionVisibility();
   executeSearch();
 });
 
@@ -822,7 +847,7 @@ optWithEmail.addEventListener('change', (event) => {
   executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
-  setConnOptionVisibility();
+  setOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -831,10 +856,16 @@ chkMdonImFollowing.addEventListener('change', (event) => {
   executeSearch();
 });
 optClear.addEventListener('change', (event) => {
-  setConnOptionVisibility();
+  setOptionVisibility();
   resetPage();
   executeSearch();
 });
+
+optWithRetweets.onclick = function(event) {
+  optWithRetweets.classList.toggle('toggledOn');
+  executeSearch();
+  return false;
+};
 
 // searching
 const handleTypeSearch = ES6.debounce((event) => {
@@ -1389,7 +1420,7 @@ const updateForSite = function() {
   const site = SETTINGS.getCachedSite();
   // clear what's there now
   initMainListUiElms();
-  _lastRenderedFollowsRequest = '';
+  _lastRenderedRequest = '';
   
   const owner = SETTINGS.getCachedOwner(site);
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
@@ -1398,7 +1429,7 @@ const updateForSite = function() {
   const mastodonBtn = document.getElementById('mastodonLensBtn');
   const mastodonApiUi = document.getElementById('mdonApiUi');
 
-  setConnOptionVisibility();
+  setOptionVisibility();
 
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
@@ -1435,16 +1466,33 @@ const updateForSite = function() {
   resetFilters();
 }
 
-const setConnOptionVisibility = function() {
-  const connQueryOptions = document.getElementById('connQueryOptions');
+const setOptionVisibility = function() {
+  setConnOptionVisibility();
+  setPostOptionVisibility();
+}
+
+const setPostOptionVisibility = function() {
+  const queryOptions = document.getElementById('postQueryOptions');
   const cmbType = document.getElementById('cmbType');
 
-  if (cmbType.value == POSTS) {
-    connQueryOptions.style.display = 'none';
+  if (cmbType.value != POSTS) {
+    queryOptions.style.display = 'none';
     return;
   }
   
-  connQueryOptions.style.display = 'block';
+  queryOptions.style.display = 'block';
+}
+
+const setConnOptionVisibility = function() {
+  const queryOptions = document.getElementById('connQueryOptions');
+  const cmbType = document.getElementById('cmbType');
+
+  if (cmbType.value == POSTS) {
+    queryOptions.style.display = 'none';
+    return;
+  }
+  
+  queryOptions.style.display = 'block';
 
   // default to undefined (no filter applied) for the tri-state
   const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
