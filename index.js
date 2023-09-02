@@ -93,6 +93,18 @@ const logDbScriptVersion = function(versionInfo) {
   document.getElementById('dbScriptNumber').textContent = versionInfo.version.toString();
 }
 
+// returns back a copy of the saved data
+const onCompletedSaveAndDelete = function(payload) {
+  switch (payload.onSuccessType) {
+    case SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS:
+      localStorage.setItem(SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS, Date.now());
+      break;
+    default:
+      // no-op
+      break;
+  }
+}
+
 const onCopiedToDb = async function(cacheKeys) {
   // we can clear out the cache keys
   for (let i = 0; i < cacheKeys.length; i++) {
@@ -321,11 +333,14 @@ worker.onmessage = function ({ data }) {
       logDbScriptVersion(data.payload);
       break;
     case MSGTYPE.FROMDB.WORKER_READY:
-      TOPICS.ensureRemoteTopicSettings();
+      TOPICS.ensureRemoteTopicSettings(onFetchedRawTopicContent);
       ensureCopiedToDb();
       break;
     case MSGTYPE.FROMDB.COPIED_TODB:
       onCopiedToDb(data.cacheKeys);
+      break;
+    case MSGTYPE.FROMDB.SAVE_AND_DELETE_DONE:
+      onCompletedSaveAndDelete(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.SUGGESTED_OWNER:
       renderSuggestedOwner(data.payload);
@@ -356,6 +371,17 @@ worker.onmessage = function ({ data }) {
       break;
   }
 };
+
+const onFetchedRawTopicContent = function(content) {
+  const topics = TOPICS.parseTopics(content);
+  const sets = TOPICS.buildSets(topics);
+  worker.postMessage({
+    actionType: MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE,
+    savableSet: sets.savableSet,
+    deletableSet: sets.deletableSet,
+    onSuccessType: SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS
+  });
+}
 
 const detailReflectsFilter = function() {
   return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;

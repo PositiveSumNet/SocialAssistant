@@ -263,6 +263,9 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
       DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
       break;
+    case MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE:
+      DBORM.SAVING.executeSaveAndDelete(evt.data);
+      break;
     case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
       savePageRecords(evt.data)
       break;
