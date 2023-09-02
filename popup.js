@@ -5,9 +5,14 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
       await onLoadReflectRecordingContext();
       loopUpdateExpirationDisplay();
       await kickoffNitterSpeedTest();
+      await ensureRemoteSettingsFetched();
     }
   });
 });
+
+const ensureRemoteSettingsFetched = async function() {
+  
+}
 
 // each time the popup loads up, we kick off a background race to see which nitter instance is fastest
 const kickoffNitterSpeedTest = async function() {

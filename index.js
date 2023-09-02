@@ -321,6 +321,7 @@ worker.onmessage = function ({ data }) {
       logDbScriptVersion(data.payload);
       break;
     case MSGTYPE.FROMDB.WORKER_READY:
+      TOPICS.ensureRemoteTopicSettings();
       ensureCopiedToDb();
       break;
     case MSGTYPE.FROMDB.COPIED_TODB:
