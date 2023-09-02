@@ -360,3 +360,11 @@ input.textinput:focus {
   padding-bottom: 6px;
   background-color: #e9ecef;
 }
+
+.postScoredTagger.noneSelected {
+  opacity: 40%;
+}
+
+.postScoredTagger.noneSelected:hover {
+  opacity: 100%;
+}

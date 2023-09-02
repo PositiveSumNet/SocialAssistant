@@ -374,6 +374,7 @@ worker.onmessage = function ({ data }) {
 
 const onFetchedRawTopicContent = function(content) {
   const topics = TOPICS.parseTopics(content);
+  TOPICS.cacheTopicsToLocal(topics);
   const sets = TOPICS.buildSets(topics);
   worker.postMessage({
     actionType: MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE,
