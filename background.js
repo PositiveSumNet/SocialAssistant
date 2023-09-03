@@ -162,3 +162,19 @@ const getStorageValue = async function(key) {
   if (!setting) { return null; }
   return setting[key];
 }
+
+// ensure badge clears out 
+const checkIfShouldAssumeDone = function() {
+
+  chrome.action.getBadgeText({}, function(result) {
+    if (result && result.startsWith('+') && _lastSetBadgeText && (Date.now() -_lastSetBadgeText) > 8000) {
+      fancySetBadge('DONE');
+    }
+  });
+
+  // a long enough time period that we can really believe it's done
+  setTimeout(() => {
+    checkIfShouldAssumeDone();
+  }, 10000);  
+}
+checkIfShouldAssumeDone();

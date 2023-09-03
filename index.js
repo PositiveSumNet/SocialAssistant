@@ -283,7 +283,7 @@ const initialRender = function() {
   txtPageNum.value = page;
 
   // post toggles
-  setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS]);
+  setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != false); // default to true
 
   setOptionVisibility();
 
