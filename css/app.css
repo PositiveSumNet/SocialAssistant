@@ -368,3 +368,15 @@ input.textinput:focus {
 .postScoredTagger.noneSelected:hover {
   opacity: 100%;
 }
+
+.postScoredTagger.noneSelected .postTagStars {
+  display: none;
+}
+
+.postScoredTagger.noneSelected:hover .postTagStars {
+  display: inline;
+}
+
+.postScoredTagger.noneSelected .postTagStars:hover {
+  display: none;
+}
