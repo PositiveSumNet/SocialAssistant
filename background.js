@@ -293,7 +293,7 @@ const ensureQueuedScrapeRequests = async function(lastScrapedParsedUrl) {
     // they never did auto-recording
     return; 
   }
-  // if "resolve full threads" is false (which is *not* the default btw), then don't do this
+  // if "resolve full threads" is false, then don't do this
   if (context.recordingContext.auto.resolvesThreads === false) {
     return;
   }
@@ -511,6 +511,7 @@ const scrapeTweetThread = async function(request) {
   const nitterDomain = await getNitterDomain();
   // request.record is tweet urlKey
   const url = `https://${nitterDomain}${request.record}`;
+  console.log(`nav-offscreen: ${url}`);
   await navigateOffscreenDocument(url);
 }
 
