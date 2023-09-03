@@ -4,16 +4,45 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
       activateApp();
       await onLoadReflectRecordingContext();
       loopUpdateExpirationDisplay();
-      await kickoffNitterSpeedTest();
     }
   });
 });
 
-// each time the popup loads up, we kick off a background race to see which nitter instance is fastest
-const kickoffNitterSpeedTest = async function() {
-  chrome.runtime.sendMessage({ 
-    actionType: MSGTYPE.TOBACKGROUND.NITTER_SPEED_TEST
-  });
+var _injectedScripts = false;
+const injectContentScriptAsNeeded = async function() {
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  if (!_injectedScripts && tab && tab.url && tab.url.indexOf('nitter') > -1 && tab.url.indexOf('nitter.net') < 0) {
+    // dynamic load required for non-standard nitter pages
+    await chrome.scripting.executeScript({
+      target: { 
+        tabId: tab.id, 
+        allFrames: true 
+      },
+      files: [
+        "lib/shared/constants.js", 
+        "lib/shared/pagetypes.js", 
+        "lib/shared/settingslib.js", 
+        "lib/shared/es6lib.js", 
+        "lib/shared/strlib.js", 
+        "lib/shared/emojilib.js", 
+        "lib/shared/urlparsing.js", 
+        "lib/content/recordinglib.js", 
+        "lib/content/twitter/twitterparsing.js", 
+        "lib/content/twitter/twitterfollowparsing.js", 
+        "lib/content/twitter/twitterfollowrecorder.js",
+        "lib/content/twitter/twittertweetsrecorder.js",
+        "lib/content/twitter/twittertweetparsing.js",
+        "lib/content/nitter/nittertweetsrecorder.js",
+        "lib/content/nitter/nitterparsing.js", 
+        "lib/content/nitter/nittertweetparsing.js",
+        "lib/content/nitter/nitterprofileparsing.js", 
+        "lib/content/recorderfactory.js",
+        "content.js"
+      ],
+    });
+
+    _injectedScripts = true;
+  }
 }
 
 const onLoadReflectRecordingContext = async function() {
@@ -167,7 +196,6 @@ const viewExamplePage = async function(forTweets) {
 
 const btnStartManualRecording = document.getElementById('btnStartManualRecording');
 btnStartManualRecording.addEventListener('click', async () => {
-  
   const shouldRecordFollows = document.getElementById('chkManualRecordsFollowLists').checked == true;
   const shouldRecordTweets = document.getElementById('chkManualRecordsTweets').checked == true;
 
@@ -196,6 +224,7 @@ btnStartManualRecording.addEventListener('click', async () => {
 
   await SETTINGS.RECORDING.saveContext(context);
 
+  await injectContentScriptAsNeeded();
   window.close();
 });
 
@@ -339,6 +368,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
   activateOrLaunchParsedUrlTab(parsedUrl);
+  await injectContentScriptAsNeeded();
   window.close();
 });
 

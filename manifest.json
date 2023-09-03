@@ -46,8 +46,7 @@
       "matches": [
         "https://*.twitter.com/*",
         "https://*.x.com/*",
-        "https://*.nitter.net/*",
-        "https://*.nitter.cz/*"
+        "https://*.nitter.net/*"
       ]
     }
   ],
@@ -57,7 +56,8 @@
   "permissions": [
     "activeTab", 
     "storage", 
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "scripting"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"
