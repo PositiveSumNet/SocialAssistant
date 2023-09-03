@@ -1,4 +1,5 @@
 // background scraping
+var _createdOffscreenDoc = false;
 var _bgScrapeRequests = [];
 var _bgDequeuedSet = new Set();
 var _bgInProcessSet = new Set();  // built using buildScrapeRequestKeyFromRecord
@@ -91,6 +92,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 /******************************/
 // CSP HEADER STRIPPING
+// needed for offscreen
 /******************************/
 chrome.runtime.onInstalled.addListener(() => {
   
@@ -454,13 +456,16 @@ const kickoffNitterSpeedTestAsNeeded = async function() {
 
 const ensureOffscreenDocument = async function() {
   const hasDoc = await hasDocument();
-  if (hasDoc == true) { return; }
+  if (hasDoc == true || _createdOffscreenDoc == true) { return; }
 
   await chrome.offscreen.createDocument({
     url: OFFSCREEN_DOCUMENT_PATH,
     reasons: [chrome.offscreen.Reason.DOM_PARSER],
     justification: 'Parse requested file in the background'
   });
+
+  // sometimes hasDocument check doesn't seem to suffice, so we have two checks
+  _createdOffscreenDoc = true;
 }
 
 const navigateOffscreenDocument = async function(url) {
@@ -509,6 +514,7 @@ const scrapeTweetThread = async function(request) {
   _bgInProcessSet.add(bgKey);
   _bgLastKickoff = Date.now();
   const nitterDomain = await getNitterDomain();
+
   // request.record is tweet urlKey
   const url = `https://${nitterDomain}${request.record}`;
   console.log(`nav-offscreen: ${url}`);
