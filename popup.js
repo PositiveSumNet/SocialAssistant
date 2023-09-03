@@ -5,14 +5,9 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
       await onLoadReflectRecordingContext();
       loopUpdateExpirationDisplay();
       await kickoffNitterSpeedTest();
-      await ensureRemoteSettingsFetched();
     }
   });
 });
-
-const ensureRemoteSettingsFetched = async function() {
-  
-}
 
 // each time the popup loads up, we kick off a background race to see which nitter instance is fastest
 const kickoffNitterSpeedTest = async function() {
@@ -110,7 +105,6 @@ btnChooseAutoScroll.addEventListener('click', async () => {
   const optViaNitter = document.getElementById('optAutoRecordViaNitter');
   const optViaTwitter = document.getElementById('optAutoRecordViaTwitter')
   const chkWithImages = document.getElementById('chkAutoRecordTweetImages');
-  const chkResolveThreads = document.getElementById('chkAutoRecordResolvesThreads');
   if (recordTweets == true) {
     let viaNitter = SETTINGS.RECORDING.getAutoViaNitter(context);
     optViaNitter.disabled = false;
@@ -131,7 +125,6 @@ btnChooseAutoScroll.addEventListener('click', async () => {
   }
 
   chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
-  chkResolveThreads.checked = SETTINGS.RECORDING.getAutoRecordResolvesThreads(context);
 
   onUpdateAutoOption();
   onChangeAutoRecordViaNitter();
@@ -342,7 +335,6 @@ btnStartAutoRecording.addEventListener('click', async () => {
   context.auto.site = site;
   context.auto.pageType = pageType;
   context.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
-  context.auto.resolvesThreads = forTweets && document.getElementById('chkAutoRecordResolvesThreads').checked == true;
   await SETTINGS.RECORDING.saveContext(context);
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);

@@ -27,7 +27,6 @@
         "lib/shared/settingslib.js", 
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
-        "lib/shared/bgfetchlib.js", 
         "lib/shared/emojilib.js", 
         "lib/shared/urlparsing.js", 
         "lib/content/recordinglib.js", 
@@ -47,10 +46,8 @@
       "matches": [
         "https://*.twitter.com/*",
         "https://*.x.com/*",
-        "https://nitter.net/*",
-        "https://nitter.at/*",
-        "https://nitter.one/*",
-        "https://nitter.cz/*"
+        "https://*.nitter.net/*",
+        "https://*.nitter.cz/*"
       ]
     }
   ],
@@ -60,18 +57,7 @@
   "permissions": [
     "activeTab", 
     "storage", 
-    "unlimitedStorage", 
-    "offscreen", 
-    "declarativeNetRequestWithHostAccess", 
-    "browsingData"
-  ],
-  "host_permissions": [
-    "https://*.twitter.com/*",
-    "https://*.x.com/*",
-    "https://nitter.net/",
-    "https://nitter.at/",
-    "https://nitter.one/",
-    "https://nitter.cz/"
+    "unlimitedStorage"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"

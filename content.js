@@ -18,55 +18,7 @@
 var _shuntRecorder = false;
 var _recorder = null;
 
-// on startup, see if it's a speed-test situation
-chrome.storage.local.get([SETTINGS.NITTER.SPEED_TEST.CACHE_KEY], async function(result) {
-  const speedTest = result[SETTINGS.NITTER.SPEED_TEST.CACHE_KEY];
-  if (document.location.href.indexOf(SETTINGS.NITTER.SPEED_TEST.URL_SUFFIX) > -1) {
-    if (!speedTest[SETTINGS.NITTER.SPEED_TEST.END]) {
-      // test isn't over yet; first to finish "wins"
-      const start = parseInt(speedTest[SETTINGS.NITTER.SPEED_TEST.START]);
-      // only valid if loads within 5 seconds
-      if (Date.now() - start < 5000) {
-        // only valid if loads more than just the pinned tweet (when nitter is broken, sometimes that's all that loads)
-        const tweetElms = NPARSE.getTweetElms(document.body);
-        const isValid = tweetElms.length > 1;
-        if (isValid == true) {
-          speedTest[SETTINGS.NITTER.SPEED_TEST.END] = Date.now();
-          const domain = STR.extractDomain(document.location.href);
-          speedTest[SETTINGS.NITTER.SPEED_TEST.WINNER] = domain;
-          await chrome.storage.local.set({ [SETTINGS.NITTER.SPEED_TEST.CACHE_KEY]: speedTest });
-          // now that speed test is done, tell the background process to ensure that it gets going on background/offscreen scraping, as needed
-          chrome.runtime.sendMessage({ 
-            actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE
-          });
-        }
-      }
-    }
-  }
-});
-
-// on startup, see if it's a SPECIAL matched background scrape request
-chrome.storage.local.get([SETTINGS.BG_SCRAPE.SCRAPE_KEYS], async function(result) {
-
-  const bgScrapeKeys = result[SETTINGS.BG_SCRAPE.SCRAPE_KEYS];
-  if (!bgScrapeKeys || bgScrapeKeys.length == 0) { return;}
-  
-  _isBackgroundRecordingUrl = URLPARSE.currentPageIsBackgroundRecordingUrl(bgScrapeKeys);
-  if (_isBackgroundRecordingUrl == true) {
-    const parsedUrl = RECORDING.getParsedUrl();
-    switch (parsedUrl.pageType) {
-      case PAGETYPE.TWITTER.PROFILE:
-        _shuntRecorder = true;
-        NITTER_PROFILE_PARSER.parseToTempStorage();
-        break;
-      default:
-        // note that TWITTER.TWEETS falls through b/c the recorder is relevant instead
-        break;
-    }
-  }
-});
-
-// scenario 3) adjust nitter settings (once)
+// adjust nitter settings (once)
 window.onload = function() {
   const href = document.location.href;
   const domain = STR.extractDomain(href);
@@ -89,11 +41,6 @@ window.onload = function() {
 
 // main scenario: recording
 const kickoffPollForRecording = async function() {
-  if (document.location.href.indexOf('nitter') > -1 && document.location.href.toLowerCase().indexOf(SETTINGS.NITTER.SPEED_TEST.URL_SUFFIX.toLowerCase()) > -1) {
-    // nitter speed test
-    return;
-  }
-  
   if (_shuntRecorder == true) {
     return;
   }

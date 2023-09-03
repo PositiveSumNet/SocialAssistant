@@ -187,9 +187,6 @@ const ensureCopiedToDb = async function() {
     filterSet.style.display = 'flex';
 
     initialRender();
-
-    // having fully copied into the db, we can also make sure background fetching is underway
-    BGFETCH_REQUEST.kickoffBackgroundScrapingAsNeeded();
   }
 }
 
@@ -1117,16 +1114,6 @@ _fileElem.addEventListener('change', (event) => {
 const handleUploadFiles = function(files) {
   files = [...files];
   files.forEach(processUpload);
-
-  const uploadContext = getUploadContext();
-  switch(uploadContext) {
-    case UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE:
-      // make sure the background worker knows we want it to look for scrape requests
-      BGFETCH_REQUEST.kickoffBackgroundScrapingAsNeeded();
-      break;
-    default:
-      break;
-  }
 }
 
 function highlightDropArea(e) {
@@ -1169,10 +1156,6 @@ const processUpload = function(file) {
         actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
         json: e.target.result
       });
-    }
-    else if (uploadContext == UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE) {
-      // cache the request for execution upon upload completion
-      BGFETCH_REQUEST.TWITTER.PROFILES.cacheTwitterHandlesForProfileScrape(e.target.result);
     }
 
     onProcessedUploadBatch();
