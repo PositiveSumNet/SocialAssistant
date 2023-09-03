@@ -8,43 +8,6 @@ chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   });
 });
 
-var _injectedScripts = false;
-const injectContentScriptAsNeeded = async function() {
-  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-  if (!_injectedScripts && tab && tab.url && tab.url.indexOf('nitter') > -1 && tab.url.indexOf('nitter.net') < 0) {
-    // dynamic load required for non-standard nitter pages
-    await chrome.scripting.executeScript({
-      target: { 
-        tabId: tab.id, 
-        allFrames: true 
-      },
-      files: [
-        "lib/shared/constants.js", 
-        "lib/shared/pagetypes.js", 
-        "lib/shared/settingslib.js", 
-        "lib/shared/es6lib.js", 
-        "lib/shared/strlib.js", 
-        "lib/shared/emojilib.js", 
-        "lib/shared/urlparsing.js", 
-        "lib/content/recordinglib.js", 
-        "lib/content/twitter/twitterparsing.js", 
-        "lib/content/twitter/twitterfollowparsing.js", 
-        "lib/content/twitter/twitterfollowrecorder.js",
-        "lib/content/twitter/twittertweetsrecorder.js",
-        "lib/content/twitter/twittertweetparsing.js",
-        "lib/content/nitter/nittertweetsrecorder.js",
-        "lib/content/nitter/nitterparsing.js", 
-        "lib/content/nitter/nittertweetparsing.js",
-        "lib/content/nitter/nitterprofileparsing.js", 
-        "lib/content/recorderfactory.js",
-        "content.js"
-      ],
-    });
-
-    _injectedScripts = true;
-  }
-}
-
 const onLoadReflectRecordingContext = async function() {
   const context = await SETTINGS.RECORDING.getContext();
   switch (context.state) {
@@ -131,32 +94,10 @@ btnChooseAutoScroll.addEventListener('click', async () => {
     document.getElementById('optAutoRecordFollowing').checked = true;
   }
 
-  const optViaNitter = document.getElementById('optAutoRecordViaNitter');
-  const optViaTwitter = document.getElementById('optAutoRecordViaTwitter')
   const chkWithImages = document.getElementById('chkAutoRecordTweetImages');
-  if (recordTweets == true) {
-    let viaNitter = SETTINGS.RECORDING.getAutoViaNitter(context);
-    optViaNitter.disabled = false;
-    optViaTwitter.disabled = false;
-
-    switch (viaNitter) {
-      case true:
-        optViaNitter.checked = true;
-        break;
-      case false:
-        optViaTwitter.checked = true;
-        break;
-      case undefined:
-      default:
-        // neither selected yet; make user choose
-        break;
-    }
-  }
-
   chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
 
   onUpdateAutoOption();
-  onChangeAutoRecordViaNitter();
   // unveil the div
   showRecordingDiv('configureAutoRecordingSection');
 });
@@ -224,7 +165,6 @@ btnStartManualRecording.addEventListener('click', async () => {
 
   await SETTINGS.RECORDING.saveContext(context);
 
-  await injectContentScriptAsNeeded();
   window.close();
 });
 
@@ -309,10 +249,8 @@ btnExtendTimer.addEventListener('click', async () => {
 
 const btnStartAutoRecording = document.getElementById('btnStartAutoRecording');
 btnStartAutoRecording.addEventListener('click', async () => {
-  let viaNitter = document.getElementById('optAutoRecordViaNitter').checked;
-  let viaTwitter = document.getElementById('optAutoRecordViaTwitter').checked;
-  const errDiv = document.getElementById('autoNonSelError');
 
+  const errDiv = document.getElementById('autoNonSelError');
   let pageType = '';
   let forTweets = false;
   if (document.getElementById('optAutoRecordTweets').checked == true) {
@@ -321,24 +259,12 @@ btnStartAutoRecording.addEventListener('click', async () => {
   }
   else if (document.getElementById('optAutoRecordFollowers').checked == true) {
     pageType = PAGETYPE.TWITTER.FOLLOWERS;
-    viaNitter = false;
-    viaTwitter = true;
   }
   else {
     pageType = PAGETYPE.TWITTER.FOLLOWING;
-    viaNitter = false;
-    viaTwitter = true;
   }
 
-  if (forTweets == true && !viaNitter && !viaTwitter) {
-    errDiv.display = 'block';
-    errDiv.textContent = 'Decide whether to use Nitter or Twitter';
-    errDiv.style.display = 'block';
-    document.getElementById('tipAboutNitter').style.display = 'block';
-    return;
-  }
-
-  let site = (viaNitter == true) ? SITE.NITTER : SITE.TWITTER;
+  const site = SITE.TWITTER;
   const owner = document.getElementById('txtAutoRecordFor').value;
 
   const lblFor = document.getElementById('lblAutoRecordFor');
@@ -368,7 +294,6 @@ btnStartAutoRecording.addEventListener('click', async () => {
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
   activateOrLaunchParsedUrlTab(parsedUrl);
-  await injectContentScriptAsNeeded();
   window.close();
 });
 
@@ -428,26 +353,6 @@ const onUpdateAutoOption = function() {
       opt.disabled = true;
     }
   });
-}
-
-document.getElementById('optAutoRecordViaNitter').addEventListener('change', (event) => {
-  onChangeAutoRecordViaNitter();
-});
-document.getElementById('optAutoRecordViaTwitter').addEventListener('change', (event) => {
-  onChangeAutoRecordViaNitter();
-});
-
-const onChangeAutoRecordViaNitter = function() {
-  const optAutoRecordViaNitter = document.getElementById('optAutoRecordViaNitter');
-  const viaNitter = (optAutoRecordViaNitter.checked == true);
-  const msgRecordingMayPause = document.getElementById('msgRecordingMayPause');
-
-  if (viaNitter == true) {
-    msgRecordingMayPause.style.display = 'none';
-  }
-  else {
-    msgRecordingMayPause.style.display = 'block';
-  }
 }
 
 const btnStopAutoRecording = document.getElementById('btnStopAutoRecording');
@@ -524,17 +429,6 @@ const activateOrLaunchParsedUrlTab = async function(parsedUrl) {
   // none found; launch tab
   chrome.tabs.create({ url: builtUrl });
 }
-
-const btnTellAboutNitter = document.getElementById('btnTellAboutNitter');
-btnTellAboutNitter.addEventListener('click', async () => {
-  const elm = document.getElementById('tipAboutNitter');
-  if (elm.style.display == 'none') {
-    elm.style.display = 'block';
-  }
-  else {
-    elm.style.display = 'none';
-  }
-});
 
 const btnClose = document.getElementById('btnClose');
 btnClose.addEventListener('click', async () => {
