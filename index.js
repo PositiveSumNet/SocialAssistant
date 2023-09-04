@@ -132,17 +132,7 @@ const onGotSavedCount = function(count, pageType, metadata) {
 }
 
 const getSavableCacheKvps = async function() {
-  const all = await chrome.storage.local.get();
-  const entries = Object.entries(all);
-  const kvps = [];
-
-  for (const [key, val] of entries) {
-    if (key.startsWith(STORAGE_PREFIX.FOR_DB)) {
-      kvps.push({key: key, val: val});
-    }
-  }
-
-  return kvps;
+  return await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
 }
 
 const ensureCopiedToDb = async function() {
