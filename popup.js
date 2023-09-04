@@ -383,9 +383,9 @@ const getActiveTabParsedUrl = async function() {
 const reviewDb = async function() {
   let queryString = '';
   const parsedUrl = await getActiveTabParsedUrl();
-  const owner = parsedUrl.owner || '';
 
   if (parsedUrl) {
+    const owner = parsedUrl.owner || '';
     queryString = `?pageType=${parsedUrl.pageType}&owner=${owner}`;
   }
   chrome.tabs.create({url: `index.html${queryString}`});

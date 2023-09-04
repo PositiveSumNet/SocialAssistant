@@ -180,7 +180,7 @@ const ensureCopiedToDb = async function() {
   }
 }
 
-const initialRender = function() {
+const initialRender = function(leaveHistoryStackAlone) {
   // app version
   document.getElementById('manifestVersion').textContent = chrome.runtime.getManifest().version;
   
@@ -261,9 +261,7 @@ const initialRender = function() {
   }
 
   // SEARCH
-  if (STR.hasLen(parms[URL_PARM.SEARCH])) {
-    txtSearch.value = parms[URL_PARM.SEARCH];
-  }
+  txtSearch.value = parms[URL_PARM.SEARCH] || '';
 
   // PAGING
   let page = parms[URL_PARM.PAGE];
@@ -280,7 +278,7 @@ const initialRender = function() {
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
-    executeSearch(owner, pageType);
+    executeSearch(owner, leaveHistoryStackAlone);
   }
 }
 
@@ -293,7 +291,7 @@ const setOptToggleBtn = function(elm, toggledOn) {
   }
 }
 
-const conformQueryStringToUi = function() {
+const conformQueryStringToUi = function(leaveHistoryStackAlone) {
   const urlParms = new URLSearchParams(document.location.search);
   urlParms.set(URL_PARM.OWNER, getOwnerFromUi() || '');
   urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
@@ -302,8 +300,15 @@ const conformQueryStringToUi = function() {
   urlParms.set(URL_PARM.PAGE, getPageNum() || 1);
   urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
 
-  history.replaceState(null, null, "?"+urlParms.toString());
+  if (!leaveHistoryStackAlone) {
+    history.pushState(null, null, "?"+urlParms.toString());
+  }
 }
+
+// companion to the above pushState so that back button works
+window.addEventListener("popstate", (event) => {
+  initialRender(true);
+});
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
 // receive messages from worker
@@ -657,8 +662,8 @@ const requestTotalCount = function() {
   _counters.push({key: key});   // value not set yet; will be when called back
 }
 
-const executeSearch = function(forceRefresh) {
-  conformQueryStringToUi();
+const executeSearch = function(forceRefresh, leaveHistoryStackAlone) {
+  conformQueryStringToUi(leaveHistoryStackAlone);
   const msg = buildSearchRequestFromUi();
   const requestJson = JSON.stringify(msg);
   
