@@ -119,24 +119,6 @@ a {
   background-color: #f6fafe;
 }
 
-a.canstar i.bi-star {
-  font-size:1.5rem;
-  color: #ced4da;
-}
-
-a.canstar:hover i.bi-star {
-  color: #ffd700;
-}
-
-a.canstar i.bi-star-fill {
-  font-size:1.5rem;
-  color: #ffd700;
-}
-
-a.canstar:hover i.bi-star-fill {
-  color: #ced4da;
-}
-
 .row .row {
   padding-right: 0px;
 }
@@ -379,4 +361,65 @@ input.textinput:focus {
 
 .postScoredTagger.noneSelected .postTagStars:hover {
   display: none;
+}
+
+a.canstar i.bi-, a.canstar i.bi-star-fill {
+  font-size:1.5rem;
+}
+
+a.canstar i.bi-star {
+  color: #ced4da;
+}
+
+a.canstar:hover i.bi-star {
+  color: #ffd700;
+}
+
+a.canstar i.bi-star-fill {
+  color: #ffd700;
+}
+
+a.canstar:hover i.bi-star-fill {
+  color: #ced4da;
+}
+
+a.star-1 i.bi-star-fill, 
+a.star-2 i.bi-star-fill, 
+a.star-3 i.bi-star-fill, 
+a.star-4 i.bi-star-fill, 
+a.star-5 i.bi-star-fill {
+  display: none;
+}
+
+.quintile-5 a.star-5 i.bi-star-fill, 
+.quintile-4 a.star-4 i.bi-star-fill, .quintile-5 a.star-4 i.bi-star-fill,
+.quintile-3 a.star-3 i.bi-star-fill, .quintile-4 a.star-3 i.bi-star-fill, .quintile-5 a.star-3 i.bi-star-fill,
+.quintile-2 a.star-2 i.bi-star-fill, .quintile-3 a.star-2 i.bi-star-fill, .quintile-4 a.star-2 i.bi-star-fill, .quintile-5 a.star-2 i.bi-star-fill,
+.quintile-1 a.star-1 i.bi-star-fill, .quintile-2 a.star-1 i.bi-star-fill, .quintile-3 a.star-1 i.bi-star-fill, .quintile-4 a.star-1 i.bi-star-fill, .quintile-5 a.star-1 i.bi-star-fill {
+  display: inline;
+  color: #ffd700;
+}
+
+.quintile-5 a.star-5 i.bi-star, 
+.quintile-4 a.star-4 i.bi-star, .quintile-5 a.star-4 i.bi-star,
+.quintile-3 a.star-3 i.bi-star, .quintile-4 a.star-3 i.bi-star, .quintile-5 a.star-3 i.bi-star,
+.quintile-2 a.star-2 i.bi-star, .quintile-3 a.star-2 i.bi-star, .quintile-4 a.star-2 i.bi-star, .quintile-5 a.star-2 i.bi-star,
+.quintile-1 a.star-1 i.bi-star, .quintile-2 a.star-1 i.bi-star, .quintile-3 a.star-1 i.bi-star, .quintile-4 a.star-1 i.bi-star, .quintile-5 a.star-1 i.bi-star {
+  display: none;
+}
+
+a.star-1:hover i.bi-star-fill, 
+a.star-2:hover i.bi-star-fill, 
+a.star-3:hover i.bi-star-fill, 
+a.star-4:hover i.bi-star-fill, 
+a.star-5:hover i.bi-star-fill {
+  color: #ced4da;
+}
+
+a.star-1:hover i.bi-star, 
+a.star-2:hover i.bi-star, 
+a.star-3:hover i.bi-star, 
+a.star-4:hover i.bi-star, 
+a.star-5:hover i.bi-star {
+  color: #ffd700;
 }

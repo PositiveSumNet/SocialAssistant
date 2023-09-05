@@ -93,6 +93,10 @@ const logDbScriptVersion = function(versionInfo) {
   document.getElementById('dbScriptNumber').textContent = versionInfo.version.toString();
 }
 
+const saveSubtopic = function(payload) {
+  console.log(payload);
+}
+
 // returns back a copy of the saved data
 const onCompletedSaveAndDelete = function(payload) {
   switch (payload.onSuccessType) {
@@ -805,7 +809,9 @@ const configureFavoriting = function(a) {
 }
 
 const onAddedRows = function(container) {
-  // favoriting
+  // tag & rate
+  Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm));
+  // simple favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
 
