@@ -103,6 +103,9 @@ const onCompletedSaveAndDelete = function(payload) {
     case SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS:
       localStorage.setItem(SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS, Date.now());
       break;
+    case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_POST_TAG:
+      TAGGING.POSTS.onTaggingSuccess(payload);
+      break;
     default:
       // no-op
       break;
@@ -809,8 +812,9 @@ const configureFavoriting = function(a) {
 }
 
 const onAddedRows = function(container) {
+  const pageType = getPageType();
   // tag & rate
-  Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm));
+  Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm, pageType));
   // simple favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
