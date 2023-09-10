@@ -815,6 +815,7 @@ const onAddedRows = function(container) {
   const pageType = getPageType();
   // tag & rate
   Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm, pageType));
+  Array.from(container.getElementsByClassName('postAnotherTag')).forEach(elm => RENDER.POST.TAGGING.configureAddAnotherTag(elm, pageType));
   // simple favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
