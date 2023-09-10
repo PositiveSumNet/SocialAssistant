@@ -423,3 +423,11 @@ a.star-4:hover i.bi-star,
 a.star-5:hover i.bi-star {
   color: #ffd700;
 }
+
+a.postAnotherTag {
+  display: none;
+}
+
+.postScoredTaggers.hasTag a.postAnotherTag {
+  display: inline;
+}
