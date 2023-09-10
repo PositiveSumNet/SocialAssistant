@@ -289,7 +289,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
   context.auto.owner = STR.stripPrefix(owner, '@');
   context.auto.site = site;
   context.auto.pageType = pageType;
-  context.recordsTweetImages = forTweets && document.getElementById('chkAutoRecordTweetImages').checked == true;
+  context.recordsTweetImages = document.getElementById('chkAutoRecordTweetImages').checked == true;
   await SETTINGS.RECORDING.saveContext(context);
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);

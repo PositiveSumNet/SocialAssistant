@@ -69,6 +69,8 @@ const _script4Entities = [
 ];
 
 const _script8Entities = [
+  APPSCHEMA.SocialTopicSubtopic,
+  APPSCHEMA.SocialSubtopicKeyword,
   APPSCHEMA.SocialPostTime,
   APPSCHEMA.SocialPostAuthorHandle,
   APPSCHEMA.SocialPostReplyToUrlKey,
@@ -87,12 +89,7 @@ const _script8Entities = [
   APPSCHEMA.SocialPostRegImgBinary,
   APPSCHEMA.SocialPostReplyCount,
   APPSCHEMA.SocialPostLikeCount,
-  APPSCHEMA.SocialPostReshareCount
-];
-
-const _script9Entities = [
-  APPSCHEMA.SocialTopicSubtopic,
-  APPSCHEMA.SocialSubtopicKeyword,
+  APPSCHEMA.SocialPostReshareCount,
   APPSCHEMA.SocialPostSubtopicRating
 ];
 
@@ -102,7 +99,6 @@ const getAllEntities = function() {
   arr.push(..._initialEntities);
   arr.push(..._script4Entities);
   arr.push(..._script8Entities);
-  arr.push(..._script9Entities);
   return arr;
 }
 
@@ -145,9 +141,6 @@ const getMigrationScripts = function() {
 
   const sql8 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script8Entities, 8);
   scripts.push(DBORM.MIGRATION.newScript(sql8, 8));
-  
-  const sql9 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script9Entities, 9);
-  scripts.push(DBORM.MIGRATION.newScript(sql9, 9));
   
   return scripts;
 }
