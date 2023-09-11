@@ -206,7 +206,6 @@ const setExpandThreadsBtnViz = async function() {
   }
 }
 
-// visually show that it worked
 const onSavedThread = function(threadUrlKey) {
   _savedThreads.add(threadUrlKey);
   const optionElms = Array.from(lstThread.querySelectorAll('option'));
