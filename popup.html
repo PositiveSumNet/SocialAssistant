@@ -23,6 +23,7 @@
         <div class="d-grid gap-3">
           <button id="btnChooseManual" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can decide what content to record as you use Twitter.'>As I scroll manually...</button>
           <button id="btnChooseAutoScroll" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can set up an automated Twitter recording.'>With auto-scroll...</button>
+          <button id="btnChooseThreadFinisher" style="display: none;" class="btn btn-secondary" data-toggle='tooltip' title='Finish recording potentially incomplete threads.'>For incomplete threads...</button>
           <div class="mt-2 small"><i class="bi-info-circle"></i> Concerned about X terms of use despite <a href="https://www.fbm.com/publications/what-recent-rulings-in-hiq-v-linkedin-and-other-cases-say-about-the-legality-of-data-scraping/" target="_blank">this</a>? Recording manually is more conservative, either via X, <a href="https://nitter.net/positivesumnet/with_replies" target="_blank">nitter.net</a> or <a href="https://nitter.cz/positivesumnet/with_replies" target="_blank">nitter.cz</a>.<br></div>
         </div>
         <br>
@@ -32,6 +33,42 @@
         </div>
         <br>
         <div><i class="bi-info-circle"></i> Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></div>
+      </div>
+      <div id="threadFinisherSection" class="appRecordingSection" style="display: none;">
+        <h5>Click to visit and record the detailed thread:</h5>
+        <div class="container-fluid">
+          <div class="row">
+            <div class='input-group col'>
+              <label for='cmbVisitThreadHow' class='text-muted input-group-text'>via</label>
+              <select id="cmbVisitThreadHow" class="ps-2">
+                <option value="x.com">Twitter</option>
+                <option value="nitter.net">Nitter.net</option>
+                <option value="nitter.cz">Nitter.cz</option>
+              </select>
+            </div>
+            <div style="font-size: 1.2rem;" class="col my-auto">
+              <a href="#" id="btnPriorThreads" data-toggle="tooltip" title="Prior set"><i class="bi-arrow-left-circle"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnNextThreads" data-toggle="tooltip" title="Next set"><i class="bi-arrow-right-circle"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnLaunchAll" data-toggle="tooltip" title="Launch (and record) all suggestions below"><i class="bi-box-arrow-up-right"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnClearSelection" data-toggle="tooltip" title="Dismiss suggestions shown"><i class="bi-trash"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnClearAll" data-toggle="tooltip" title="Clear all suggestions"><i class="bi-trash-fill"></i></a>
+            </div>
+          </div>
+          <div class="row p-3">
+            <select id="lstThread" size="10" class="p-1">
+              <option value="x.com">Twitter</option>
+              <option value="nitter.net">Nitter.net</option>
+              <option value="nitter.cz">Nitter.cz</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-grid gap-3">
+          <button id="btnEscapeThreadFinishing" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Done for now</button>
+        </div>
       </div>
       <div id="configureManualRecordingSection" class="appRecordingSection" style="display:none;">
         <h5>While using <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span>, privately record:</h5>

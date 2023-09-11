@@ -22,6 +22,7 @@ const onLoadReflectRecordingContext = async function() {
       break;
     case SETTINGS.RECORDING.STATE.OFF:
     default:
+      await setExpandThreadsBtnViz();
       showRecordingDiv('notYetRecordingSection');
       break;
   }
@@ -121,6 +122,44 @@ btnManualPreviewExamplePage.addEventListener('click', async () => {
   await viewExamplePage(forTweets);
   window.close();
 });
+
+const btnStartExpandThreadsFlow = document.getElementById('btnChooseThreadFinisher');
+btnStartExpandThreadsFlow.addEventListener('click', async () => {
+  showRecordingDiv('threadFinisherSection');
+});
+
+// document.getElementById('btnPriorThreads').addEventListener('click', async () => {
+//   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+//   chrome.tabs.update(tab.id, {url: 'https://x.com'});
+//   return false;
+// });
+
+const setExpandThreadsBtnViz = async function() {
+  const threadUrlKeys = await getExpandThreadUrlKeys(true);
+  if (threadUrlKeys.length > 0) {
+    btnStartExpandThreadsFlow.style.display = 'block';
+  }
+  else {
+    btnStartExpandThreadsFlow.style.display = 'none';
+  }
+}
+
+const getExpandThreadUrlKeys = async function(justOne) {
+  const all = await chrome.storage.local.get();
+  const entries = Object.entries(all);
+  const threadUrlKeys = [];
+
+  for (const [key, val] of entries) {
+    if (key.startsWith(STORAGE_PREFIX.THREAD_EXPANSION_URLKEY)) {
+      threadUrlKeys.push(val);
+      if (justOne == true) {
+        break;
+      }
+    }
+  }
+
+  return threadUrlKeys;
+}
 
 const viewExamplePage = async function(forTweets) {
   let url = '';
