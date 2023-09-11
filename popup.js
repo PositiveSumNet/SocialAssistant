@@ -1,3 +1,29 @@
+const _threadsPageSize = 10;
+var _threadFinisherPage = 1;
+const _savedThreads = new Set();
+
+// listen for messages
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // stackoverflow.com/a/73836810
+  let returnsData = false;
+  switch (request.actionType) {
+    case MSGTYPE.TO_POPUP.SAVED_THREAD:
+    default:
+      break;
+  }
+
+  (async () => {
+    switch (request.actionType) {
+      case MSGTYPE.TO_POPUP.SAVED_THREAD:
+        onSavedThread(request.threadUrlKey);
+        return returnsData;
+      default:
+        return returnsData;
+    }
+  })();
+  return returnsData;
+});
+
 chrome.tabs.query({active: true, currentWindow: true}, ([tab]) => {
   chrome.storage.local.get([SETTINGS.AGREED_TO_TERMS], async function(result) {
     if (result.agreedToTerms == 'true') {
@@ -106,7 +132,7 @@ btnChooseAutoScroll.addEventListener('click', async () => {
 const btnReviewDb = document.getElementById('btnReviewDb');
 btnReviewDb.addEventListener('click', async () => {
   await reviewDb();
-  window.close();
+  await closeWindow();
 });
 
 const btnManualViewExamplePage = document.getElementById('btnManualViewExamplePage');
@@ -114,28 +140,64 @@ btnManualViewExamplePage.addEventListener('click', async () => {
   const context = await SETTINGS.RECORDING.getContext();
   const forTweets = context.manual.recordsTweets;
   await viewExamplePage(forTweets);
-  window.close();
+  await closeWindow();
 });
 const btnManualPreviewExamplePage = document.getElementById('btnManualPreviewExamplePage');
 btnManualPreviewExamplePage.addEventListener('click', async () => {
   const forTweets = document.getElementById('chkManualRecordsTweets').checked == true;
   await viewExamplePage(forTweets);
-  window.close();
+  await closeWindow();
+});
+
+document.getElementById('btnEscapeThreadFinishing').addEventListener('click', async () => {
+  showRecordingDiv('notYetRecordingSection');
+  return false;
+});
+
+const cmbVisitThreadHow = document.getElementById('cmbVisitThreadHow');
+cmbVisitThreadHow.addEventListener('change', (event) => {
+  const domain = cmbVisitThreadHow.value;
+  const nitterTip = document.getElementById('nitterTipSection');
+  if (domain && domain.indexOf('nitter') > -1) {
+    nitterTip.style.visibility = 'visible';
+  }
+  else {
+    nitterTip.style.visibility = 'hidden';
+  }
+});
+
+const lstThread = document.getElementById('lstThread');
+lstThread.addEventListener('change', async (event) => {
+  const urlKey = lstThread.value;
+  if (STR.hasLen(urlKey)) {
+    const domain = cmbVisitThreadHow.value;
+    const fullUrl = STR.expandTweetUrl(urlKey, domain);
+    const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+    chrome.tabs.update(tab.id, {url: fullUrl});
+  }
 });
 
 const btnStartExpandThreadsFlow = document.getElementById('btnChooseThreadFinisher');
 btnStartExpandThreadsFlow.addEventListener('click', async () => {
+  await loadThreadList();
   showRecordingDiv('threadFinisherSection');
 });
 
-// document.getElementById('btnPriorThreads').addEventListener('click', async () => {
-//   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-//   chrome.tabs.update(tab.id, {url: 'https://x.com'});
-//   return false;
-// });
+const loadThreadList = async function() {
+  const skip = (_threadFinisherPage - 1) * _threadsPageSize;
+  const threadUrlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys(_threadsPageSize, skip);
+  let html = '';
+  for (let i = 0; i < threadUrlKeys.length; i++) {
+    let threadUrlKey = threadUrlKeys[i];
+    let threadLabel = writeThreadLabel(threadUrlKey);
+    let optHtml = `<option value='${threadUrlKey}'>${threadLabel}</option>`;
+    html = STR.appendLine(html, optHtml);
+  }
+  lstThread.innerHTML = DOMPurify.sanitize(html);
+}
 
 const setExpandThreadsBtnViz = async function() {
-  const threadUrlKeys = await getExpandThreadUrlKeys(true);
+  const threadUrlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys(1);
   if (threadUrlKeys.length > 0) {
     btnStartExpandThreadsFlow.style.display = 'block';
   }
@@ -144,21 +206,25 @@ const setExpandThreadsBtnViz = async function() {
   }
 }
 
-const getExpandThreadUrlKeys = async function(justOne) {
-  const all = await chrome.storage.local.get();
-  const entries = Object.entries(all);
-  const threadUrlKeys = [];
-
-  for (const [key, val] of entries) {
-    if (key.startsWith(STORAGE_PREFIX.THREAD_EXPANSION_URLKEY)) {
-      threadUrlKeys.push(val);
-      if (justOne == true) {
-        break;
-      }
+// visually show that it worked
+const onSavedThread = function(threadUrlKey) {
+  _savedThreads.add(threadUrlKey);
+  const optionElms = Array.from(lstThread.querySelectorAll('option'));
+  for (let i = 0; i < optionElms.length; i++) {
+    let optionElm = optionElms[i];
+    let optionVal = optionElm.getAttribute('value');
+    if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
+      optionElm.textContent = writeThreadLabel(optionVal);
     }
   }
+}
 
-  return threadUrlKeys;
+const writeThreadLabel = function(threadUrlKey) {
+  let saved = '';
+  if (_savedThreads.has(threadUrlKey)) {
+    saved = '(saved) '
+  }
+  return `${saved}${threadUrlKey}`;
 }
 
 const viewExamplePage = async function(forTweets) {
@@ -204,7 +270,7 @@ btnStartManualRecording.addEventListener('click', async () => {
 
   await SETTINGS.RECORDING.saveContext(context);
 
-  window.close();
+  await closeWindow();
 });
 
 const loopUpdateExpirationDisplay = async function() {
@@ -268,7 +334,7 @@ btnEscapeManualRecordingConfig.addEventListener('click', async () => {
 const btnStopManualRecording = document.getElementById('btnStopManualRecording');
 btnStopManualRecording.addEventListener('click', async () => {
   await stopRecording();
-  window.close();
+  await closeWindow();
 });
 
 const btnExtendTimer = document.getElementById('btnExtendTimer');
@@ -333,7 +399,7 @@ btnStartAutoRecording.addEventListener('click', async () => {
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
   activateOrLaunchParsedUrlTab(parsedUrl);
-  window.close();
+  await closeWindow();
 });
 
 const btnEscapeAutoRecordingConfig = document.getElementById('btnEscapeAutoRecordingConfig');
@@ -398,7 +464,7 @@ const btnStopAutoRecording = document.getElementById('btnStopAutoRecording');
 btnStopAutoRecording.addEventListener('click', async () => {
   await stopRecording();
   // while debugging save, can comment out next line
-  window.close();
+  await closeWindow();
 });
 
 const stopRecording = async function() {
@@ -444,7 +510,7 @@ btnAutoRecordingWhat.addEventListener('click', async () => {
   const recordingContext = await SETTINGS.RECORDING.getContext();
   const contextParsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(recordingContext);
   await activateOrLaunchParsedUrlTab(contextParsedUrl);
-  window.close();
+  await closeWindow();
 });
 
 // activate the tab that has the corresponding url...
@@ -472,7 +538,16 @@ const activateOrLaunchParsedUrlTab = async function(parsedUrl) {
 
 const btnClose = document.getElementById('btnClose');
 btnClose.addEventListener('click', async () => {
-  window.close();
+  await closeWindow();
   return false;
 });
 
+const closeWindow = async function() {
+  // on close, ensure that all the recently saved thread url keys are removed from local cache
+  const urlKeys = Array.from(_savedThreads);
+  for (let i = 0; i < urlKeys.length; i++) {
+    let urlKey = urlKeys[i];
+    await SETTINGS.RECORDING.removeThreadExpansionUrlKey(urlKey);
+  }
+  window.close();
+}

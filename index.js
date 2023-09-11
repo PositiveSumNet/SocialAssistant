@@ -41,23 +41,6 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(re
   // console.log('userauth: ' + _mdonUserAuthToken);
 });
 
-// each time this page loads/refreshes, we make sure background tasks are running (as needed) for offscreen scraping
-chrome.runtime.sendMessage({ 
-  actionType: MSGTYPE.TOBACKGROUND.LETS_SCRAPE
-});
-
-// listen for messages (aside from worker messages which are handled separately)
-chrome.runtime.onMessage.addListener(handleMessages);
-async function handleMessages(message) {
-  switch (message.actionType) {
-    case MSGTYPE.FROMBG.BG_SCRAPED:
-      onScrapedBg(message.parsedUrl);
-      break;
-    default:
-      break;
-  }
-}
-
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
   if (getUiValue('optWithMdon') === true) {
@@ -417,12 +400,6 @@ const renderMatchedOwners = function(payload) {
     
     IMAGE.resolveDeferredLoadImages(listOwnerPivotPicker);
   }
-}
-
-const onScrapedBg = function(parsedUrl) {
-  const msg = `Processed ${STR.friendlyParsedUrl(parsedUrl)}`;
-  const elm = document.getElementById('bgStatusMsg');
-  elm.textContent = msg;
 }
 
 const renderSuggestedOwner = function(payload) {

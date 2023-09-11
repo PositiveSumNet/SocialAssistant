@@ -35,7 +35,7 @@
         <div><i class="bi-info-circle"></i> Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></div>
       </div>
       <div id="threadFinisherSection" class="appRecordingSection" style="display: none;">
-        <h5>Click to visit and record the detailed thread:</h5>
+        <h5>Click to visit and record rest of thread:</h5>
         <div class="container-fluid">
           <div class="row">
             <div class='input-group col'>
@@ -57,6 +57,9 @@
               <span class='basicSep'> | </span>
               <a href="#" id="btnClearAll" data-toggle="tooltip" title="Clear all suggestions"><i class="bi-trash-fill"></i></a>
             </div>
+          </div>
+          <div id="nitterTipSection" class="small text-muted pt-2" style="visibility: hidden;">
+            <span>If you enjoy nitter, consider <a href="https://nitter.net/about" target="_blank">a donation</a>. We're not affiliated.</span>
           </div>
           <div class="row p-3">
             <select id="lstThread" size="10" class="p-1">
@@ -158,6 +161,7 @@
       <br>
       <div class="text-center"><img src="/images/possum800.png" style="width:255px; height:170px;" alt="possum-mascot"></div>
     </div>
+    <script src='lib/shared/purify.min.js'></script>
     <script src="lib/shared/constants.js"></script>
     <script src="lib/shared/es6lib.js"></script>
     <script src="lib/shared/pagetypes.js"></script>

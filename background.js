@@ -63,6 +63,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case 'logMe':
         console.log(request.data);
         return returnsData;
+      case 'savedThreadToBg':
+        await onSavedThread(request.threadUrlKey);
+        return returnsData;
       default:
         return returnsData;
     }
@@ -141,6 +144,21 @@ const getImageBase64 = async function(url) {
 /**************************/
 // MISC
 /**************************/
+
+// a clone of SETTINGs.RECORDING.removeThreadExpansionUrlKey
+// until we use "modules" approach to background though, can't stay DRY
+const onSavedThread = async function(threadUrlKey) {
+
+  // this gives the user time to plunk around with the page
+  // i.e. in case they're scrolling through it etc. while reviewing threads to expand
+  // (and where not already recording manually)
+  // this is part of the popup's threaa expansion flow
+  setTimeout(async () => {
+    const THREAD_EXPANSION_URLKEY = 'threadMore-';
+    const key = `${THREAD_EXPANSION_URLKEY}${threadUrlKey}`;
+    await chrome.storage.local.remove(key);
+  }, 30000);
+}
 
 const fancySetBadge = function(text) {
   chrome.action.setBadgeText({text: text});
