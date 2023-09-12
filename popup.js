@@ -157,6 +157,7 @@ document.getElementById('btnEscapeThreadFinishing').addEventListener('click', as
 const cmbVisitThreadHow = document.getElementById('cmbVisitThreadHow');
 cmbVisitThreadHow.addEventListener('change', (event) => {
   const domain = cmbVisitThreadHow.value;
+  SETTINGS.RECORDING.setThreadExpansionPreferredDomain(domain);
   const nitterTip = document.getElementById('nitterTipSection');
   if (domain && domain.indexOf('nitter') > -1) {
     nitterTip.style.visibility = 'visible';
@@ -180,6 +181,7 @@ lstThread.addEventListener('change', async (event) => {
 const btnStartExpandThreadsFlow = document.getElementById('btnChooseThreadFinisher');
 btnStartExpandThreadsFlow.addEventListener('click', async () => {
   await loadThreadList();
+  cmbVisitThreadHow.value = SETTINGS.RECORDING.getThreadExpansionPreferredDomain();
   showRecordingDiv('threadFinisherSection');
 });
 
