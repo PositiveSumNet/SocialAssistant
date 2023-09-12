@@ -178,8 +178,8 @@ lstThread.addEventListener('change', async (event) => {
   }
 });
 
-const btnStartExpandThreadsFlow = document.getElementById('btnChooseThreadFinisher');
-btnStartExpandThreadsFlow.addEventListener('click', async () => {
+const btnChooseThreadFinisher = document.getElementById('btnChooseThreadFinisher');
+btnChooseThreadFinisher.addEventListener('click', async () => {
   await loadThreadList();
   cmbVisitThreadHow.value = SETTINGS.RECORDING.getThreadExpansionPreferredDomain();
   showRecordingDiv('threadFinisherSection');
@@ -201,10 +201,10 @@ const loadThreadList = async function() {
 const setExpandThreadsBtnViz = async function() {
   const threadUrlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys(1);
   if (threadUrlKeys.length > 0) {
-    btnStartExpandThreadsFlow.style.display = 'block';
+    btnChooseThreadFinisher.style.display = 'block';
   }
   else {
-    btnStartExpandThreadsFlow.style.display = 'none';
+    btnChooseThreadFinisher.style.display = 'none';
   }
 }
 
@@ -227,6 +227,56 @@ const writeThreadLabel = function(threadUrlKey) {
   }
   return `${saved}${threadUrlKey}`;
 }
+
+const btnPriorThreads = document.getElementById('btnPriorThreads');
+btnPriorThreads.addEventListener('click', async () => {
+  if (_threadFinisherPage > 1) {
+    _threadFinisherPage--;
+    await loadThreadList();
+  }
+  return false;
+});
+
+const btnNextThreads = document.getElementById('btnNextThreads');
+btnNextThreads.addEventListener('click', async () => {
+  const currentPageItemCnt = Array.from(lstThread.querySelectorAll('option')).length;
+  if (currentPageItemCnt > 0) {
+    _threadFinisherPage++;
+    await loadThreadList();
+  }
+  return false;
+});
+
+const btnClearSelThreads = document.getElementById('btnClearSelThreads');
+btnClearSelThreads.addEventListener('click', async () => {
+  const optElms = Array.from(lstThread.querySelectorAll('option'));
+  for (let i = 0; i < optElms.length; i++) {
+    let optElm = optElms[i];
+    let urlKey = optElm.getAttribute('value');
+    await SETTINGS.RECORDING.removeThreadExpansionUrlKey(urlKey);
+  }
+  
+  // reload
+  _threadFinisherPage = 1;
+  await loadThreadList(); // load first page
+
+  return false;
+});
+
+const btnClearThreadsAll = document.getElementById('btnClearThreadsAll');
+btnClearThreadsAll.addEventListener('click', async () => {
+  const urlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys();
+  for (let i = 0; i < urlKeys.length; i++) {
+    await SETTINGS.RECORDING.removeThreadExpansionUrlKey(urlKeys[i]);
+  }
+
+  // reset
+  _threadFinisherPage = 1;
+  setExpandThreadsBtnViz();
+  showRecordingDiv('notYetRecordingSection');
+
+  return false;
+});
 
 const viewExamplePage = async function(forTweets) {
   let url = '';
