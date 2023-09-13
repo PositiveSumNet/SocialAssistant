@@ -76,10 +76,6 @@ const logDbScriptVersion = function(versionInfo) {
   document.getElementById('dbScriptNumber').textContent = versionInfo.version.toString();
 }
 
-const saveSubtopic = function(payload) {
-  console.log(payload);
-}
-
 // returns back a copy of the saved data
 const onCompletedSaveAndDelete = function(payload) {
   switch (payload.onSuccessType) {
@@ -123,6 +119,12 @@ const onGotSavedCount = function(count, pageType, metadata) {
 
 const getSavableCacheKvps = async function() {
   return await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
+}
+
+const ensureInUseTopicsFilter = function() {
+  worker.postMessage({
+    actionType: MSGTYPE.TODB.GET_INUSE_TOPICS
+  });
 }
 
 const ensureCopiedToDb = async function() {
@@ -302,7 +304,7 @@ window.addEventListener("popstate", (event) => {
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
 // receive messages from worker
-worker.onmessage = function ({ data }) {
+worker.onmessage = async function ({ data }) {
   switch (data.type) {
     case MSGTYPE.FROMDB.LOG.LEGACY:
       // legacy + error logging
@@ -316,10 +318,11 @@ worker.onmessage = function ({ data }) {
       break;
     case MSGTYPE.FROMDB.WORKER_READY:
       TOPICS.ensureRemoteTopicSettings(onFetchedRawTopicContent);
-      ensureCopiedToDb();
+      ensureInUseTopicsFilter();
+      await ensureCopiedToDb();
       break;
     case MSGTYPE.FROMDB.COPIED_TODB:
-      onCopiedToDb(data.cacheKeys);
+      await onCopiedToDb(data.cacheKeys);
       break;
     case MSGTYPE.FROMDB.SAVE_AND_DELETE_DONE:
       onCompletedSaveAndDelete(data.payload);
@@ -338,6 +341,10 @@ worker.onmessage = function ({ data }) {
       break;
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       renderNetworkSize(data.payload);
+      break;
+    case MSGTYPE.FROMDB.RENDER.INUSE_TOPICS:
+      _inUseTags = data.payload;
+      renderInUseTopics();
       break;
     case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
       handleExportedResults(data.payload);
@@ -690,9 +697,17 @@ const renderNetworkSize = function(payload) {
 }
 
 const initMainListUiElms = function() {
+  const owner = getUiValue('txtOwnerHandle');
+  if (STR.hasLen(owner)) {
+    optWithRetweets.style.display = 'inline-block';
+  }
+  else {
+    optWithRetweets.style.display = 'none';
+  }
+  
   document.getElementById('paginated-list').replaceChildren();
   document.getElementById('listOwnerPivotPicker').replaceChildren();
-  clearTotalCount();
+  document.getElementById('txtSearch').setAttribute('placeholder', 'search...');
 
   const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
   document.getElementById('pageGear').setAttribute("title", pageGearTip);
@@ -702,6 +717,25 @@ const canRenderMastodonFollowOneButtons = function() {
   const site = SETTINGS.getCachedSite();
   const mdonMode = getUiValue('optWithMdon');
   return site === SITE.MASTODON || mdonMode === true;
+}
+
+const cmbTopicFilter = document.getElementById('cmbTopicFilter');
+cmbTopicFilter.addEventListener('change', (event) => {
+
+});
+
+const renderInUseTopics = function() {
+  let choices = [];
+  choices.push(CMB_SPECIAL.TAG_FILTER_BY);
+  choices.push(..._inUseTags);
+
+  let html = '';
+  for (let i = 0; i < choices.length; i++) {
+    let tag = choices[i];
+    html = STR.appendLine(html, `<option value='${i - 1}'>${tag}</option>`);
+  }
+  html = DOMPurify.sanitize(html);
+  cmbTopicFilter.innerHTML = html;
 }
 
 const renderPostStream = function(payload) {
@@ -947,6 +981,7 @@ txtOwnerHandle.onfocus = function () {
 txtOwnerHandle.addEventListener('keydown', function(event) {
   if (event.key === "Backspace" || event.key === "Delete") {
     _deletingOwner = true;
+    _lastRenderedRequest = '';
   }
   else {
     _deletingOwner = false;
@@ -1016,17 +1051,12 @@ listOwnerPivotPicker.onclick = function(event) {
   onChooseOwner();
 };
 
-const clearTotalCount = function() {
-  document.getElementById('txtSearch').setAttribute('placeholder', 'search...');
-}
-
 const displayTotalCount = function(count) {
   document.getElementById('txtSearch').setAttribute('placeholder', `search (${count} total)...`);
 }
 
 const onChooseOwner = function() {
-  // when owner changes, we need to reset the counts and then request a refreshed count
-  clearTotalCount();
+  initMainListUiElms();
   listOwnerPivotPicker.replaceChildren();
   resetPage();
   executeSearch();
@@ -1412,7 +1442,6 @@ const updateForSite = function() {
   stopExport();
   
   const site = SETTINGS.getCachedSite();
-  // clear what's there now
   initMainListUiElms();
   _lastRenderedRequest = '';
   

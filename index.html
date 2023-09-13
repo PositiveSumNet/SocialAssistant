@@ -249,8 +249,14 @@
             <a data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
             <a data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
           </div>
-          <div id="postQueryOptions" class="col-4 pt-2" style="margin-left:25px;display:none;float:right;">
-            <a class="optToggle" href="#" id="optWithRetweets" data-toggle='tooltip' title='Toggle whether to include retweets for selected account'><i class='bi-repeat'></i></a>
+          <div id="postQueryOptions" class="col-4 pt-2" style="padding-left:25px;display:none;">
+            <select id="cmbTopicFilter">
+              <option value="following">Followed by</option>
+              <option value="followers">Followers of</option>
+              <option value="posts">AnimalWelfare: AnimalTreatment</option>
+            </select>
+            <a class="optToggle ms-2" href="#" id="optWithRetweets" data-toggle='tooltip' title='Toggle whether to include retweets for selected account'><i class='bi-repeat'></i></a>
+            <a style="display: none;" class="optToggle me-2" href="#" data-toggle='tooltip' title='Choose sort order'><i class='bi-arrow-down-up'></i></a>
           </div>
           <div id='connQueryOptions' class='col-4' style="margin-left:25px;display:none;float:right;">
             <table>

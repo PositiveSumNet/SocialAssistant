@@ -194,7 +194,7 @@ a {
   text-align: center;
   border-top: 1px solid #ced4da;
   border-bottom: 1px solid #ced4da;
-  padding: .375rem .75rem;
+  padding: .375rem .5rem;
   margin-left: -4px;
 }
 
@@ -247,7 +247,7 @@ label.inputlabel {
   padding: 0.5rem 0.75rem;
 }
 
-input.textinput {
+input.textinput, #cmbTopicFilter {
   margin-left: -5px;
   padding: 0.375rem 0.75rem;
   border: 1px solid #ced4da;
@@ -255,6 +255,10 @@ input.textinput {
   -webkit-transition: 0.5s;
   transition: 0.5s;
   outline: none;
+}
+
+#cmbTopicFilter {
+  border-radius: 0.25rem;
 }
 
 input.textinput:focus {
@@ -430,4 +434,8 @@ a.postAnotherTag {
 
 .postScoredTaggers.hasTag a.postAnotherTag {
   display: inline;
+}
+
+#topicFilter {
+  display: inline-block;
 }
