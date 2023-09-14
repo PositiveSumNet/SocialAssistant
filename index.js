@@ -180,22 +180,7 @@ const initialRender = function(leaveHistoryStackAlone) {
 
   let owner = parms[URL_PARM.OWNER];
   let pageType = parms[URL_PARM.PAGE_TYPE];
-  let mode = parms[URL_PARM.MODE];
-  
-  // power user mode (undocumented; exposes some advanced features)
-  if (mode) {
-    switch (mode) {
-      case 'power':
-        SETTINGS.setPowerUserMode(true);
-        break;
-      case 'basic':
-        document.getElementById('optImportContextEntities').checked = true;
-        SETTINGS.setPowerUserMode(false);
-        break;
-      default:
-        break;
-    }
-  }
+  let topic = parms[URL_PARM.TOPIC];
 
   if (!pageType) {
     pageType = SETTINGS.getCachedPageType();
@@ -263,14 +248,42 @@ const initialRender = function(leaveHistoryStackAlone) {
   txtPageNum.value = page;
 
   // post toggles
+  // WITH_RETWEETS
   setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != false); // default to true
+
+  // TOPIC
+  setTopicFilterChoiceInUi(parms[URL_PARM.TOPIC]);
 
   setOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
-    executeSearch(owner, leaveHistoryStackAlone);
+    executeSearch(owner, leaveHistoryStackAlone, topic);
+  }
+}
+
+const setTopicFilterChoiceInUi = function(topic) {
+  let intVal = -1;
+  const tags = _inUseTags;
+  for (let i = 0; i < tags.length; i++) {
+    let tag = tags[i];
+    if (topic == tag) {
+      intVal = i;
+      break;
+    }
+  }
+
+  cmbTopicFilter.value = intVal;
+}
+
+const getTopicFilterChoiceFromUi = function() {
+  const intValue = parseInt(cmbTopicFilter.value);
+  if (!isNaN(intValue) && intValue > -1 && _inUseTags.length >= intValue + 1) {
+    return _inUseTags[intValue];
+  }
+  else {
+    return null;
   }
 }
 
@@ -283,7 +296,7 @@ const setOptToggleBtn = function(elm, toggledOn) {
   }
 }
 
-const conformQueryStringToUi = function(leaveHistoryStackAlone) {
+const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
   const urlParms = new URLSearchParams(document.location.search);
   urlParms.set(URL_PARM.OWNER, getOwnerFromUi() || '');
   urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
@@ -291,7 +304,8 @@ const conformQueryStringToUi = function(leaveHistoryStackAlone) {
   urlParms.set(URL_PARM.SIZE, SETTINGS.getPageSize() || 50);
   urlParms.set(URL_PARM.PAGE, getPageNum() || 1);
   urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
-
+  urlParms.set(URL_PARM.TOPIC, topic || getUiValue('cmbTopicFilter') || '');
+  
   if (!leaveHistoryStackAlone) {
     history.pushState(null, null, "?"+urlParms.toString());
   }
@@ -445,6 +459,8 @@ const getUiValue = function(id) {
       return optWithUrl.checked;
     case 'optWithRetweets':
       return optWithRetweets.classList.contains('toggledOn');
+    case 'cmbTopicFilter':
+      return getTopicFilterChoiceFromUi();
     default:
       return undefined;
   }
@@ -564,7 +580,9 @@ const buildSearchRequestFromUi = function() {
   myMastodonHandle = myMastodonHandle || (_mdonRememberedUser ? _mdonRememberedUser.Handle : undefined);
 
   const mdonFollowing = ES6.TRISTATE.getValue(chkMdonImFollowing);
-  
+
+  const topic = getUiValue('cmbTopicFilter');
+
   const orderBy = getOrderByFromUi();
 
   const msg = { 
@@ -578,6 +596,7 @@ const buildSearchRequestFromUi = function() {
     take: pageSize,
     // post filters
     withRetweets: withRetweets,
+    topic: topic,
     // conn filters
     mutual: mutual,
     list: LIST_FAVORITES,
@@ -588,7 +607,7 @@ const buildSearchRequestFromUi = function() {
     myMastodonHandle: myMastodonHandle,
     mdonFollowing: mdonFollowing
   };
-  
+
   return msg;
 }
 
@@ -653,11 +672,16 @@ const requestTotalCount = function() {
   _counters.push({key: key});   // value not set yet; will be when called back
 }
 
-const executeSearch = function(forceRefresh, leaveHistoryStackAlone) {
-  conformQueryStringToUi(leaveHistoryStackAlone);
-  const msg = buildSearchRequestFromUi();
-  const requestJson = JSON.stringify(msg);
+// topic dropdown isn't populated yet on initial render, which is why that can get passed in
+const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
+  conformQueryStringToUi(leaveHistoryStackAlone, topic);
   
+  const msg = buildSearchRequestFromUi();
+  if (STR.hasLen(topic)) {
+    msg.topic = topic;
+  }
+
+  const requestJson = JSON.stringify(msg);
   SETTINGS.cachePageState(msg);
 
   if (!forceRefresh && _lastRenderedRequest === requestJson) {
@@ -719,11 +743,6 @@ const canRenderMastodonFollowOneButtons = function() {
   return site === SITE.MASTODON || mdonMode === true;
 }
 
-const cmbTopicFilter = document.getElementById('cmbTopicFilter');
-cmbTopicFilter.addEventListener('change', (event) => {
-
-});
-
 const renderInUseTopics = function() {
   let choices = [];
   choices.push(CMB_SPECIAL.TAG_FILTER_BY);
@@ -736,6 +755,11 @@ const renderInUseTopics = function() {
   }
   html = DOMPurify.sanitize(html);
   cmbTopicFilter.innerHTML = html;
+
+  // this is a straggler step from initialRender() where we needed the topics populated first (via callback)
+  const parms = URLPARSE.getQueryParms();
+  // TOPIC FILTER
+  setTopicFilterChoiceInUi(parms[URL_PARM.TOPIC]);
 }
 
 const renderPostStream = function(payload) {
@@ -909,6 +933,12 @@ optWithRetweets.onclick = function(event) {
   return false;
 };
 
+const cmbTopicFilter = document.getElementById('cmbTopicFilter');
+cmbTopicFilter.addEventListener('change', (event) => {
+  resetPage();
+  executeSearch();
+});
+
 // searching
 const handleTypeSearch = ES6.debounce((event) => {
   resetPage();
@@ -927,6 +957,10 @@ txtPageNum.addEventListener('keydown', function(event) {
 
 const handleFromClickedOwner = function(event) {
   const personElm = ES6.findUpClass(event.target, 'person');
+  if (!personElm) {
+    console.log('Errant owner click');
+    return;
+  }
   const handleElm = personElm.querySelector('.personLabel .personHandle');
   let handleText = handleElm.innerText;
   handleText = STR.stripPrefix(handleText, '@');
@@ -1144,15 +1178,6 @@ function handleDrop(e) {
   handleUploadFiles(files);
 }
 
-const getUploadContext = function() {
-  if (document.getElementById('optImportContextTwitterProfilesToScrape').checked == true) {
-    return UPLOAD_CONTEXT.TWITTER_PROFILES_TO_SCRAPE;
-  }
-  else {
-    return UPLOAD_CONTEXT.ENTITIES_TO_IMPORT;
-  }
-}
-
 // stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
 const processUpload = function(file) {
   const reader = new FileReader();
@@ -1163,13 +1188,10 @@ const processUpload = function(file) {
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
     updateUploadDoneBtnText();
     
-    const uploadContext = getUploadContext();
-    if (uploadContext == UPLOAD_CONTEXT.ENTITIES_TO_IMPORT) {
-      worker.postMessage({
-        actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
-        json: e.target.result
-      });
-    }
+    worker.postMessage({
+      actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
+      json: e.target.result
+    });
 
     onProcessedUploadBatch();
   }

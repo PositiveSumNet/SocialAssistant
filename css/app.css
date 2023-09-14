@@ -99,12 +99,12 @@ a {
 }
 
 .bg-header a:hover, .bg-subheader a:hover, .fixed-bottom a:hover {
-  color: #ffd700;
+  color: #ffe34c;
 }
 
 .row .striped {
   background-color: #f8f9fa;
-  border: 1px solid #ced4da;
+  border: 1.5px solid #ced4da;
 }
 
 .row .striped:nth-child(odd) {
@@ -187,20 +187,23 @@ a {
   border: none;
 }
 
-#paging label, #paging input, #paging a, a.optToggle {
-  white-space:nowrap!important;
+#paging label, #paging input, #paging a {
   display: inline-block;
   align-items: center;
   text-align: center;
   border-top: 1px solid #ced4da;
   border-bottom: 1px solid #ced4da;
-  padding: .375rem .5rem;
+  padding: .375rem .25rem;
   margin-left: -4px;
 }
 
 a.optToggle {
-  border-left: 1px solid #ced4da;
   color: #ced4da;
+  display: inline-block;
+  align-items: center;
+  text-align: center;
+  border: 1px solid #ced4da;
+  padding: .375rem .5rem;
 }
 
 #paging a:hover, a.optToggle:hover {
@@ -302,8 +305,8 @@ input.textinput:focus {
 }
 
 .postAuthorImg {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
 }
 
 .basicSep, .lightfont {
@@ -332,10 +335,15 @@ input.textinput:focus {
 
 .quotedPost {
   padding-top: .5rem!important;
+  background-color: #ececec;
 }
 
 .postHeadline, .replyToPost, .postContent, .postDirectText {
-  padding-bottom: .5rem!important;
+  padding-bottom: .75rem!important;
+}
+
+.postDirectText {
+  color: black;
 }
 
 #continuePaging {
@@ -345,6 +353,10 @@ input.textinput:focus {
   padding-top: 2px;
   padding-bottom: 6px;
   background-color: #e9ecef;
+}
+
+.postScoredTagger>select {
+  color: #14416A;
 }
 
 .postScoredTagger.noneSelected {
@@ -367,7 +379,7 @@ input.textinput:focus {
   display: none;
 }
 
-a.canstar i.bi-, a.canstar i.bi-star-fill {
+a.canstar i.bi-star, a.canstar i.bi-star-fill {
   font-size:1.5rem;
 }
 
@@ -376,11 +388,11 @@ a.canstar i.bi-star {
 }
 
 a.canstar:hover i.bi-star {
-  color: #ffd700;
+  color: #ffe34c;
 }
 
 a.canstar i.bi-star-fill {
-  color: #ffd700;
+  color: #ffe34c;
 }
 
 a.canstar:hover i.bi-star-fill {
@@ -401,7 +413,7 @@ a.star-5 i.bi-star-fill {
 .quintile-2 a.star-2 i.bi-star-fill, .quintile-3 a.star-2 i.bi-star-fill, .quintile-4 a.star-2 i.bi-star-fill, .quintile-5 a.star-2 i.bi-star-fill,
 .quintile-1 a.star-1 i.bi-star-fill, .quintile-2 a.star-1 i.bi-star-fill, .quintile-3 a.star-1 i.bi-star-fill, .quintile-4 a.star-1 i.bi-star-fill, .quintile-5 a.star-1 i.bi-star-fill {
   display: inline;
-  color: #ffd700;
+  color: #ffe34c;
 }
 
 .quintile-5 a.star-5 i.bi-star, 
@@ -425,7 +437,7 @@ a.star-2:hover i.bi-star,
 a.star-3:hover i.bi-star, 
 a.star-4:hover i.bi-star, 
 a.star-5:hover i.bi-star {
-  color: #ffd700;
+  color: #ffe34c;
 }
 
 a.postAnotherTag {
@@ -438,4 +450,9 @@ a.postAnotherTag {
 
 #topicFilter {
   display: inline-block;
+}
+
+.row-tight.row>* {
+  padding-left: calc(var(--bs-gutter-x) * .2);
+  padding-right: calc(var(--bs-gutter-x) * .2);
 }
