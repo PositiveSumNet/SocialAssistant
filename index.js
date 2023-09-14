@@ -175,6 +175,11 @@ const ensureCopiedToDb = async function() {
 const initialRender = function(leaveHistoryStackAlone) {
   // app version
   document.getElementById('manifestVersion').textContent = chrome.runtime.getManifest().version;
+
+  // ensure _topicTags are in place
+  RENDER.POST.TAGGING.initTopicTags();
+  // now render the combobox dropdown
+  renderTopicFilterChoices();
   
   const parms = URLPARSE.getQueryParms();
 
@@ -252,8 +257,8 @@ const initialRender = function(leaveHistoryStackAlone) {
   setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != false); // default to true
 
   // TOPIC
-  setTopicFilterChoiceInUi(parms[URL_PARM.TOPIC]);
-
+  setTopicFilterChoiceInUi(topic);
+  
   setOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
@@ -263,9 +268,25 @@ const initialRender = function(leaveHistoryStackAlone) {
   }
 }
 
+const renderTopicFilterChoices = function() {
+  let choices = [];
+  choices.push(CMB_SPECIAL.TAG_FILTER_BY);
+  choices.push(..._topicTags);
+  
+  let html = '';
+  for (let i = 0; i < choices.length; i++) {
+    let tag = choices[i];
+    // the "-- clear selection --" option should always be visible
+    let cls = i == 0 || _inUseTags.has(tag) ? '' : ` class='d-none'`;
+    html = STR.appendLine(html, `<option value='${i - 1}'${cls}>${tag}</option>`);
+  }
+  html = DOMPurify.sanitize(html);
+  cmbTopicFilter.innerHTML = html;
+}
+
 const setTopicFilterChoiceInUi = function(topic) {
   let intVal = -1;
-  const tags = _inUseTags;
+  const tags = _topicTags;
   for (let i = 0; i < tags.length; i++) {
     let tag = tags[i];
     if (topic == tag) {
@@ -279,8 +300,8 @@ const setTopicFilterChoiceInUi = function(topic) {
 
 const getTopicFilterChoiceFromUi = function() {
   const intValue = parseInt(cmbTopicFilter.value);
-  if (!isNaN(intValue) && intValue > -1 && _inUseTags.length >= intValue + 1) {
-    return _inUseTags[intValue];
+  if (!isNaN(intValue) && intValue > -1 && _topicTags.length >= intValue + 1) {
+    return _topicTags[intValue];
   }
   else {
     return null;
@@ -357,8 +378,8 @@ worker.onmessage = async function ({ data }) {
       renderNetworkSize(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.INUSE_TOPICS:
-      _inUseTags = data.payload;
-      renderInUseTopics();
+      _inUseTags = new Set(data.payload);
+      adjustTopicFilterVisibility();
       break;
     case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
       handleExportedResults(data.payload);
@@ -743,23 +764,18 @@ const canRenderMastodonFollowOneButtons = function() {
   return site === SITE.MASTODON || mdonMode === true;
 }
 
-const renderInUseTopics = function() {
-  let choices = [];
-  choices.push(CMB_SPECIAL.TAG_FILTER_BY);
-  choices.push(..._inUseTags);
-
-  let html = '';
-  for (let i = 0; i < choices.length; i++) {
-    let tag = choices[i];
-    html = STR.appendLine(html, `<option value='${i - 1}'>${tag}</option>`);
-  }
-  html = DOMPurify.sanitize(html);
-  cmbTopicFilter.innerHTML = html;
-
-  // this is a straggler step from initialRender() where we needed the topics populated first (via callback)
-  const parms = URLPARSE.getQueryParms();
-  // TOPIC FILTER
-  setTopicFilterChoiceInUi(parms[URL_PARM.TOPIC]);
+const adjustTopicFilterVisibility = function() {
+  const options = Array.from(cmbTopicFilter.querySelectorAll('option'));
+  options.forEach(function(option) {
+    let intVal = option.value;
+    // visibility
+    if (intVal < 0 || _inUseTags.has(_topicTags[intVal])) {
+      option.classList.remove('d-none');
+    }
+    else {
+      option.classList.add('d-none');
+    }
+  });
 }
 
 const renderPostStream = function(payload) {
