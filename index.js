@@ -254,7 +254,8 @@ const initialRender = function(leaveHistoryStackAlone) {
 
   // post toggles
   // WITH_RETWEETS
-  setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != false); // default to true
+  setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != 'false'); // default to true
+  setOptToggleBtn(optGuessTopics, parms[URL_PARM.GUESS_TOPICS] == 'true'); // default to false
 
   // TOPIC
   setTopicFilterChoiceInUi(topic);
@@ -325,6 +326,7 @@ const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
   urlParms.set(URL_PARM.SIZE, SETTINGS.getPageSize() || 50);
   urlParms.set(URL_PARM.PAGE, getPageNum() || 1);
   urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
+  urlParms.set(URL_PARM.GUESS_TOPICS, getUiValue('optGuessTopics') || false);
   urlParms.set(URL_PARM.TOPIC, topic || getUiValue('cmbTopicFilter') || '');
   
   if (!leaveHistoryStackAlone) {
@@ -480,6 +482,8 @@ const getUiValue = function(id) {
       return optWithUrl.checked;
     case 'optWithRetweets':
       return optWithRetweets.classList.contains('toggledOn');
+    case 'optGuessTopics':
+      return optGuessTopics.classList.contains('toggledOn');
     case 'cmbTopicFilter':
       return getTopicFilterChoiceFromUi();
     default:
@@ -590,6 +594,7 @@ const buildSearchRequestFromUi = function() {
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
   const withRetweets = getUiValue('optWithRetweets');
+  const guessTopics = getUiValue('optGuessTopics');
 
   // conditional filters
   let withUrl = getUiValue('optWithUrl');
@@ -617,6 +622,7 @@ const buildSearchRequestFromUi = function() {
     take: pageSize,
     // post filters
     withRetweets: withRetweets,
+    guessTopics: guessTopics,
     topic: topic,
     // conn filters
     mutual: mutual,
@@ -902,6 +908,7 @@ const optClear = document.getElementById('optClear');
 
 // post option buttons
 const optWithRetweets = document.getElementById('optWithRetweets');
+const optGuessTopics = document.getElementById('optGuessTopics');
 
 // mastodon account typeahead hitting api
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
@@ -945,6 +952,12 @@ optClear.addEventListener('change', (event) => {
 
 optWithRetweets.onclick = function(event) {
   optWithRetweets.classList.toggle('toggledOn');
+  executeSearch();
+  return false;
+};
+
+optGuessTopics.onclick = function(event) {
+  optGuessTopics.classList.toggle('toggledOn');
   executeSearch();
   return false;
 };
