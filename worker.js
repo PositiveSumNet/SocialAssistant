@@ -12,6 +12,7 @@
 // on startup
 // DBORM.LOGGING.log('Loading and initializing sqlite3 module...');
 importScripts('/jswasm/sqlite3.js');
+importScripts('/lib/dbui/topiclib.js');
 importScripts('/lib/shared/constants.js');
 importScripts('/lib/shared/pagetypes.js');
 importScripts('/lib/shared/settingslib.js');
