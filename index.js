@@ -186,6 +186,7 @@ const initialRender = function(leaveHistoryStackAlone) {
   let owner = parms[URL_PARM.OWNER];
   let pageType = parms[URL_PARM.PAGE_TYPE];
   let topic = parms[URL_PARM.TOPIC];
+  let threadUrlKey = parms[URL_PARM.THREAD];
 
   if (!pageType) {
     pageType = SETTINGS.getCachedPageType();
@@ -266,7 +267,7 @@ const initialRender = function(leaveHistoryStackAlone) {
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
-    executeSearch(owner, leaveHistoryStackAlone, topic);
+    executeSearch(owner, leaveHistoryStackAlone, topic, threadUrlKey);
   }
 }
 
@@ -319,7 +320,7 @@ const setOptToggleBtn = function(elm, toggledOn) {
   }
 }
 
-const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
+const conformQueryStringToUi = function(leaveHistoryStackAlone, topic, threadUrlKey) {
   const urlParms = new URLSearchParams(document.location.search);
   urlParms.set(URL_PARM.OWNER, getOwnerFromUi() || '');
   urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
@@ -329,7 +330,8 @@ const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
   urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
   urlParms.set(URL_PARM.GUESS_TOPICS, getUiValue('optGuessTopics') || false);
   urlParms.set(URL_PARM.TOPIC, topic || getUiValue('cmbTopicFilter') || '');
-  
+  urlParms.set(URL_PARM.THREAD, threadUrlKey || '');
+
   if (!leaveHistoryStackAlone) {
     history.pushState(null, null, "?"+urlParms.toString());
   }
@@ -597,6 +599,8 @@ const buildSearchRequestFromUi = function() {
   const withRetweets = getUiValue('optWithRetweets');
   const guessTopics = getUiValue('optGuessTopics');
 
+  const threadUrlKey = URLPARSE.getQueryParm(URL_PARM.THREAD) || '';
+
   // conditional filters
   let withUrl = getUiValue('optWithUrl');
   let withMdon = site == SITE.TWITTER ? getUiValue('optWithMdon') : false;
@@ -625,6 +629,7 @@ const buildSearchRequestFromUi = function() {
     withRetweets: withRetweets,
     guessTopics: guessTopics,
     topic: topic,
+    threadUrlKey: threadUrlKey,
     // conn filters
     mutual: mutual,
     list: LIST_FAVORITES,
@@ -701,8 +706,8 @@ const requestTotalCount = function() {
 }
 
 // topic dropdown isn't populated yet on initial render, which is why that can get passed in
-const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
-  conformQueryStringToUi(leaveHistoryStackAlone, topic);
+const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic, threadUrlKey) {
+  conformQueryStringToUi(leaveHistoryStackAlone, topic, threadUrlKey);
   
   const msg = buildSearchRequestFromUi();
   if (STR.hasLen(topic)) {
@@ -874,6 +879,8 @@ const onAddedRows = function(container) {
   // tag & rate
   Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm, pageType));
   Array.from(container.getElementsByClassName('postAnotherTag')).forEach(elm => RENDER.POST.TAGGING.configureAddAnotherTag(elm, pageType));
+  // view thread
+  Array.from(container.getElementsByClassName('btnViewThread')).forEach(elm => configureViewThread(elm));
   // simple favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
 }
@@ -920,6 +927,14 @@ document.getElementById('cmbType').addEventListener('change', (event) => {
   setOptionVisibility();
   executeSearch();
 });
+
+const configureViewThread = function(btnViewThreadElm) {
+  btnViewThreadElm.onclick = function(event) {
+    const threadUrlKey = btnViewThreadElm.getAttribute('data-testid');
+    executeSearch(undefined, undefined, undefined, threadUrlKey);
+    return false;
+  }
+};
 
 chkMutual.addEventListener('change', (event) => {
   resetPage();

@@ -460,3 +460,8 @@ a.postAnotherTag {
 .d-nonefor .d-noneif {
   display: none;
 }
+
+.btnViewThread {
+  display: block;
+  float: right;
+}
