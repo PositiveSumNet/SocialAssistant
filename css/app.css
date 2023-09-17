@@ -456,3 +456,7 @@ a.postAnotherTag {
   padding-left: calc(var(--bs-gutter-x) * .2);
   padding-right: calc(var(--bs-gutter-x) * .2);
 }
+
+.d-nonefor .d-noneif {
+  display: none;
+}

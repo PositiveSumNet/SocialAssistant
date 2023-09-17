@@ -255,9 +255,10 @@ const initialRender = function(leaveHistoryStackAlone) {
   // post toggles
   // WITH_RETWEETS
   setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != 'false'); // default to true
-  setOptToggleBtn(optGuessTopics, parms[URL_PARM.GUESS_TOPICS] == 'true'); // default to false
 
   // TOPIC
+  setOptToggleBtn(optGuessTopics, parms[URL_PARM.GUESS_TOPICS] == 'true'); // default to false
+  setTopicFilterVisibility();
   setTopicFilterChoiceInUi(topic);
   
   setOptionVisibility();
@@ -278,7 +279,7 @@ const renderTopicFilterChoices = function() {
   for (let i = 0; i < choices.length; i++) {
     let tag = choices[i];
     // the "-- clear selection --" option should always be visible
-    let cls = i == 0 || _inUseTags.has(tag) ? '' : ` class='d-none'`;
+    let cls = i == 0 || _inUseTags.has(tag) ? '' : ` class='d-noneif'`;
     html = STR.appendLine(html, `<option value='${i - 1}'${cls}>${tag}</option>`);
   }
   html = DOMPurify.sanitize(html);
@@ -381,7 +382,7 @@ worker.onmessage = async function ({ data }) {
       break;
     case MSGTYPE.FROMDB.RENDER.INUSE_TOPICS:
       _inUseTags = new Set(data.payload);
-      adjustTopicFilterVisibility();
+      adjustTopicFilterVizWhen();
       break;
     case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
       handleExportedResults(data.payload);
@@ -770,16 +771,16 @@ const canRenderMastodonFollowOneButtons = function() {
   return site === SITE.MASTODON || mdonMode === true;
 }
 
-const adjustTopicFilterVisibility = function() {
+const adjustTopicFilterVizWhen = function() {
   const options = Array.from(cmbTopicFilter.querySelectorAll('option'));
   options.forEach(function(option) {
     let intVal = option.value;
     // visibility
     if (intVal < 0 || _inUseTags.has(_topicTags[intVal])) {
-      option.classList.remove('d-none');
+      option.classList.remove('d-noneif');
     }
     else {
-      option.classList.add('d-none');
+      option.classList.add('d-noneif');
     }
   });
 }
@@ -952,12 +953,25 @@ optClear.addEventListener('change', (event) => {
 
 optWithRetweets.onclick = function(event) {
   optWithRetweets.classList.toggle('toggledOn');
+  resetPage();
   executeSearch();
   return false;
 };
 
+const setTopicFilterVisibility = function() {
+  const guessTopics = getUiValue('optGuessTopics');
+  if (guessTopics == true) {
+    cmbTopicFilter.classList.remove('d-nonefor');
+  }
+  else {
+    cmbTopicFilter.classList.add('d-nonefor');
+  }
+}
+
 optGuessTopics.onclick = function(event) {
   optGuessTopics.classList.toggle('toggledOn');
+  setTopicFilterVisibility();
+  resetPage();
   executeSearch();
   return false;
 };
