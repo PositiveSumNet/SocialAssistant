@@ -10,7 +10,7 @@
     <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' >
   </head>
   <body>
-    <div class='main container-fluid'>
+    <div id="mainContainer" class='main container-fluid'>
       <div class="row bg-header inkfree">
         <div class="col">
           <span class="h1"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></span>
@@ -301,6 +301,11 @@
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>
         <div id='listOwnerPivotPicker' class='row pt-2'></div>
+        <div id="filteredThreadSection" class="row">
+          <div>
+            <a href="#" id="btnClearThreadFilter"><i class="bi-x-circle"></i> Filtered by thread. Click to clear.</a>
+          </div>
+        </div>
         <div class='listMain row' id='connListMain'>
           <div id='paginated-list' aria-live='polite'>
           </div>

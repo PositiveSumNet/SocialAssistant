@@ -262,12 +262,14 @@ const initialRender = function(leaveHistoryStackAlone) {
   setTopicFilterVisibility();
   setTopicFilterChoiceInUi(topic);
   
+  setOneThreadVisibility(threadUrlKey);
+
   setOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
-    executeSearch(owner, leaveHistoryStackAlone, topic, threadUrlKey);
+    executeSearch(owner, leaveHistoryStackAlone, topic);
   }
 }
 
@@ -320,7 +322,7 @@ const setOptToggleBtn = function(elm, toggledOn) {
   }
 }
 
-const conformQueryStringToUi = function(leaveHistoryStackAlone, topic, threadUrlKey) {
+const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
   const urlParms = new URLSearchParams(document.location.search);
   urlParms.set(URL_PARM.OWNER, getOwnerFromUi() || '');
   urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
@@ -330,7 +332,7 @@ const conformQueryStringToUi = function(leaveHistoryStackAlone, topic, threadUrl
   urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
   urlParms.set(URL_PARM.GUESS_TOPICS, getUiValue('optGuessTopics') || false);
   urlParms.set(URL_PARM.TOPIC, topic || getUiValue('cmbTopicFilter') || '');
-  urlParms.set(URL_PARM.THREAD, threadUrlKey || '');
+  urlParms.set(URL_PARM.THREAD, getUiValue('threadUrlKey') || '');
 
   if (!leaveHistoryStackAlone) {
     history.pushState(null, null, "?"+urlParms.toString());
@@ -489,6 +491,8 @@ const getUiValue = function(id) {
       return optGuessTopics.classList.contains('toggledOn');
     case 'cmbTopicFilter':
       return getTopicFilterChoiceFromUi();
+    case 'threadUrlKey':
+      return document.getElementById('mainContainer').getAttribute('data-testid') || '';
     default:
       return undefined;
   }
@@ -706,8 +710,8 @@ const requestTotalCount = function() {
 }
 
 // topic dropdown isn't populated yet on initial render, which is why that can get passed in
-const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic, threadUrlKey) {
-  conformQueryStringToUi(leaveHistoryStackAlone, topic, threadUrlKey);
+const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
+  conformQueryStringToUi(leaveHistoryStackAlone, topic);
   
   const msg = buildSearchRequestFromUi();
   if (STR.hasLen(topic)) {
@@ -928,13 +932,35 @@ document.getElementById('cmbType').addEventListener('change', (event) => {
   executeSearch();
 });
 
+const btnClearThreadFilter = document.getElementById('btnClearThreadFilter');
+btnClearThreadFilter.onclick = function(event) {
+  setOneThreadVisibility(null);
+  resetPage();
+  executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
+  return false;
+}
+
 const configureViewThread = function(btnViewThreadElm) {
   btnViewThreadElm.onclick = function(event) {
     const threadUrlKey = btnViewThreadElm.getAttribute('data-testid');
-    executeSearch(undefined, undefined, undefined, threadUrlKey);
+    setOneThreadVisibility(threadUrlKey);
+    resetPage();
+    executeSearch();
     return false;
   }
 };
+
+const setOneThreadVisibility = function(threadUrlKey) {
+  const container = document.getElementById('mainContainer');
+  if (STR.hasLen(threadUrlKey)) {
+    container.classList.add('oneThread');
+    container.setAttribute('data-testid', threadUrlKey);
+  }
+  else {
+    container.removeAttribute('data-testid');
+    container.classList.remove('oneThread');
+  }
+}
 
 chkMutual.addEventListener('change', (event) => {
   resetPage();

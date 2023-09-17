@@ -465,3 +465,26 @@ a.postAnotherTag {
   display: block;
   float: right;
 }
+
+#filteredThreadSection {
+  display: none;
+}
+
+.oneThread #filteredThreadSection {
+  display: flex;
+}
+
+#filteredThreadSection>* {
+  background-color: #f5a11d;
+  font-size: 1.2rem;
+}
+
+#filteredThreadSection a {
+  color: #fff;
+  display: inline-block;
+  width: 100%;
+}
+
+#filteredThreadSection a:hover {
+  color: #e9ecef;
+}
