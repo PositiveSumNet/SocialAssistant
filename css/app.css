@@ -488,3 +488,19 @@ a.postAnotherTag {
 #filteredThreadSection a:hover {
   color: #e9ecef;
 }
+
+#optSortByStars {
+  display: none;
+}
+
+.oneTopic #optSortByStars {
+  display: inline-block;
+}
+
+.oneTopic.oneThread #optSortByStars {
+  display: none;
+}
+
+.postCardText {
+  font-style: italic;
+}

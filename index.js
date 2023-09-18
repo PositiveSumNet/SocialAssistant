@@ -261,8 +261,10 @@ const initialRender = function(leaveHistoryStackAlone) {
   setOptToggleBtn(optGuessTopics, parms[URL_PARM.GUESS_TOPICS] == 'true'); // default to false
   setTopicFilterVisibility();
   setTopicFilterChoiceInUi(topic);
-  
-  setOneThreadVisibility(threadUrlKey);
+  // THREAD
+  setOneThreadState(threadUrlKey);
+  // post sort
+  setTopicSortInUi();
 
   setOptionVisibility();
 
@@ -289,6 +291,17 @@ const renderTopicFilterChoices = function() {
   cmbTopicFilter.innerHTML = html;
 }
 
+const setTopicSortInUi = function() {
+  const byStars = SETTINGS.getSortByStars();
+  
+  if (byStars == true) {
+    optSortByStars.classList.add('toggledOn');
+  }
+  else {
+    optSortByStars.classList.remove('toggledOn');
+  }
+}
+
 const setTopicFilterChoiceInUi = function(topic) {
   let intVal = -1;
   const tags = _topicTags;
@@ -301,6 +314,19 @@ const setTopicFilterChoiceInUi = function(topic) {
   }
 
   cmbTopicFilter.value = intVal;
+  setTopicFilterModeInUi();
+}
+
+const setTopicFilterModeInUi = function() {
+  const container = document.getElementById('mainContainer');
+  const topic = getTopicFilterChoiceFromUi();
+  
+  if (STR.hasLen(topic)) {
+    container.classList.add('oneTopic');
+  }
+  else {
+    container.classList.remove('oneTopic');
+  }
 }
 
 const getTopicFilterChoiceFromUi = function() {
@@ -489,6 +515,8 @@ const getUiValue = function(id) {
       return optWithRetweets.classList.contains('toggledOn');
     case 'optGuessTopics':
       return optGuessTopics.classList.contains('toggledOn');
+    case 'optSortByStars':
+      return optSortByStars.classList.contains('toggledOn');
     case 'cmbTopicFilter':
       return getTopicFilterChoiceFromUi();
     case 'threadUrlKey':
@@ -579,13 +607,27 @@ const getOwnerFromUi = function() {
   return owner;
 }
 
-// TO-DO
-const getOrderByFromUi = function() {
+const getOrderByFromUi = function(threadUrlKey, topic) {
   const pageType = getPageType();
   switch (pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
-      return ORDER_BY.POST_TIME_DESC;
+      if (STR.hasLen(threadUrlKey)) {
+        // thread-view shows oldest first
+        return ORDER_BY.POST_TIME_ASC;
+      }
+      else if (STR.hasLen(topic)) {
+        if (SETTINGS.getSortByStars() == true) {
+          return ORDER_BY.POST_RATING;
+        }
+        else {
+          return ORDER_BY.POST_TIME_DESC;
+        }
+      }
+      else {
+        // default
+        return ORDER_BY.POST_TIME_DESC;
+      }
     default:
       return ORDER_BY.HANDLE;
   }
@@ -618,7 +660,7 @@ const buildSearchRequestFromUi = function() {
 
   const topic = getUiValue('cmbTopicFilter');
 
-  const orderBy = getOrderByFromUi();
+  const orderBy = getOrderByFromUi(threadUrlKey, topic);
 
   const msg = { 
     actionType: MSGTYPE.TODB.EXECUTE_SEARCH, 
@@ -921,6 +963,7 @@ const optClear = document.getElementById('optClear');
 // post option buttons
 const optWithRetweets = document.getElementById('optWithRetweets');
 const optGuessTopics = document.getElementById('optGuessTopics');
+const optSortByStars = document.getElementById('optSortByStars');
 
 // mastodon account typeahead hitting api
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
@@ -934,7 +977,7 @@ document.getElementById('cmbType').addEventListener('change', (event) => {
 
 const btnClearThreadFilter = document.getElementById('btnClearThreadFilter');
 btnClearThreadFilter.onclick = function(event) {
-  setOneThreadVisibility(null);
+  setOneThreadState(null);
   resetPage();
   executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
   return false;
@@ -943,18 +986,25 @@ btnClearThreadFilter.onclick = function(event) {
 const configureViewThread = function(btnViewThreadElm) {
   btnViewThreadElm.onclick = function(event) {
     const threadUrlKey = btnViewThreadElm.getAttribute('data-testid');
-    setOneThreadVisibility(threadUrlKey);
+    setOneThreadState(threadUrlKey);
     resetPage();
     executeSearch();
     return false;
   }
 };
 
-const setOneThreadVisibility = function(threadUrlKey) {
+const setOneThreadState = function(threadUrlKey) {
   const container = document.getElementById('mainContainer');
   if (STR.hasLen(threadUrlKey)) {
     container.classList.add('oneThread');
     container.setAttribute('data-testid', threadUrlKey);
+    // clear all that which might confuse a user about why they aren't seeing the full thread
+    // clear owner
+    txtOwnerHandle.value = '';
+    // clear search
+    txtSearch.value = '';
+    // clear topic filter
+    cmbTopicFilter.value = -1;  // clear
   }
   else {
     container.removeAttribute('data-testid');
@@ -1017,8 +1067,18 @@ optGuessTopics.onclick = function(event) {
   return false;
 };
 
+optSortByStars.onclick = function(event) {
+  optSortByStars.classList.toggle('toggledOn');
+  const shouldSortByStars = getUiValue('optSortByStars');
+  SETTINGS.setSortByStars(shouldSortByStars);
+  resetPage();
+  executeSearch();
+  return false;
+};
+
 const cmbTopicFilter = document.getElementById('cmbTopicFilter');
 cmbTopicFilter.addEventListener('change', (event) => {
+  setTopicFilterModeInUi();
   resetPage();
   executeSearch();
 });
