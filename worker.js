@@ -94,12 +94,17 @@ const _script8Entities = [
   APPSCHEMA.SocialPostSubtopicRating
 ];
 
+const _script9Entities = [
+  APPSCHEMA.SocialPostEmbedsVideo
+];
+
 const getAllEntities = function() {
   const arr = [];
   // as we add more entities beyond the initial set, this array will be a superset
   arr.push(..._initialEntities);
   arr.push(..._script4Entities);
   arr.push(..._script8Entities);
+  arr.push(..._script9Entities);
   return arr;
 }
 
@@ -142,6 +147,9 @@ const getMigrationScripts = function() {
 
   const sql8 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script8Entities, 8);
   scripts.push(DBORM.MIGRATION.newScript(sql8, 8));
+  
+  const sql9 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script9Entities, 9);
+  scripts.push(DBORM.MIGRATION.newScript(sql9, 9));
   
   return scripts;
 }
