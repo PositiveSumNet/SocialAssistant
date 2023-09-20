@@ -157,7 +157,7 @@ document.getElementById('btnEscapeThreadFinishing').addEventListener('click', as
 const cmbVisitThreadHow = document.getElementById('cmbVisitThreadHow');
 cmbVisitThreadHow.addEventListener('change', (event) => {
   const domain = cmbVisitThreadHow.value;
-  SETTINGS.RECORDING.setThreadExpansionPreferredDomain(domain);
+  SETTINGS.RECORDING.setNavxPreferredDomain(domain);
   const nitterTip = document.getElementById('nitterTipSection');
   if (domain && domain.indexOf('nitter') > -1) {
     nitterTip.style.visibility = 'visible';
@@ -181,13 +181,13 @@ lstThread.addEventListener('change', async (event) => {
 const btnChooseThreadFinisher = document.getElementById('btnChooseThreadFinisher');
 btnChooseThreadFinisher.addEventListener('click', async () => {
   await loadThreadList();
-  cmbVisitThreadHow.value = SETTINGS.RECORDING.getThreadExpansionPreferredDomain();
+  cmbVisitThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
   showRecordingDiv('threadFinisherSection');
 });
 
 const loadThreadList = async function() {
   const skip = (_threadFinisherPage - 1) * _threadsPageSize;
-  const threadUrlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys(_threadsPageSize, skip);
+  const threadUrlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_threadsPageSize, skip);
   let html = '';
   for (let i = 0; i < threadUrlKeys.length; i++) {
     let threadUrlKey = threadUrlKeys[i];
@@ -199,7 +199,7 @@ const loadThreadList = async function() {
 }
 
 const setExpandThreadsBtnViz = async function() {
-  const threadUrlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys(1);
+  const threadUrlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(1);
   if (threadUrlKeys.length > 0) {
     btnChooseThreadFinisher.style.display = 'block';
   }
@@ -256,7 +256,7 @@ btnClearSelThreads.addEventListener('click', async () => {
   for (let i = 0; i < optElms.length; i++) {
     let optElm = optElms[i];
     let urlKey = optElm.getAttribute('value');
-    await SETTINGS.RECORDING.removeThreadExpansionUrlKey(urlKey);
+    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
   }
   
   // reload
@@ -268,9 +268,9 @@ btnClearSelThreads.addEventListener('click', async () => {
 
 const btnClearThreadsAll = document.getElementById('btnClearThreadsAll');
 btnClearThreadsAll.addEventListener('click', async () => {
-  const urlKeys = await SETTINGS.RECORDING.getExpandThreadUrlKeys();
+  const urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys();
   for (let i = 0; i < urlKeys.length; i++) {
-    await SETTINGS.RECORDING.removeThreadExpansionUrlKey(urlKeys[i]);
+    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKeys[i]);
   }
 
   // reset
@@ -601,7 +601,7 @@ const closeWindow = async function() {
   const urlKeys = Array.from(_savedThreads);
   for (let i = 0; i < urlKeys.length; i++) {
     let urlKey = urlKeys[i];
-    await SETTINGS.RECORDING.removeThreadExpansionUrlKey(urlKey);
+    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
   }
   window.close();
 }
