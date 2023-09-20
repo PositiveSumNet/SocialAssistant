@@ -1254,13 +1254,9 @@ document.getElementById('startImportBtn').onclick = function(event) {
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('mdonDownloadConnsUi').style.display = 'none';
 
-  if (SETTINGS.getPowerUserMode() == 'true') {
-    document.getElementById('powerUserImport').style.display = 'block';
-  }
-
   return false;
 };
-  
+
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
 document.getElementById('stopImportBtn').onclick = function(event) {
   location.reload();
@@ -1364,7 +1360,7 @@ const updateUploadDoneBtnText = function() {
 }
 
 /************************/
-// Export
+// Backup
 /************************/
 
 document.getElementById('showExportUiBtn').onclick = function(event) {
@@ -1527,7 +1523,7 @@ const startExport = function() {
 
 const stopExport = function() {
   _exportStopRequested = true;
-  document.getElementById('showExportUiBtn').innerText = 'Export';
+  document.getElementById('showExportUiBtn').innerText = 'Backup';
   document.getElementById('showExportUiBtn').style.display = 'inline-block';
   document.getElementById('stopExportBtn').style.display = 'none';
   document.getElementById('exportui').style.display = 'none';
@@ -1564,7 +1560,7 @@ const handleExportedResults = function(payload) {
   else {
     _exportStopRequested = false;
 
-    document.getElementById('showExportUiBtn').innerText = 'Export Again';
+    document.getElementById('showExportUiBtn').innerText = 'Backup Again';
     document.getElementById('showExportUiBtn').style.display = 'inline-block';
     document.getElementById('stopExportBtn').style.display = 'none';
     document.getElementById('exportui').style.display = 'none';

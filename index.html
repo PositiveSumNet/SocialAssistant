@@ -39,20 +39,31 @@
             Copying recent recordings to local database...  | 
           </span>
           <span>
-            <a href="#" id="showExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
-            <a href="#" id="stopExportBtn" role="button" data-toggle='tooltip' title='stop file backup' style="display:none;">Cancel Export</a>
+            <a href="#" id="showExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>Backup</a>
+            <a href="#" id="stopExportBtn" role="button" data-toggle='tooltip' title='stop file backup' style="display:none;">Cancel Backup</a>
             <span>&nbsp;|&nbsp;</span>
-            <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Import</a>
+            <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Restore</a>
             <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
           </span>
         </div>
       </div>
       <div id="exportui" class="row pb-2" style="display:none;">
-        <h3>Customize the Export</h3>
+        <h3>Customize the Backup</h3>
         <p class="text-secondary">This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.</p>
         <div id="exportOpts" class="row">
+          <div class="col d-none">
+            <p class="h5 mt-3">Backup what?</p>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportType" id="optExportTypeNetworks">
+              <label class="form-check-label" for="optExportTypeNetworks">Follow networks</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="optExportType" id="optExportTypePosts">
+              <label class="form-check-label" for="optExportTypePosts">Posts</label>
+            </div>
+          </div>
           <div class="col">
-            <p class="h5 mt-3">For Whom</p>
+            <p class="h5 mt-3">Which Networks</p>
             <div class="form-check">
               <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomAll">
               <label class="form-check-label" for="optExportWhomAll">All networks</label>
@@ -71,7 +82,7 @@
             </div>
           </div>
           <div class="col">
-            <p class="h5 mt-3">If Modified When</p>
+            <p class="h5 mt-3">If Recorded When</p>
             <div class="form-check">
               <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenAll">
               <label class="form-check-label" for="optExportWhenAll">All date ranges</label>
@@ -124,7 +135,7 @@
           </div>
         </div>
         <div class="p-4">
-          <a href="#" id="btnConfirmExport" role="button" class="btn btn-primary">Start Export</a>
+          <a href="#" id="btnConfirmExport" role="button" class="btn btn-primary">Start Backup</a>
           <a href="#" id="btnCancelExport" role="button" class="btn btn-secondary ms-2">Cancel</a>
         </div>
       </div>
