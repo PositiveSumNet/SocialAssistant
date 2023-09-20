@@ -15,7 +15,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
     switch (request.actionType) {
       case MSGTYPE.TO_POPUP.SAVED_THREAD:
-        onSavedThread(request.threadUrlKey);
+        onSavedThread(request.threadUrlKeys);
         return returnsData;
       default:
         return returnsData;
@@ -208,14 +208,17 @@ const setExpandThreadsBtnViz = async function() {
   }
 }
 
-const onSavedThread = function(threadUrlKey) {
-  _savedThreads.add(threadUrlKey);
-  const optionElms = Array.from(lstThread.querySelectorAll('option'));
-  for (let i = 0; i < optionElms.length; i++) {
-    let optionElm = optionElms[i];
-    let optionVal = optionElm.getAttribute('value');
-    if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
-      optionElm.textContent = writeThreadLabel(optionVal);
+const onSavedThread = function(threadUrlKeys) {
+  for (let i = 0; i < threadUrlKeys.length; i++) {
+    let threadUrlKey = threadUrlKeys[i];
+    _savedThreads.add(threadUrlKey);
+    const optionElms = Array.from(lstThread.querySelectorAll('option'));
+    for (let i = 0; i < optionElms.length; i++) {
+      let optionElm = optionElms[i];
+      let optionVal = optionElm.getAttribute('value');
+      if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
+        optionElm.textContent = writeThreadLabel(optionVal);
+      }
     }
   }
 }
