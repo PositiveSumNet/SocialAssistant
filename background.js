@@ -69,6 +69,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case 'foundPartialThread':
         await saveThreadExpansionUrlKey(request.threadUrlKey);
         return returnsData;
+      case 'foundEmbeddedVideo':
+        await saveEmbeddedVideoUrlKey(request.urlKey);
+        return returnsData;
       default:
         return returnsData;
     }
@@ -141,6 +144,18 @@ const getImageBase64 = async function(url) {
   catch(err) {
     console.log(`img64err: ${err}`);
     return undefined;
+  }
+}
+
+/**************************/
+// EMBEDDED VIDEOS
+/**************************/
+
+const saveEmbeddedVideoUrlKey = async function(urlKey) {
+  const EMBEDDED_VIDEO_URLKEY = 'embVideo-';
+  if (urlKey) {
+    const key = `${EMBEDDED_VIDEO_URLKEY}${urlKey}`;
+    await chrome.storage.local.set({ [key]: urlKey });
   }
 }
 

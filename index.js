@@ -1240,6 +1240,15 @@ const onChooseOwner = function() {
   executeSearch();
 }
 
+const btnClearCache = document.getElementById('btnClearCache');
+btnClearCache.addEventListener('click', async () => {
+  if (confirm('If unknown problems persist even after relaunching the browser, you may wish to clear the cache. \nContinue?')) {
+    await chrome.storage.local.clear();
+    localStorage.clear();
+  }
+  return true;
+});
+
 /************************/
 // Upload/Import 
 // smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
