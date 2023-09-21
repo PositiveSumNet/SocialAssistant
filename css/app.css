@@ -504,3 +504,12 @@ a.postAnotherTag {
 .postCardText {
   font-style: italic;
 }
+
+#finishVideosHeader, .videoMode #finishThreadHeader {
+  display: none;
+}
+
+.videoMode #finishVideosHeader, #finishThreadHeader {
+  display: inline;
+}
+

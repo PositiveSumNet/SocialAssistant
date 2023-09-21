@@ -1,6 +1,7 @@
 const _threadsPageSize = 10;
 var _threadFinisherPage = 1;
 const _savedThreads = new Set();
+const _downloadedVideoUrlKeys = new Set();
 
 // listen for messages
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -154,6 +155,41 @@ document.getElementById('btnEscapeThreadFinishing').addEventListener('click', as
   return false;
 });
 
+// THREADS & VIDEOS
+// top-most screen
+const btnChooseThreadFinisher = document.getElementById('btnChooseThreadFinisher');
+btnChooseThreadFinisher.addEventListener('click', async () => {
+  await enterRecordingFinisherMode(false);
+});
+
+const btnChooseVideoExtracter = document.getElementById('btnChooseVideoExtracter');
+btnChooseVideoExtracter.addEventListener('click', async () => {
+  await enterRecordingFinisherMode(true);
+});
+
+const enterRecordingFinisherMode = async function(videoMode) {
+  setVideoMode(videoMode);
+  await loadThreadList();
+  cmbVisitThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
+  showRecordingDiv('threadFinisherSection');
+}
+
+const setVideoMode = function(videoMode) {
+  const sectionElm = document.getElementById('threadFinisherSection');
+  if (videoMode == true) {
+    sectionElm.classList.add('videoMode');
+  }
+  else {
+    sectionElm.classList.remove('videoMode');
+  }
+}
+
+const getVideoMode = function() {
+  const sectionElm = document.getElementById('threadFinisherSection');
+  return sectionElm.classList.contains('videoMode');
+}
+
+// finish-recording screen
 const cmbVisitThreadHow = document.getElementById('cmbVisitThreadHow');
 cmbVisitThreadHow.addEventListener('change', (event) => {
   const domain = cmbVisitThreadHow.value;
@@ -178,21 +214,25 @@ lstThread.addEventListener('change', async (event) => {
   }
 });
 
-const btnChooseThreadFinisher = document.getElementById('btnChooseThreadFinisher');
-btnChooseThreadFinisher.addEventListener('click', async () => {
-  await loadThreadList();
-  cmbVisitThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
-  showRecordingDiv('threadFinisherSection');
-});
-
 const loadThreadList = async function() {
+  const videoMode = getVideoMode();
   const skip = (_threadFinisherPage - 1) * _threadsPageSize;
-  const threadUrlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_threadsPageSize, skip);
+  let urlKeys = [];
+
+  if (videoMode == true) {
+    // urlKeys to finish videos
+    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_threadsPageSize, skip);
+  }
+  else {
+    // urlKeys are for visiting and expanding threads
+    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_threadsPageSize, skip);
+  }
+  
   let html = '';
-  for (let i = 0; i < threadUrlKeys.length; i++) {
-    let threadUrlKey = threadUrlKeys[i];
-    let threadLabel = writeThreadLabel(threadUrlKey);
-    let optHtml = `<option value='${threadUrlKey}'>${threadLabel}</option>`;
+  for (let i = 0; i < urlKeys.length; i++) {
+    let urlKey = urlKeys[i];
+    let threadLabel = writeUrlFinisherLabel(urlKey, videoMode);
+    let optHtml = `<option value='${urlKey}'>${threadLabel}</option>`;
     html = STR.appendLine(html, optHtml);
   }
   lstThread.innerHTML = DOMPurify.sanitize(html);
@@ -206,9 +246,18 @@ const setExpandThreadsBtnViz = async function() {
   else {
     btnChooseThreadFinisher.style.display = 'none';
   }
+
+  const videoUrlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(1);
+  if (videoUrlKeys.length > 0) {
+    btnChooseVideoExtracter.style.display = 'block';
+  }
+  else {
+    btnChooseVideoExtracter.style.display = 'none';
+  }
 }
 
 const onSavedThread = function(threadUrlKeys) {
+  const videoMode = false;
   for (let i = 0; i < threadUrlKeys.length; i++) {
     let threadUrlKey = threadUrlKeys[i];
     _savedThreads.add(threadUrlKey);
@@ -217,18 +266,20 @@ const onSavedThread = function(threadUrlKeys) {
       let optionElm = optionElms[i];
       let optionVal = optionElm.getAttribute('value');
       if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
-        optionElm.textContent = writeThreadLabel(optionVal);
+        optionElm.textContent = writeUrlFinisherLabel(optionVal, videoMode);
       }
     }
   }
 }
 
-const writeThreadLabel = function(threadUrlKey) {
-  let saved = '';
-  if (_savedThreads.has(threadUrlKey)) {
-    saved = '(saved) '
+const writeUrlFinisherLabel = function(urlKey, videoMode) {
+  const labelIfDone = (videoMode == true) ? 'downloaded' : 'saved';
+  const isDone = (videoMode == true) ? _downloadedVideoUrlKeys.has(urlKey) : _savedThreads.has(urlKey);
+  let labelToUse = '';
+  if (isDone) {
+    labelToUse = `(${labelIfDone}) `
   }
-  return `${saved}${threadUrlKey}`;
+  return `${labelToUse}${urlKey}`;
 }
 
 const btnPriorThreads = document.getElementById('btnPriorThreads');
