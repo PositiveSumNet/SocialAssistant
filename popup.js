@@ -1,5 +1,5 @@
-const _threadsPageSize = 10;
-var _threadFinisherPage = 1;
+const _guidedNavPageSize = 10;
+var _guidedNavPageNum = 1;
 const _savedThreads = new Set();
 const _downloadedVideoUrlKeys = new Set();
 
@@ -216,16 +216,16 @@ lstThread.addEventListener('change', async (event) => {
 
 const loadThreadList = async function() {
   const videoMode = getVideoMode();
-  const skip = (_threadFinisherPage - 1) * _threadsPageSize;
+  const skip = (_guidedNavPageNum - 1) * _guidedNavPageSize;
   let urlKeys = [];
 
   if (videoMode == true) {
     // urlKeys to finish videos
-    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_threadsPageSize, skip);
+    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_guidedNavPageSize, skip);
   }
   else {
     // urlKeys are for visiting and expanding threads
-    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_threadsPageSize, skip);
+    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_guidedNavPageSize, skip);
   }
   
   let html = '';
@@ -284,8 +284,8 @@ const writeUrlFinisherLabel = function(urlKey, videoMode) {
 
 const btnNavPrior = document.getElementById('btnNavPrior');
 btnNavPrior.addEventListener('click', async () => {
-  if (_threadFinisherPage > 1) {
-    _threadFinisherPage--;
+  if (_guidedNavPageNum > 1) {
+    _guidedNavPageNum--;
     await loadThreadList();
   }
   return false;
@@ -295,7 +295,7 @@ const btnNavNext = document.getElementById('btnNavNext');
 btnNavNext.addEventListener('click', async () => {
   const currentPageItemCnt = Array.from(lstThread.querySelectorAll('option')).length;
   if (currentPageItemCnt > 0) {
-    _threadFinisherPage++;
+    _guidedNavPageNum++;
     await loadThreadList();
   }
   return false;
@@ -311,7 +311,7 @@ btnClearSelNav.addEventListener('click', async () => {
   }
   
   // reload
-  _threadFinisherPage = 1;
+  _guidedNavPageNum = 1;
   await loadThreadList(); // load first page
 
   return false;
@@ -325,7 +325,7 @@ btnClearNavAll.addEventListener('click', async () => {
   }
 
   // reset
-  _threadFinisherPage = 1;
+  _guidedNavPageNum = 1;
   setExpandThreadsBtnViz();
   showRecordingDiv('notYetRecordingSection');
 
