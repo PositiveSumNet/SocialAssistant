@@ -150,7 +150,7 @@ btnManualPreviewExamplePage.addEventListener('click', async () => {
   await closeWindow();
 });
 
-document.getElementById('btnEscapeThreadFinishing').addEventListener('click', async () => {
+document.getElementById('btnDoneNav').addEventListener('click', async () => {
   showRecordingDiv('notYetRecordingSection');
   return false;
 });
@@ -170,12 +170,12 @@ btnChooseVideoExtracter.addEventListener('click', async () => {
 const enterRecordingFinisherMode = async function(videoMode) {
   setVideoMode(videoMode);
   await loadThreadList();
-  cmbVisitThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
-  showRecordingDiv('threadFinisherSection');
+  cmbNavPostHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
+  showRecordingDiv('navFinisherSection');
 }
 
 const setVideoMode = function(videoMode) {
-  const sectionElm = document.getElementById('threadFinisherSection');
+  const sectionElm = document.getElementById('navFinisherSection');
   if (videoMode == true) {
     sectionElm.classList.add('videoMode');
   }
@@ -185,14 +185,14 @@ const setVideoMode = function(videoMode) {
 }
 
 const getVideoMode = function() {
-  const sectionElm = document.getElementById('threadFinisherSection');
+  const sectionElm = document.getElementById('navFinisherSection');
   return sectionElm.classList.contains('videoMode');
 }
 
 // finish-recording screen
-const cmbVisitThreadHow = document.getElementById('cmbVisitThreadHow');
-cmbVisitThreadHow.addEventListener('change', (event) => {
-  const domain = cmbVisitThreadHow.value;
+const cmbNavPostHow = document.getElementById('cmbNavPostHow');
+cmbNavPostHow.addEventListener('change', (event) => {
+  const domain = cmbNavPostHow.value;
   SETTINGS.RECORDING.setNavxPreferredDomain(domain);
   const nitterTip = document.getElementById('nitterTipSection');
   if (domain && domain.indexOf('nitter') > -1) {
@@ -207,7 +207,7 @@ const lstThread = document.getElementById('lstThread');
 lstThread.addEventListener('change', async (event) => {
   const urlKey = lstThread.value;
   if (STR.hasLen(urlKey)) {
-    const domain = cmbVisitThreadHow.value;
+    const domain = cmbNavPostHow.value;
     const fullUrl = STR.expandTweetUrl(urlKey, domain);
     const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
     chrome.tabs.update(tab.id, {url: fullUrl});
@@ -282,8 +282,8 @@ const writeUrlFinisherLabel = function(urlKey, videoMode) {
   return `${labelToUse}${urlKey}`;
 }
 
-const btnPriorThreads = document.getElementById('btnPriorThreads');
-btnPriorThreads.addEventListener('click', async () => {
+const btnNavPrior = document.getElementById('btnNavPrior');
+btnNavPrior.addEventListener('click', async () => {
   if (_threadFinisherPage > 1) {
     _threadFinisherPage--;
     await loadThreadList();
@@ -291,8 +291,8 @@ btnPriorThreads.addEventListener('click', async () => {
   return false;
 });
 
-const btnNextThreads = document.getElementById('btnNextThreads');
-btnNextThreads.addEventListener('click', async () => {
+const btnNavNext = document.getElementById('btnNavNext');
+btnNavNext.addEventListener('click', async () => {
   const currentPageItemCnt = Array.from(lstThread.querySelectorAll('option')).length;
   if (currentPageItemCnt > 0) {
     _threadFinisherPage++;
@@ -301,8 +301,8 @@ btnNextThreads.addEventListener('click', async () => {
   return false;
 });
 
-const btnClearSelThreads = document.getElementById('btnClearSelThreads');
-btnClearSelThreads.addEventListener('click', async () => {
+const btnClearSelNav = document.getElementById('btnClearSelNav');
+btnClearSelNav.addEventListener('click', async () => {
   const optElms = Array.from(lstThread.querySelectorAll('option'));
   for (let i = 0; i < optElms.length; i++) {
     let optElm = optElms[i];
@@ -317,8 +317,8 @@ btnClearSelThreads.addEventListener('click', async () => {
   return false;
 });
 
-const btnClearThreadsAll = document.getElementById('btnClearThreadsAll');
-btnClearThreadsAll.addEventListener('click', async () => {
+const btnClearNavAll = document.getElementById('btnClearNavAll');
+btnClearNavAll.addEventListener('click', async () => {
   const urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys();
   for (let i = 0; i < urlKeys.length; i++) {
     await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKeys[i]);

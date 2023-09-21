@@ -35,27 +35,27 @@
         <br>
         <div><i class="bi-info-circle"></i> Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></div>
       </div>
-      <div id="threadFinisherSection" class="appRecordingSection" style="display: none;">
+      <div id="navFinisherSection" class="appRecordingSection" style="display: none;">
         <h5 id="finishVideosHeader">Click to save embedded videos:</h5>
         <h5 id="finishThreadHeader">Click to visit and record rest of thread:</h5>
         <div class="container-fluid pt-2">
           <div class="row">
             <div class='input-group col'>
-              <label for='cmbVisitThreadHow' class='text-muted input-group-text'>via</label>
-              <select id="cmbVisitThreadHow" class="ps-2">
+              <label for='cmbNavPostHow' class='text-muted input-group-text'>via</label>
+              <select id="cmbNavPostHow" class="ps-2">
                 <option value="x.com">Twitter</option>
                 <option value="nitter.net">Nitter.net</option>
                 <option value="nitter.cz">Nitter.cz</option>
               </select>
             </div>
             <div style="font-size: 1.2rem;" class="col my-auto">
-              <a href="#" id="btnPriorThreads" data-toggle="tooltip" title="Prior set"><i class="bi-arrow-left-circle"></i></a>
+              <a href="#" id="btnNavPrior" data-toggle="tooltip" title="Prior set"><i class="bi-arrow-left-circle"></i></a>
               <span class='basicSep'> | </span>
-              <a href="#" id="btnNextThreads" data-toggle="tooltip" title="Next set"><i class="bi-arrow-right-circle"></i></a>
+              <a href="#" id="btnNavNext" data-toggle="tooltip" title="Next set"><i class="bi-arrow-right-circle"></i></a>
               <span class='basicSep'> | </span>
-              <a href="#" id="btnClearSelThreads" data-toggle="tooltip" title="Dismiss suggestions shown"><i class="bi-trash"></i></a>
+              <a href="#" id="btnClearSelNav" data-toggle="tooltip" title="Dismiss suggestions shown"><i class="bi-trash"></i></a>
               <span class='basicSep'> | </span>
-              <a href="#" id="btnClearThreadsAll" data-toggle="tooltip" title="Clear all suggestions"><i class="bi-trash-fill"></i></a>
+              <a href="#" id="btnClearNavAll" data-toggle="tooltip" title="Clear all suggestions"><i class="bi-trash-fill"></i></a>
             </div>
           </div>
           <div id="nitterTipSection" class="small text-muted pt-2" style="visibility: hidden;">
@@ -70,7 +70,7 @@
           </div>
         </div>
         <div class="d-grid gap-3">
-          <button id="btnEscapeThreadFinishing" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Done for now</button>
+          <button id="btnDoneNav" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Done for now</button>
         </div>
       </div>
       <div id="configureManualRecordingSection" class="appRecordingSection" style="display:none;">
