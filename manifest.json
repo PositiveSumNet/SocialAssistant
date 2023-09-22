@@ -39,6 +39,7 @@
         "lib/content/nitter/nitterparsing.js", 
         "lib/content/nitter/nittertweetparsing.js",
         "lib/content/nitter/nitterprofileparsing.js", 
+        "lib/content/embvideo/squiddy.js", 
         "lib/content/recorderfactory.js",
         "content.js"
       ],
@@ -47,7 +48,8 @@
         "https://*.twitter.com/*",
         "https://*.x.com/*",
         "https://*.nitter.net/*",
-        "https://*.nitter.cz/*"
+        "https://*.nitter.cz/*",
+        "https://*.squidlr.com/*"
       ]
     }
   ],
@@ -57,7 +59,8 @@
   "permissions": [
     "activeTab", 
     "storage", 
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "scripting"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"

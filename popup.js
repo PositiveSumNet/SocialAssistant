@@ -18,6 +18,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case MSGTYPE.TO_POPUP.SAVED_THREAD:
         onSavedThread(request.threadUrlKeys);
         return returnsData;
+      case MSGTYPE.TO_POPUP.DOWNLOAD_MEDIA:
+        ES6.downloadMediaFile(request.cdnUrl, request.fileName);
+        return returnsData;
       default:
         return returnsData;
     }
@@ -152,183 +155,6 @@ btnManualPreviewExamplePage.addEventListener('click', async () => {
 
 document.getElementById('btnDoneNav').addEventListener('click', async () => {
   showRecordingDiv('notYetRecordingSection');
-  return false;
-});
-
-// THREADS & VIDEOS
-// top-most screen
-const btnChooseThreadFinisher = document.getElementById('btnChooseThreadFinisher');
-btnChooseThreadFinisher.addEventListener('click', async () => {
-  await enterRecordingFinisherMode(false);
-});
-
-const btnChooseVideoExtracter = document.getElementById('btnChooseVideoExtracter');
-btnChooseVideoExtracter.addEventListener('click', async () => {
-  await enterRecordingFinisherMode(true);
-});
-
-const enterRecordingFinisherMode = async function(videoMode) {
-  setVideoMode(videoMode);
-  await loadThreadList();
-  cmbNavPostHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
-  showRecordingDiv('navFinisherSection');
-}
-
-const setVideoMode = function(videoMode) {
-  const sectionElm = document.getElementById('navFinisherSection');
-  if (videoMode == true) {
-    sectionElm.classList.add('videoMode');
-  }
-  else {
-    sectionElm.classList.remove('videoMode');
-  }
-}
-
-const getVideoMode = function() {
-  const sectionElm = document.getElementById('navFinisherSection');
-  return sectionElm.classList.contains('videoMode');
-}
-
-// finish-recording screen
-const cmbNavPostHow = document.getElementById('cmbNavPostHow');
-cmbNavPostHow.addEventListener('change', (event) => {
-  const domain = cmbNavPostHow.value;
-  SETTINGS.RECORDING.setNavxPreferredDomain(domain);
-  const nitterTip = document.getElementById('nitterTipSection');
-  if (domain && domain.indexOf('nitter') > -1) {
-    nitterTip.style.visibility = 'visible';
-  }
-  else {
-    nitterTip.style.visibility = 'hidden';
-  }
-});
-
-const lstThread = document.getElementById('lstThread');
-lstThread.addEventListener('change', async (event) => {
-  const urlKey = lstThread.value;
-  if (STR.hasLen(urlKey)) {
-    const domain = cmbNavPostHow.value;
-    const fullUrl = STR.expandTweetUrl(urlKey, domain);
-    const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-    chrome.tabs.update(tab.id, {url: fullUrl});
-  }
-});
-
-const loadThreadList = async function() {
-  const videoMode = getVideoMode();
-  const skip = (_guidedNavPageNum - 1) * _guidedNavPageSize;
-  let urlKeys = [];
-
-  if (videoMode == true) {
-    // urlKeys to finish videos
-    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_guidedNavPageSize, skip);
-  }
-  else {
-    // urlKeys are for visiting and expanding threads
-    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_guidedNavPageSize, skip);
-  }
-  
-  let html = '';
-  for (let i = 0; i < urlKeys.length; i++) {
-    let urlKey = urlKeys[i];
-    let threadLabel = writeUrlFinisherLabel(urlKey, videoMode);
-    let optHtml = `<option value='${urlKey}'>${threadLabel}</option>`;
-    html = STR.appendLine(html, optHtml);
-  }
-  lstThread.innerHTML = DOMPurify.sanitize(html);
-}
-
-const setExpandThreadsBtnViz = async function() {
-  const threadUrlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(1);
-  if (threadUrlKeys.length > 0) {
-    btnChooseThreadFinisher.style.display = 'block';
-  }
-  else {
-    btnChooseThreadFinisher.style.display = 'none';
-  }
-
-  const videoUrlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(1);
-  if (videoUrlKeys.length > 0) {
-    btnChooseVideoExtracter.style.display = 'block';
-  }
-  else {
-    btnChooseVideoExtracter.style.display = 'none';
-  }
-}
-
-const onSavedThread = function(threadUrlKeys) {
-  const videoMode = false;
-  for (let i = 0; i < threadUrlKeys.length; i++) {
-    let threadUrlKey = threadUrlKeys[i];
-    _savedThreads.add(threadUrlKey);
-    const optionElms = Array.from(lstThread.querySelectorAll('option'));
-    for (let i = 0; i < optionElms.length; i++) {
-      let optionElm = optionElms[i];
-      let optionVal = optionElm.getAttribute('value');
-      if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
-        optionElm.textContent = writeUrlFinisherLabel(optionVal, videoMode);
-      }
-    }
-  }
-}
-
-const writeUrlFinisherLabel = function(urlKey, videoMode) {
-  const labelIfDone = (videoMode == true) ? 'downloaded' : 'saved';
-  const isDone = (videoMode == true) ? _downloadedVideoUrlKeys.has(urlKey) : _savedThreads.has(urlKey);
-  let labelToUse = '';
-  if (isDone) {
-    labelToUse = `(${labelIfDone}) `
-  }
-  return `${labelToUse}${urlKey}`;
-}
-
-const btnNavPrior = document.getElementById('btnNavPrior');
-btnNavPrior.addEventListener('click', async () => {
-  if (_guidedNavPageNum > 1) {
-    _guidedNavPageNum--;
-    await loadThreadList();
-  }
-  return false;
-});
-
-const btnNavNext = document.getElementById('btnNavNext');
-btnNavNext.addEventListener('click', async () => {
-  const currentPageItemCnt = Array.from(lstThread.querySelectorAll('option')).length;
-  if (currentPageItemCnt > 0) {
-    _guidedNavPageNum++;
-    await loadThreadList();
-  }
-  return false;
-});
-
-const btnClearSelNav = document.getElementById('btnClearSelNav');
-btnClearSelNav.addEventListener('click', async () => {
-  const optElms = Array.from(lstThread.querySelectorAll('option'));
-  for (let i = 0; i < optElms.length; i++) {
-    let optElm = optElms[i];
-    let urlKey = optElm.getAttribute('value');
-    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
-  }
-  
-  // reload
-  _guidedNavPageNum = 1;
-  await loadThreadList(); // load first page
-
-  return false;
-});
-
-const btnClearNavAll = document.getElementById('btnClearNavAll');
-btnClearNavAll.addEventListener('click', async () => {
-  const urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys();
-  for (let i = 0; i < urlKeys.length; i++) {
-    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKeys[i]);
-  }
-
-  // reset
-  _guidedNavPageNum = 1;
-  setExpandThreadsBtnViz();
-  showRecordingDiv('notYetRecordingSection');
-
   return false;
 });
 
@@ -656,3 +482,197 @@ const closeWindow = async function() {
   }
   window.close();
 }
+
+// VIDEO
+// THREADS & VIDEOS
+// top-most screen
+const btnChooseThreadFinisher = document.getElementById('btnChooseThreadFinisher');
+btnChooseThreadFinisher.addEventListener('click', async () => {
+  await enterRecordingFinisherMode(false);
+});
+
+const btnChooseVideoExtracter = document.getElementById('btnChooseVideoExtracter');
+btnChooseVideoExtracter.addEventListener('click', async () => {
+  await enterRecordingFinisherMode(true);
+});
+
+const enterRecordingFinisherMode = async function(videoMode) {
+  setVideoMode(videoMode);
+  await loadThreadList();
+  cmbNavThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
+  cmbVideoRes.value = SETTINGS.RECORDING.VIDEO_EXTRACTION.getPreferredVideoRes();
+  showRecordingDiv('navFinisherSection');
+}
+
+const setVideoMode = function(videoMode) {
+  const sectionElm = document.getElementById('navFinisherSection');
+  if (videoMode == true) {
+    sectionElm.classList.add('videoMode');
+  }
+  else {
+    sectionElm.classList.remove('videoMode');
+  }
+}
+
+const getVideoMode = function() {
+  const sectionElm = document.getElementById('navFinisherSection');
+  return sectionElm.classList.contains('videoMode');
+}
+
+// finish-recording screen
+// videos
+const cmbVideoRes = document.getElementById('cmbVideoRes');
+cmbVideoRes.addEventListener('change', (event) => {
+  SETTINGS.RECORDING.VIDEO_EXTRACTION.setPreferredVideoRes(cmbVideoRes.value);
+});
+// threads
+const cmbNavThreadHow = document.getElementById('cmbNavThreadHow');
+cmbNavThreadHow.addEventListener('change', (event) => {
+  const domain = cmbNavThreadHow.value;
+  SETTINGS.RECORDING.setNavxPreferredDomain(domain);
+  const nitterTip = document.getElementById('nitterTipSection');
+  if (domain && domain.indexOf('nitter') > -1) {
+    nitterTip.style.visibility = 'visible';
+  }
+  else {
+    nitterTip.style.visibility = 'hidden';
+  }
+});
+
+const lstNavFinisher = document.getElementById('lstNavFinisher');
+lstNavFinisher.addEventListener('change', async (event) => {
+  const urlKey = lstNavFinisher.value;
+  const videoMode = getVideoMode();
+  if (STR.hasLen(urlKey)) {
+    let fullUrl;
+    if (videoMode == true) {
+      let resolution = cmbVideoRes.value;
+      fullUrl = STR.buildSquidlrUrl(urlKey, resolution);
+    }
+    else {
+      fullUrl = STR.expandTweetUrl(urlKey, cmbNavThreadHow.value);
+    }
+    let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+    chrome.tabs.update(tab.id, {url: fullUrl});
+    // then via content.js it's automatically recorded (or video navigated-to in the case of squidlr)
+  }
+});
+
+const loadThreadList = async function() {
+  const videoMode = getVideoMode();
+  const skip = (_guidedNavPageNum - 1) * _guidedNavPageSize;
+  let urlKeys = [];
+
+  if (videoMode == true) {
+    // urlKeys to finish videos
+    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_guidedNavPageSize, skip);
+  }
+  else {
+    // urlKeys are for visiting and expanding threads
+    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_guidedNavPageSize, skip);
+  }
+  
+  let html = '';
+  for (let i = 0; i < urlKeys.length; i++) {
+    let urlKey = urlKeys[i];
+    let threadLabel = writeUrlFinisherLabel(urlKey, videoMode);
+    let optHtml = `<option value='${urlKey}'>${threadLabel}</option>`;
+    html = STR.appendLine(html, optHtml);
+  }
+  lstNavFinisher.innerHTML = DOMPurify.sanitize(html);
+}
+
+const setExpandThreadsBtnViz = async function() {
+  const threadUrlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(1);
+  if (threadUrlKeys.length > 0) {
+    btnChooseThreadFinisher.style.display = 'block';
+  }
+  else {
+    btnChooseThreadFinisher.style.display = 'none';
+  }
+
+  const videoUrlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(1);
+  if (videoUrlKeys.length > 0) {
+    btnChooseVideoExtracter.style.display = 'block';
+  }
+  else {
+    btnChooseVideoExtracter.style.display = 'none';
+  }
+}
+
+const onSavedThread = function(threadUrlKeys) {
+  const videoMode = false;
+  for (let i = 0; i < threadUrlKeys.length; i++) {
+    let threadUrlKey = threadUrlKeys[i];
+    _savedThreads.add(threadUrlKey);
+    const optionElms = Array.from(lstNavFinisher.querySelectorAll('option'));
+    for (let i = 0; i < optionElms.length; i++) {
+      let optionElm = optionElms[i];
+      let optionVal = optionElm.getAttribute('value');
+      if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
+        optionElm.textContent = writeUrlFinisherLabel(optionVal, videoMode);
+      }
+    }
+  }
+}
+
+const writeUrlFinisherLabel = function(urlKey, videoMode) {
+  const labelIfDone = (videoMode == true) ? 'downloaded' : 'saved';
+  const isDone = (videoMode == true) ? _downloadedVideoUrlKeys.has(urlKey) : _savedThreads.has(urlKey);
+  let labelToUse = '';
+  if (isDone) {
+    labelToUse = `(${labelIfDone}) `
+  }
+  return `${labelToUse}${urlKey}`;
+}
+
+const btnNavPrior = document.getElementById('btnNavPrior');
+btnNavPrior.addEventListener('click', async () => {
+  if (_guidedNavPageNum > 1) {
+    _guidedNavPageNum--;
+    await loadThreadList();
+  }
+  return false;
+});
+
+const btnNavNext = document.getElementById('btnNavNext');
+btnNavNext.addEventListener('click', async () => {
+  const currentPageItemCnt = Array.from(lstNavFinisher.querySelectorAll('option')).length;
+  if (currentPageItemCnt > 0) {
+    _guidedNavPageNum++;
+    await loadThreadList();
+  }
+  return false;
+});
+
+const btnClearSelNav = document.getElementById('btnClearSelNav');
+btnClearSelNav.addEventListener('click', async () => {
+  const optElms = Array.from(lstNavFinisher.querySelectorAll('option'));
+  for (let i = 0; i < optElms.length; i++) {
+    let optElm = optElms[i];
+    let urlKey = optElm.getAttribute('value');
+    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
+  }
+  
+  // reload
+  _guidedNavPageNum = 1;
+  await loadThreadList(); // load first page
+
+  return false;
+});
+
+const btnClearNavAll = document.getElementById('btnClearNavAll');
+btnClearNavAll.addEventListener('click', async () => {
+  const urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys();
+  for (let i = 0; i < urlKeys.length; i++) {
+    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKeys[i]);
+  }
+
+  // reset
+  _guidedNavPageNum = 1;
+  setExpandThreadsBtnViz();
+  showRecordingDiv('notYetRecordingSection');
+
+  return false;
+});
+

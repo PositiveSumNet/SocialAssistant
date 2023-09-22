@@ -505,11 +505,14 @@ a.postAnotherTag {
   font-style: italic;
 }
 
-#finishVideosHeader, .videoMode #finishThreadHeader {
+#navThreadHowSection, .videoMode #videoResSection {
+  display: flex;
+}
+
+#finishVideosHeader, .videoMode #finishThreadHeader, .videoMode #nitterTipSection, #squidlrTipSection, .videoMode #navThreadHowSection, #videoResSection {
   display: none;
 }
 
-.videoMode #finishVideosHeader, #finishThreadHeader {
+.videoMode #finishVideosHeader, #finishThreadHeader, #nitterTipSection, .videoMode #squidlrTipSection {
   display: inline;
 }
-

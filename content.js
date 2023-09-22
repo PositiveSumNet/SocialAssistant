@@ -15,7 +15,6 @@
   When the DB UI is opened, records are flushed from localStorage to the SQLite database.
   
 */
-var _shuntRecorder = false;
 var _recorder = null;
 
 // adjust nitter settings (once)
@@ -41,16 +40,15 @@ window.onload = function() {
 
 // main scenario: recording
 const kickoffPollForRecording = async function() {
-  if (_shuntRecorder == true) {
-    return;
-  }
-  
   _recorder = RECORDING.getRecorder();
   if (_recorder) {
     await _recorder.pollForRecording();
   }
   else {
-    // not every twitter page is meant to get recorded
+    const href = document.location.href;
+    if (href.indexOf('squidlr.com') > -1) {
+      await SQUIDDY.pollForCaptureVideo();
+    }
   }
 }
 

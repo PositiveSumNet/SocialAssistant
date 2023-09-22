@@ -39,10 +39,18 @@
         <h5 id="finishVideosHeader">Click to save embedded videos:</h5>
         <h5 id="finishThreadHeader">Click to visit and record rest of thread:</h5>
         <div class="container-fluid pt-2">
-          <div class="row">
-            <div class='input-group col'>
-              <label for='cmbNavPostHow' class='text-muted input-group-text'>via</label>
-              <select id="cmbNavPostHow" class="ps-2">
+          <div class="row pb-1">
+            <div class='input-group col' id="videoResSection">
+              <label for='cmbVideoRes' class='text-muted input-group-text'>res</label>
+              <select id="cmbVideoRes" class="ps-2" data-toggle="tooltip" title="Choose your preferred video resolution (where available)">
+                <option value="high">hi-res</option>
+                <option value="medium">med-res</option>
+                <option value="lowest">lowest-res</option>
+              </select>
+            </div>
+            <div class='input-group col' id="navThreadHowSection">
+              <label for='cmbNavThreadHow' class='text-muted input-group-text'>via</label>
+              <select id="cmbNavThreadHow" class="ps-2">
                 <option value="x.com">Twitter</option>
                 <option value="nitter.net">Nitter.net</option>
                 <option value="nitter.cz">Nitter.cz</option>
@@ -61,11 +69,11 @@
           <div id="nitterTipSection" class="small text-muted pt-2" style="visibility: hidden;">
             <span>If you enjoy nitter, consider <a href="https://nitter.net/about" target="_blank">a donation</a>. We're not affiliated.</span>
           </div>
+          <div id="squidlrTipSection" class="pt-2">
+            <span>Uses <a href="https://squidlr.com" target="_blank">Squidlr</a> to get video URLs. We're not affiliated.</span>
+          </div>
           <div class="row p-3">
-            <select id="lstThread" size="10" class="p-1">
-              <option value="x.com">Twitter</option>
-              <option value="nitter.net">Nitter.net</option>
-              <option value="nitter.cz">Nitter.cz</option>
+            <select id="lstNavFinisher" size="10" class="p-1">
             </select>
           </div>
         </div>
