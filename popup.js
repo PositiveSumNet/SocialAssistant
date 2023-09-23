@@ -16,10 +16,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
     switch (request.actionType) {
       case MSGTYPE.TO_POPUP.SAVED_THREAD:
-        onSavedThread(request.threadUrlKeys);
+        onSavedViaNav(request.threadUrlKeys);
         return returnsData;
       case MSGTYPE.TO_POPUP.DOWNLOAD_MEDIA:
-        ES6.downloadMediaFile(request.cdnUrl, request.fileName);
+        downloadVideo(request);
         return returnsData;
       default:
         return returnsData;
@@ -600,20 +600,32 @@ const setExpandThreadsBtnViz = async function() {
   }
 }
 
-const onSavedThread = function(threadUrlKeys) {
-  const videoMode = false;
-  for (let i = 0; i < threadUrlKeys.length; i++) {
-    let threadUrlKey = threadUrlKeys[i];
-    _savedThreads.add(threadUrlKey);
+const onSavedViaNav = function(urlKeys) {
+  const videoMode = getVideoMode();
+  for (let i = 0; i < urlKeys.length; i++) {
+    let urlKey = urlKeys[i];
+    if (videoMode == true) {
+      _downloadedVideoUrlKeys.add(urlKey);
+    }
+    else {
+      _savedThreads.add(urlKey);
+    }
     const optionElms = Array.from(lstNavFinisher.querySelectorAll('option'));
     for (let i = 0; i < optionElms.length; i++) {
       let optionElm = optionElms[i];
       let optionVal = optionElm.getAttribute('value');
-      if (optionVal && STR.sameText(optionVal, threadUrlKey)) {
-        optionElm.textContent = writeUrlFinisherLabel(optionVal, videoMode);
+      // video workflow drops the #quoted suffix on quote tweet videos
+      let optionCompareText = optionVal && videoMode == true ? STR.stripUrlHashSuffix(optionVal) : optionVal;
+      if (optionVal && STR.sameText(optionCompareText, urlKey)) {
+        optionElm.textContent = writeUrlFinisherLabel(urlKey, videoMode);
       }
     }
   }
+}
+
+const downloadVideo = function(request) {
+  ES6.downloadMediaFile(request.cdnUrl, request.fileName);
+  onSavedViaNav([request.urlKey]);
 }
 
 const writeUrlFinisherLabel = function(urlKey, videoMode) {
