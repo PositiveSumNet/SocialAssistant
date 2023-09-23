@@ -225,6 +225,7 @@ const initialRender = function(leaveHistoryStackAlone) {
       document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWING; // POSTS;
       autoResolveOwner = false;
       break;
+    case PAGETYPE.GITHUB.CONFIGURE:
     case PAGETYPE.GITHUB.BACKUP:
     case PAGETYPE.GITHUB.RESTORE:
       autoResolveOwner = false;
@@ -1650,17 +1651,23 @@ const activateGithubTab = function(pageType) {
 
 const unveilGithubUi = function(pageType) {
   switch (pageType) {
+    case PAGETYPE.GITHUB.BACKUP:
+      activateGhBackupTab();
+      break;
     case PAGETYPE.GITHUB.RESTORE:
       activateGhRestoreTab();
       break;
-    case PAGETYPE.GITHUB.BACKUP:
+    case PAGETYPE.GITHUB.CONFIGURE:
     default:
-      activateGhBackupTab();
+      activateGhConfigureTab();
       break;
   }
-  conformQueryStringToUi(false);
 }
 
+document.getElementById('ghConfigureTab').onclick = function(event) {
+  activateGhConfigureTab();
+  return false;
+}
 document.getElementById('ghBackupTab').onclick = function(event) {
   activateGhBackupTab();
   return false;
@@ -1668,6 +1675,10 @@ document.getElementById('ghBackupTab').onclick = function(event) {
 document.getElementById('ghRestoreTab').onclick = function(event) {
   activateGhRestoreTab();
   return false;
+}
+
+const activateGhConfigureTab = function() {
+  setActiveSyncTabPageType(PAGETYPE.GITHUB.CONFIGURE);
 }
 
 const activateGhBackupTab = function() {
@@ -1682,14 +1693,18 @@ const getActiveSyncTabPageType = function() {
   if (document.getElementById('ghRestoreTab').classList.contains('active')) {
     return PAGETYPE.GITHUB.RESTORE;
   }
-  else {
+  else if (document.getElementById('ghBackupTab').classList.contains('active')) {
     return PAGETYPE.GITHUB.BACKUP;
+  }
+  else {
+    return PAGETYPE.GITHUB.CONFIGURE;
   }
 }
 
 const setActiveSyncTabPageType = function(pageType) {
   const backupTab = document.getElementById('ghBackupTab');
   const restoreTab = document.getElementById('ghRestoreTab');
+  const configureTab = document.getElementById('ghConfigureTab');
 
   if (pageType == PAGETYPE.GITHUB.RESTORE) {
     restoreTab.classList.add('active');
@@ -1697,20 +1712,46 @@ const setActiveSyncTabPageType = function(pageType) {
     if (backupTab.classList.contains('active')) {
       backupTab.classList.remove('active');
     }
+    if (configureTab.classList.contains('active')) {
+      configureTab.classList.remove('active');
+    }
     
     restoreTab.setAttribute('aria-current', 'page');
     backupTab.removeAttribute('aria-current');
+    configureTab.removeAttribute('aria-current');
   }
-  else {
+  else if (pageType == PAGETYPE.GITHUB.BACKUP) {
     backupTab.classList.add('active');
     
     if (restoreTab.classList.contains('active')) {
       restoreTab.classList.remove('active');
     }
+    if (configureTab.classList.contains('active')) {
+      configureTab.classList.remove('active');
+    }
     
     backupTab.setAttribute('aria-current', 'page');
     restoreTab.removeAttribute('aria-current');
+    configureTab.removeAttribute('aria-current');
   }
+  else {
+    configureTab.classList.add('active');
+    
+    if (restoreTab.classList.contains('active')) {
+      restoreTab.classList.remove('active');
+    }
+    if (backupTab.classList.contains('active')) {
+      backupTab.classList.remove('active');
+    }
+    
+    configureTab.setAttribute('aria-current', 'page');
+    restoreTab.removeAttribute('aria-current');
+    backupTab.removeAttribute('aria-current');
+  }
+
+  conformQueryStringToUi(false);
+  const cacheKey = SETTINGS.pageTypeCacheKey(SITE.GITHUB);
+  localStorage.setItem(cacheKey, pageType);
 }
 
 const updateForSite = function() {
