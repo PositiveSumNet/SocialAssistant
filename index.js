@@ -217,8 +217,16 @@ const initialRender = function(leaveHistoryStackAlone) {
         document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWING;
       break;
     case PAGETYPE.TWITTER.TWEETS:
-    case PAGETYPE.MASTODON.TOOTS:
       document.getElementById('cmbType').value = POSTS;
+      autoResolveOwner = false;
+      break;
+    case PAGETYPE.MASTODON.TOOTS:
+      // TEMPORARY - until mastodon toots are ready    
+      document.getElementById('cmbType').value = CONN_DIRECTION.FOLLOWING; // POSTS;
+      autoResolveOwner = false;
+      break;
+    case PAGETYPE.GITHUB.BACKUP:
+    case PAGETYPE.GITHUB.RESTORE:
       autoResolveOwner = false;
       break;
     default:
@@ -271,7 +279,16 @@ const initialRender = function(leaveHistoryStackAlone) {
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
   if (waitForOwnerCallback === false) {
-    executeSearch(owner, leaveHistoryStackAlone, topic);
+    
+    switch (site) {
+      case SITE.GITHUB:
+        console.log('todo: unveil github');
+        conformQueryStringToUi(leaveHistoryStackAlone, topic);
+        break;
+      default:
+        executeSearch(owner, leaveHistoryStackAlone, topic);
+        break;
+    }
   }
 }
 
@@ -528,6 +545,12 @@ const getUiValue = function(id) {
 
 const getPageType = function() {
   const site = SETTINGS.getCachedSite();
+
+  if (site == SITE.GITHUB) {
+    // TEMPORARY
+    return PAGETYPE.GITHUB.BACKUP;
+  }
+
   const type = document.getElementById('cmbType').value;
   if (type == POSTS) {
     switch (site) {
@@ -1599,6 +1622,11 @@ document.getElementById('mastodonLensBtn').onclick = function(event) {
   return false;
 };
 
+document.getElementById('githubLensBtn').onclick = function(event) {
+  activateGithubTab();
+  return false;
+};
+
 const activateMastodonTab = function() {
   const site = SETTINGS.getCachedSite();
 
@@ -1606,6 +1634,15 @@ const activateMastodonTab = function() {
     SETTINGS.cacheSite(SITE.MASTODON);
     updateForSite();
     executeSearch();
+  }
+}
+
+const activateGithubTab = function() {
+  const site = SETTINGS.getCachedSite();
+
+  if (site != SITE.GITHUB) {
+    SETTINGS.cacheSite(SITE.GITHUB);
+    updateForSite();
   }
 }
 
@@ -1622,6 +1659,7 @@ const updateForSite = function() {
   const twitterBtn = document.getElementById('twitterLensBtn');
   const mastodonBtn = document.getElementById('mastodonLensBtn');
   const mastodonApiUi = document.getElementById('mdonApiUi');
+  const githubBtn = document.getElementById('githubLensBtn');
 
   setOptionVisibility();
 
@@ -1631,10 +1669,14 @@ const updateForSite = function() {
     if (mastodonBtn.classList.contains('active')) {
       mastodonBtn.classList.remove('active');
     }
+    if (githubBtn.classList.contains('active')) {
+      githubBtn.classList.remove('active');
+    }
     
     twitterBtn.setAttribute('aria-current', 'page');
     mastodonBtn.removeAttribute('aria-current');
     mastodonApiUi.style.display = 'none';
+    githubBtn.removeAttribute('aria-current');
 
     // render list
     document.getElementById('dbui').style.display = 'flex';
@@ -1644,13 +1686,34 @@ const updateForSite = function() {
     if (twitterBtn.classList.contains('active')) {
       twitterBtn.classList.remove('active');
     }
+    if (githubBtn.classList.contains('active')) {
+      githubBtn.classList.remove('active');
+    }
 
     mastodonBtn.classList.add('active');
     twitterBtn.removeAttribute('aria-current');
     mastodonBtn.setAttribute('aria-current', 'page');
+    githubBtn.removeAttribute('aria-current');
     
     MASTODON.render();
     mastodonApiUi.style.display = 'block';
+  }
+  else if (site == SITE.GITHUB) {
+    githubBtn.classList.add('active');
+    
+    if (twitterBtn.classList.contains('active')) {
+      twitterBtn.classList.remove('active');
+    }
+    if (mastodonBtn.classList.contains('active')) {
+      mastodonBtn.classList.remove('active');
+    }
+    
+    githubBtn.setAttribute('aria-current', 'page');
+    twitterBtn.removeAttribute('aria-current');
+    mastodonBtn.removeAttribute('aria-current');
+    mastodonApiUi.style.display = 'none';
+
+    document.getElementById('dbui').style.display = 'none';
   }
   else {
     return;

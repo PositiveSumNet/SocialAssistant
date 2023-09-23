@@ -32,6 +32,11 @@
                 <i class="bi-mastodon"></i>
                 Mastodon</a>
             </li>
+            <li class="nav-item">
+              <a id="githubLensBtn" class="nav-link" href="#" data-toggle='tooltip' title='Backup and restore using a GitHub account'>
+                <i class="bi-github"></i>
+                Backup & Restore</a>
+            </li>
           </ul>
         </div>
         <div class="col-sm-auto text-right">
@@ -51,17 +56,6 @@
         <h3>Customize the Backup</h3>
         <p class="text-secondary">This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.</p>
         <div id="exportOpts" class="row">
-          <div class="col d-none">
-            <p class="h5 mt-3">Backup what?</p>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportType" id="optExportTypeNetworks">
-              <label class="form-check-label" for="optExportTypeNetworks">Follow networks</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportType" id="optExportTypePosts">
-              <label class="form-check-label" for="optExportTypePosts">Posts</label>
-            </div>
-          </div>
           <div class="col">
             <p class="h5 mt-3">Which Networks</p>
             <div class="form-check">
