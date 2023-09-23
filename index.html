@@ -46,6 +46,18 @@
         </div>
       </div>
       <div id="syncUi" class="row" style="display:none;padding:10px 20px;">
+        <ul class="nav nav-tabs" style="border-bottom:none;">
+          <li class="nav-item">
+            <a id="ghBackupTab" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Backup this database'>
+              <i class="bi-arrow-up-circle"></i>
+              Backup</a>
+          </li>
+          <li class="nav-item">
+            <a id="ghRestoreTab" class="nav-link" href="#" data-toggle='tooltip' title='Restore data into this database from a backup'>
+              <i class="bi-arrow-down-circle"></i>
+              Restore</a>
+          </li>
+        </ul>
         <div>
           <span>
             <a href="#" id="showExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>Backup</a>

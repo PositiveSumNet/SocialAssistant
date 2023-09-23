@@ -282,8 +282,7 @@ const initialRender = function(leaveHistoryStackAlone) {
     
     switch (site) {
       case SITE.GITHUB:
-        console.log('todo: unveil github');
-        conformQueryStringToUi(leaveHistoryStackAlone, topic);
+        activateGithubTab(pageType);
         break;
       default:
         executeSearch(owner, leaveHistoryStackAlone, topic);
@@ -547,8 +546,7 @@ const getPageType = function() {
   const site = SETTINGS.getCachedSite();
 
   if (site == SITE.GITHUB) {
-    // TEMPORARY
-    return PAGETYPE.GITHUB.BACKUP;
+    return getActiveSyncTabPageType();
   }
   else {
     const type = document.getElementById('cmbType').value;
@@ -1638,7 +1636,7 @@ const activateMastodonTab = function() {
   }
 }
 
-const activateGithubTab = function() {
+const activateGithubTab = function(pageType) {
   const site = SETTINGS.getCachedSite();
 
   if (site != SITE.GITHUB) {
@@ -1646,7 +1644,73 @@ const activateGithubTab = function() {
     updateForSite();
   }
 
+  pageType = pageType || getPageType();
+  unveilGithubUi(pageType);
+}
+
+const unveilGithubUi = function(pageType) {
+  switch (pageType) {
+    case PAGETYPE.GITHUB.RESTORE:
+      activateGhRestoreTab();
+      break;
+    case PAGETYPE.GITHUB.BACKUP:
+    default:
+      activateGhBackupTab();
+      break;
+  }
   conformQueryStringToUi(false);
+}
+
+document.getElementById('ghBackupTab').onclick = function(event) {
+  activateGhBackupTab();
+  return false;
+}
+document.getElementById('ghRestoreTab').onclick = function(event) {
+  activateGhRestoreTab();
+  return false;
+}
+
+const activateGhBackupTab = function() {
+  setActiveSyncTabPageType(PAGETYPE.GITHUB.BACKUP);
+}
+
+const activateGhRestoreTab = function() {
+  setActiveSyncTabPageType(PAGETYPE.GITHUB.RESTORE);
+}
+
+const getActiveSyncTabPageType = function() {
+  if (document.getElementById('ghRestoreTab').classList.contains('active')) {
+    return PAGETYPE.GITHUB.RESTORE;
+  }
+  else {
+    return PAGETYPE.GITHUB.BACKUP;
+  }
+}
+
+const setActiveSyncTabPageType = function(pageType) {
+  const backupTab = document.getElementById('ghBackupTab');
+  const restoreTab = document.getElementById('ghRestoreTab');
+
+  if (pageType == PAGETYPE.GITHUB.RESTORE) {
+    restoreTab.classList.add('active');
+    
+    if (backupTab.classList.contains('active')) {
+      backupTab.classList.remove('active');
+    }
+    
+    restoreTab.setAttribute('aria-current', 'page');
+    backupTab.removeAttribute('aria-current');
+  }
+  else {
+    backupTab.classList.add('active');
+    
+    if (restoreTab.classList.contains('active')) {
+      restoreTab.classList.remove('active');
+    }
+    
+    backupTab.setAttribute('aria-current', 'page');
+    restoreTab.removeAttribute('aria-current');
+  }
 }
 
 const updateForSite = function() {
