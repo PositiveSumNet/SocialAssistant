@@ -550,20 +550,21 @@ const getPageType = function() {
     // TEMPORARY
     return PAGETYPE.GITHUB.BACKUP;
   }
-
-  const type = document.getElementById('cmbType').value;
-  if (type == POSTS) {
-    switch (site) {
-      case SITE.TWITTER:
-        return PAGETYPE.TWITTER.TWEETS;
-      case SITE.MASTODON:
-        return PAGETYPE.MASTODON.TOOTS;
-      default:
-        return undefined;
-    }
-  }
   else {
-    return PAGETYPE.getPageType(site, type);
+    const type = document.getElementById('cmbType').value;
+    if (type == POSTS) {
+      switch (site) {
+        case SITE.TWITTER:
+          return PAGETYPE.TWITTER.TWEETS;
+        case SITE.MASTODON:
+          return PAGETYPE.MASTODON.TOOTS;
+        default:
+          return undefined;
+      }
+    }
+    else {
+      return PAGETYPE.getPageType(site, type);
+    }
   }
 }
 
@@ -1278,7 +1279,7 @@ btnClearCache.addEventListener('click', async () => {
 /************************/
 document.getElementById('startImportBtn').onclick = function(event) {
   document.getElementById('uploadui').style.display = 'block';
-  document.getElementById('exportui').style.display = 'none';
+  document.getElementById('legacyExportUi').style.display = 'none';
   document.getElementById('startImportBtn').style.display = 'none';
   document.getElementById('stopImportBtn').style.display = 'inline-block';
   updateUploadDoneBtnText();
@@ -1433,7 +1434,7 @@ const showExportUi = function() {
   document.getElementById('optExportWhenAll').checked = true;
   initiallySelectExportWhatAll();
 
-  document.getElementById('exportui').style.display = 'flex';
+  document.getElementById('legacyExportUi').style.display = 'flex';
   document.getElementById('btnConfirmExport').style.display = 'inline-block';
 
   document.getElementById('uploadui').style.display = 'none';
@@ -1558,7 +1559,7 @@ const stopExport = function() {
   document.getElementById('showExportUiBtn').innerText = 'Backup';
   document.getElementById('showExportUiBtn').style.display = 'inline-block';
   document.getElementById('stopExportBtn').style.display = 'none';
-  document.getElementById('exportui').style.display = 'none';
+  document.getElementById('legacyExportUi').style.display = 'none';
   document.getElementById('dbui').style.display = 'flex';
   document.getElementById('mdonDownloadConnsUi').style.display = 'block';
 }
@@ -1595,7 +1596,7 @@ const handleExportedResults = function(payload) {
     document.getElementById('showExportUiBtn').innerText = 'Backup Again';
     document.getElementById('showExportUiBtn').style.display = 'inline-block';
     document.getElementById('stopExportBtn').style.display = 'none';
-    document.getElementById('exportui').style.display = 'none';
+    document.getElementById('legacyExportUi').style.display = 'none';
     document.getElementById('dbui').style.display = 'flex';
     document.getElementById('mdonDownloadConnsUi').style.display = 'block';
   }
@@ -1644,6 +1645,8 @@ const activateGithubTab = function() {
     SETTINGS.cacheSite(SITE.GITHUB);
     updateForSite();
   }
+
+  conformQueryStringToUi(false);
 }
 
 const updateForSite = function() {
@@ -1660,6 +1663,7 @@ const updateForSite = function() {
   const mastodonBtn = document.getElementById('mastodonLensBtn');
   const mastodonApiUi = document.getElementById('mdonApiUi');
   const githubBtn = document.getElementById('githubLensBtn');
+  const syncUi = document.getElementById('syncUi');
 
   setOptionVisibility();
 
@@ -1677,6 +1681,7 @@ const updateForSite = function() {
     mastodonBtn.removeAttribute('aria-current');
     mastodonApiUi.style.display = 'none';
     githubBtn.removeAttribute('aria-current');
+    syncUi.style.display = 'none';
 
     // render list
     document.getElementById('dbui').style.display = 'flex';
@@ -1694,6 +1699,7 @@ const updateForSite = function() {
     twitterBtn.removeAttribute('aria-current');
     mastodonBtn.setAttribute('aria-current', 'page');
     githubBtn.removeAttribute('aria-current');
+    syncUi.style.display = 'none';
     
     MASTODON.render();
     mastodonApiUi.style.display = 'block';
@@ -1714,6 +1720,8 @@ const updateForSite = function() {
     mastodonApiUi.style.display = 'none';
 
     document.getElementById('dbui').style.display = 'none';
+
+    syncUi.style.display = 'flex';
   }
   else {
     return;
