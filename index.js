@@ -1276,11 +1276,10 @@ btnClearCache.addEventListener('click', async () => {
 // Upload/Import 
 // smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
 /************************/
-document.getElementById('startImportBtn').onclick = function(event) {
+document.getElementById('startLegacyImportBtn').onclick = function(event) {
   document.getElementById('uploadui').style.display = 'block';
   document.getElementById('legacyExportUi').style.display = 'none';
-  document.getElementById('startImportBtn').style.display = 'none';
-  document.getElementById('stopImportBtn').style.display = 'inline-block';
+  document.getElementById('startLegacyImportBtn').style.display = 'none';
   updateUploadDoneBtnText();
   stopExport();
   document.getElementById('dbui').style.display = 'none';
@@ -1290,7 +1289,7 @@ document.getElementById('startImportBtn').onclick = function(event) {
 };
 
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
-document.getElementById('stopImportBtn').onclick = function(event) {
+document.getElementById('stopLegacyImportBtn').onclick = function(event) {
   location.reload();
   return false;
 };  
@@ -1395,7 +1394,7 @@ const updateUploadDoneBtnText = function() {
 // Backup
 /************************/
 
-document.getElementById('showExportUiBtn').onclick = function(event) {
+document.getElementById('showLegacyExportUiBtn').onclick = function(event) {
   showExportUi();
   return false;
 };
@@ -1404,11 +1403,6 @@ document.getElementById('btnCancelExport').onclick = function(event) {
   stopExport();
   return false;
 };
-document.getElementById('stopExportBtn').onclick = function(event) {
-  stopExport();
-  return false;
-};
-
 document.getElementById('btnConfirmExport').onclick = function(event) {
   startExport();
   return false;
@@ -1440,8 +1434,7 @@ const showExportUi = function() {
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('mdonDownloadConnsUi').style.display = 'none';
 
-  document.getElementById('showExportUiBtn').style.display = 'none';
-  document.getElementById('stopExportBtn').style.display = 'inline-block';
+  document.getElementById('showLegacyExportUiBtn').style.display = 'none';
 }
 
 const buildExportRequest = function() {
@@ -1544,8 +1537,7 @@ const startExport = function() {
   _exportStopRequested = false;
 
   // at top right
-  document.getElementById('showExportUiBtn').style.display = 'none';
-  document.getElementById('stopExportBtn').style.display = 'inline-block';
+  document.getElementById('showLegacyExportUiBtn').style.display = 'none';
   
   // within the form
   document.getElementById('btnConfirmExport').style.display = 'none';
@@ -1555,9 +1547,8 @@ const startExport = function() {
 
 const stopExport = function() {
   _exportStopRequested = true;
-  document.getElementById('showExportUiBtn').innerText = 'Backup';
-  document.getElementById('showExportUiBtn').style.display = 'inline-block';
-  document.getElementById('stopExportBtn').style.display = 'none';
+  document.getElementById('showLegacyExportUiBtn').innerText = 'export';
+  document.getElementById('showLegacyExportUiBtn').style.display = 'inline-block';
   document.getElementById('legacyExportUi').style.display = 'none';
   document.getElementById('dbui').style.display = 'flex';
   document.getElementById('mdonDownloadConnsUi').style.display = 'block';
@@ -1592,9 +1583,8 @@ const handleExportedResults = function(payload) {
   else {
     _exportStopRequested = false;
 
-    document.getElementById('showExportUiBtn').innerText = 'Backup Again';
-    document.getElementById('showExportUiBtn').style.display = 'inline-block';
-    document.getElementById('stopExportBtn').style.display = 'none';
+    document.getElementById('showLegacyExportUiBtn').innerText = 'Export Again';
+    document.getElementById('showLegacyExportUiBtn').style.display = 'inline-block';
     document.getElementById('legacyExportUi').style.display = 'none';
     document.getElementById('dbui').style.display = 'flex';
     document.getElementById('mdonDownloadConnsUi').style.display = 'block';
@@ -1677,16 +1667,27 @@ document.getElementById('ghRestoreTab').onclick = function(event) {
   return false;
 }
 
+const configureSyncUi = document.getElementById('configureSyncUi');
+
 const activateGhConfigureTab = function() {
   setActiveSyncTabPageType(PAGETYPE.GITHUB.CONFIGURE);
+  configureSyncUi.style.display = 'block';
+  backupUi.style.display = 'none';
+  restoreUi.style.display = 'none';
 }
 
 const activateGhBackupTab = function() {
   setActiveSyncTabPageType(PAGETYPE.GITHUB.BACKUP);
+  configureSyncUi.style.display = 'none';
+  backupUi.style.display = 'block';
+  restoreUi.style.display = 'none';
 }
 
 const activateGhRestoreTab = function() {
   setActiveSyncTabPageType(PAGETYPE.GITHUB.RESTORE);
+  configureSyncUi.style.display = 'none';
+  backupUi.style.display = 'none';
+  restoreUi.style.display = 'block';
 }
 
 const getActiveSyncTabPageType = function() {

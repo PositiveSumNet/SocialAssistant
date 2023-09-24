@@ -63,14 +63,47 @@
               Restore</a>
           </li>
         </ul>
-        <div>
-          <span>
-            <a href="#" id="showExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>Backup</a>
-            <a href="#" id="stopExportBtn" role="button" data-toggle='tooltip' title='stop file backup' style="display:none;">Cancel Backup</a>
-            <span>&nbsp;|&nbsp;</span>
-            <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Restore</a>
-            <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
-          </span>
+        <div id="configureSyncUi" class="row pb-2" style="display:none;">
+          <div id="ghFirstTime">
+            <h3 class="pt-4">Configure a <a href="https://github.com" target="_blank"><i class="bi-github"></i> GitHub</a> account for backups and more</h3>
+            <div id="aWhyGitHub">
+              <p>
+                This application holds data locally on your PC in the browser's cache. 
+                It also supports a more permanent secure backup of your social data using 
+                <a href="https://github.com" target="_blank"><i class="bi-github"></i> GitHub</a>. 
+                GitHub is trusted by over 100 million programmers. 
+                While it's owned by Microsoft, private repositories remain private. 
+                It's therefore a great place to avoid <a href="https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81" target="_blank">surveillance capitalism</a> while enjoying robust security and free access. 
+                (Learn more about our decision to build a social layer on top of GitHub <a href="https://scafaria.com/prosocial-micro-blogging-at-scale-7c4d45c063fd" target="_blank">here</a>.) 
+                Don't worry, you will <b>not</b> need technical skills to set up an account. 
+              </p>
+              <p>
+                Once you <a href="https://github.com" target="_blank">create an account</a>, you'll be able to:
+              </p>
+              <ol>
+                <li>Backup and restore your data across devices</li>
+                <li>Upload extracted videos</li>
+                <li>Create a <a href="https://whosum.com/prove" target="_blank">portable identity</a></li>
+                <li>More coming soon!</li>
+              </ol>
+            </div>
+          </div>
+          <div class="pt-2 ps-4">
+            <a href="#" id="btnDismissGitHubFaq" role="button" class="btn btn-primary">OK, let's go!</a>
+          </div>
+          <p class="small">
+            <br>
+            Or click for the legacy approach to 
+            <a href="#" id="showLegacyExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>export</a> 
+            and 
+            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import</a>.
+          </p>
+        </div>
+        <div id="backupUi" class="row pb-2" style="display:none;">
+          Backup (to-do)...
+        </div>
+        <div id="restoreUi" class="row pb-2" style="display:none;">
+          Restore (to-do)...
         </div>
         <div id="uploadui" class="row pb-2" style="display:none;">
           <div id="drop-area">
@@ -86,6 +119,7 @@
           </div>
           <div class="pt-2 ps-4">
             <a href="#" id="uploadDone" role="button" class="btn btn-primary">Done</a>
+            <a href="#" id="stopLegacyImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
           </div>
         </div>
         <div id="legacyExportUi" class="row pb-2" style="display:none;">
@@ -378,6 +412,7 @@
     <script src='lib/dbui/tagginglib.js'></script>
     <script src='lib/dbui/connexportlib.js'></script>
     <script src='lib/apis/mastodonlib.js'></script>
+    <script src='lib/apis/githublib.js'></script>
     <script src='index.js'></script>
   </body>
 </html>
