@@ -1279,7 +1279,6 @@ btnClearCache.addEventListener('click', async () => {
 document.getElementById('startLegacyImportBtn').onclick = function(event) {
   document.getElementById('uploadui').style.display = 'block';
   document.getElementById('legacyExportUi').style.display = 'none';
-  document.getElementById('startLegacyImportBtn').style.display = 'none';
   updateUploadDoneBtnText();
   stopExport();
   document.getElementById('dbui').style.display = 'none';
@@ -1433,8 +1432,6 @@ const showExportUi = function() {
   document.getElementById('uploadui').style.display = 'none';
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('mdonDownloadConnsUi').style.display = 'none';
-
-  document.getElementById('showLegacyExportUiBtn').style.display = 'none';
 }
 
 const buildExportRequest = function() {
@@ -1550,8 +1547,13 @@ const stopExport = function() {
   document.getElementById('showLegacyExportUiBtn').innerText = 'export';
   document.getElementById('showLegacyExportUiBtn').style.display = 'inline-block';
   document.getElementById('legacyExportUi').style.display = 'none';
-  document.getElementById('dbui').style.display = 'flex';
-  document.getElementById('mdonDownloadConnsUi').style.display = 'block';
+
+  const pageType = getPageType();
+  const site = PAGETYPE.getSite(pageType);
+  if (site != SITE.GITHUB) {
+    document.getElementById('dbui').style.display = 'flex';
+    document.getElementById('mdonDownloadConnsUi').style.display = 'block';
+  }
 }
 
 const handleExportedResults = function(payload) {
@@ -1896,6 +1898,13 @@ const setConnOptionVisibility = function() {
     optPosts.style.display = 'inline';
   }
 }
+
+const btnDismissGitHubFaq = document.getElementById('btnDismissGitHubFaq');
+btnDismissGitHubFaq.onclick = function(event) {
+  document.getElementById('ghFirstTime').style.display = 'none';
+  document.getElementById('ghConfigureSection').style.display = 'block';
+  return false;
+};
 
 /************************/
 // Mastodon events

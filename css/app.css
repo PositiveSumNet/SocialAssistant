@@ -183,11 +183,11 @@ a {
   white-space:nowrap!important;
 }
 
-#paging input {
+#paging input, #submitGhTokenSection input {
   border: none;
 }
 
-#paging label, #paging input, #paging a {
+#paging label, #paging input, #paging a, #submitGhTokenSection label, #submitGhTokenSection input {
   display: inline-block;
   align-items: center;
   text-align: center;
@@ -210,7 +210,7 @@ a.optToggle {
   color: #216CB1;
 }
 
-#paging label {
+#paging label #submitGhTokenSection label {
   border-left: 1px solid #ced4da;
 }
 
@@ -232,7 +232,7 @@ a.optToggle.toggledOn:hover {
   width: 50px;
 }
 
-#paging label {
+#paging label, #submitGhTokenSection label {
   background-color: #e9ecef;
 }
 
@@ -515,4 +515,8 @@ a.postAnotherTag {
 
 .videoMode #finishVideosHeader, #finishThreadHeader, #nitterTipSection, .videoMode #squidlrTipSection {
   display: inline;
+}
+
+#txtGithubToken {
+  width: 300px;
 }

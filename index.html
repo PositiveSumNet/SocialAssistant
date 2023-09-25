@@ -72,9 +72,8 @@
                 It also supports a more permanent secure backup of your social data using 
                 <a href="https://github.com" target="_blank"><i class="bi-github"></i> GitHub</a>. 
                 GitHub is trusted by over 100 million programmers. 
-                While it's owned by Microsoft, private repositories remain private. 
-                It's therefore a great place to avoid <a href="https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81" target="_blank">surveillance capitalism</a> while enjoying robust security and free access. 
-                (Learn more about our decision to build a social layer on top of GitHub <a href="https://scafaria.com/prosocial-micro-blogging-at-scale-7c4d45c063fd" target="_blank">here</a>.) 
+                While it's owned by Microsoft, your private repository remains private. 
+                It's therefore a great place to avoid <a href="https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81" target="_blank">surveillance capitalism</a> while enjoying robust security at no charge. 
                 Don't worry, you will <b>not</b> need technical skills to set up an account. 
               </p>
               <p>
@@ -84,19 +83,44 @@
                 <li>Backup and restore your data across devices</li>
                 <li>Upload extracted videos</li>
                 <li>Create a <a href="https://whosum.com/prove" target="_blank">portable identity</a></li>
-                <li>More coming soon!</li>
+                <li><a href="https://scafaria.com/prosocial-micro-blogging-at-scale-7c4d45c063fd" target="_blank">More</a> coming soon!</li>
               </ol>
             </div>
+            <div class="pt-2 ps-4">
+              <a href="#" id="btnDismissGitHubFaq" role="button" class="btn btn-primary">I made my <i class="bi-github"></i> account. Let's go!</a>
+            </div>
           </div>
-          <div class="pt-2 ps-4">
-            <a href="#" id="btnDismissGitHubFaq" role="button" class="btn btn-primary">OK, let's go!</a>
+          <div id="ghConfigureSection" style="display: none;">
+            <h3 class="pt-4">Connect this app to <a href="https://github.com" target="_blank"><i class="bi-github"></i> your GitHub account</a></h3>
+            <p>
+              Follow the steps below to connect this app with a sync repository that you own and control. 
+            </p>
+            <ol>
+              <li><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository named <code>MyWhosum</code>.</li>
+              <li>Remember to scroll down and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
+              <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
+              <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
+            </ol>
+            <div id="submitGhTokenSection">
+              <label for="txtGithubToken" class="text-muted">Paste code</label>
+              <input type="password" name="txtGithubToken" id="txtGithubToken" placeholder="github_pat_123456" style="width: 300px; border-right: 1px solid #ced4da; text-align: left;">
+              <a href="#" id="btnSubmitGithubToken" role="button" class="btn btn-primary">Connect!</a>
+            </div>
+            <div class="mt-4 pt-2" style="border-top: solid 1px #ced4da;">
+              <h5 class="inkfree">Figure 1</h5>
+              <p>
+                How to name a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> <code>MyWhosumSyncToken</code> and grant permission of <code>Contents: Read and write</code> for the <code>MyWhosum</code> repository only:
+              </p>
+              <img src="/images/ghpathelp.png" alt="Token generation screenshot" style="width: 800px; height: auto;">
+            </div>
           </div>
           <p class="small">
             <br>
-            Or click for the legacy approach to 
+            You can still access the legacy approach to 
             <a href="#" id="showLegacyExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>export</a> 
             and 
-            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import</a>.
+            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import</a>
+            follow networks (but not posts).
           </p>
         </div>
         <div id="backupUi" class="row pb-2" style="display:none;">
