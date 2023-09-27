@@ -1689,6 +1689,13 @@ const onGithubConnectFailure = function(result) {
     case 'tokenFailed':
       setGithubConnFailureMsg('Missing or invalid token. Please try again.');
       break;
+    case 'writeFailed':
+      setGithubConnFailureMsg(`Attempting to write a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built using the instructions below.`);
+      break;
+    case 'deleteFailed':
+      // unexpected
+      setGithubConnFailureMsg(`Attempting to write & delete a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built using the instructions below.`);
+      break;
     default:
       console.log('GH connection error');
       break;
