@@ -4,6 +4,7 @@ const _starOnCls = 'bi-star-fill'
 
 // avoid double-submit
 var _lastRenderedRequest = '';
+var _docLocSearch = '';
 
 // improves experience of deleting in owner textbox
 var _deletingOwner = false;
@@ -168,11 +169,11 @@ const ensureCopiedToDb = async function() {
     xferring.style.display = 'none';
     filterSet.style.display = 'flex';
 
-    initialRender();
+    await initialRender();
   }
 }
 
-const initialRender = function(leaveHistoryStackAlone) {
+const initialRender = async function(leaveHistoryStackAlone) {
   // app version
   document.getElementById('manifestVersion').textContent = chrome.runtime.getManifest().version;
 
@@ -283,7 +284,8 @@ const initialRender = function(leaveHistoryStackAlone) {
     
     switch (site) {
       case SITE.GITHUB:
-        activateGithubTab(pageType);
+        await activateGithubTab(pageType);
+        _docLocSearch = document.location.search; // aids our popstate behavior
         break;
       default:
         executeSearch(owner, leaveHistoryStackAlone, topic);
@@ -380,11 +382,15 @@ const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
   if (!leaveHistoryStackAlone) {
     history.pushState(null, null, "?"+urlParms.toString());
   }
+
+  _docLocSearch = document.location.search;
 }
 
 // companion to the above pushState so that back button works
-window.addEventListener("popstate", (event) => {
-  initialRender(true);
+window.addEventListener("popstate", async function(event) {
+  if (_docLocSearch != document.location.search) {
+    await initialRender(true);
+  }
 });
 
 const worker = new Worker('worker.js?sqlite3.dir=jswasm');
@@ -797,6 +803,7 @@ const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
   }
 
   showSearchProgress(true);
+  _docLocSearch = document.location.search; // aids our popstate behavior
   worker.postMessage(msg);
 }
 
@@ -1614,8 +1621,8 @@ document.getElementById('mastodonLensBtn').onclick = function(event) {
   return false;
 };
 
-document.getElementById('githubLensBtn').onclick = function(event) {
-  activateGithubTab();
+document.getElementById('githubLensBtn').onclick = async function(event) {
+  await activateGithubTab();
   return false;
 };
 
@@ -1629,64 +1636,96 @@ const activateMastodonTab = function() {
   }
 }
 
-const activateGithubTab = function(pageType) {
+const activateGithubTab = async function(pageType) {
+  pageType = pageType || SETTINGS.getCachedPageType(SITE.GITHUB);
   const site = SETTINGS.getCachedSite();
-
   if (site != SITE.GITHUB) {
     SETTINGS.cacheSite(SITE.GITHUB);
     updateForSite();
   }
 
-  pageType = pageType || getPageType();
-  unveilGithubUi(pageType);
+  await unveilGithubUi(pageType);
 }
 
-const unveilGithubUi = function(pageType) {
+const unveilGithubUi = async function(pageType) {
   switch (pageType) {
     case PAGETYPE.GITHUB.BACKUP:
-      activateGhBackupTab();
+      await activateGhBackupTab();
       break;
     case PAGETYPE.GITHUB.RESTORE:
-      activateGhRestoreTab();
+      await activateGhRestoreTab();
       break;
     case PAGETYPE.GITHUB.CONFIGURE:
     default:
-      activateGhConfigureTab();
+      await activateGhConfigureTab();
       break;
   }
 }
 
-document.getElementById('ghConfigureTab').onclick = function(event) {
-  activateGhConfigureTab();
+document.getElementById('ghConfigureTab').onclick = async function(event) {
+  await activateGhConfigureTab();
   return false;
 }
-document.getElementById('ghBackupTab').onclick = function(event) {
-  activateGhBackupTab();
+document.getElementById('ghBackupTab').onclick = async function(event) {
+  await activateGhBackupTab();
   return false;
 }
-document.getElementById('ghRestoreTab').onclick = function(event) {
-  activateGhRestoreTab();
+document.getElementById('ghRestoreTab').onclick = async function(event) {
+  await activateGhRestoreTab();
   return false;
+}
+
+const testGithubConnection = async function() {
+  await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubConnectFailure);
+}
+
+const onGithubConnectedOk = function(result) {
+  console.log('github ok');
+}
+
+const onGithubConnectFailure = function(result) {
+  switch (result.reason) {
+    case 'lacksToken':
+    case 'tokenFailed':
+      setGithubConnFailureMsg('Missing or invalid token. Please try again.');
+      break;
+    default:
+      console.log('GH connection error');
+      break;
+  }
+}
+
+const reflectGithubTokenStatus = function(hasToken) {
+  if (hasToken == true) {
+    hideGithubFaq();
+    // show status and offer Test Connection or Disconnect
+  }
+  else {
+    // show it again
+    hideGithubFaq(true);
+  }
 }
 
 const configureSyncUi = document.getElementById('configureSyncUi');
 
-const activateGhConfigureTab = function() {
-  setActiveSyncTabPageType(PAGETYPE.GITHUB.CONFIGURE);
+const activateGhConfigureTab = async function() {
+  const hasToken = await SETTINGS.GITHUB.hasSyncToken();
+  reflectGithubTokenStatus(hasToken); 
+  await setActiveSyncTabPageType(PAGETYPE.GITHUB.CONFIGURE);
   configureSyncUi.style.display = 'block';
   backupUi.style.display = 'none';
   restoreUi.style.display = 'none';
 }
 
-const activateGhBackupTab = function() {
-  setActiveSyncTabPageType(PAGETYPE.GITHUB.BACKUP);
+const activateGhBackupTab = async function() {
+  await setActiveSyncTabPageType(PAGETYPE.GITHUB.BACKUP);
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'block';
   restoreUi.style.display = 'none';
 }
 
-const activateGhRestoreTab = function() {
-  setActiveSyncTabPageType(PAGETYPE.GITHUB.RESTORE);
+const activateGhRestoreTab = async function() {
+  await setActiveSyncTabPageType(PAGETYPE.GITHUB.RESTORE);
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'none';
   restoreUi.style.display = 'block';
@@ -1704,7 +1743,7 @@ const getActiveSyncTabPageType = function() {
   }
 }
 
-const setActiveSyncTabPageType = function(pageType) {
+const setActiveSyncTabPageType = async function(pageType) {
   const backupTab = document.getElementById('ghBackupTab');
   const restoreTab = document.getElementById('ghRestoreTab');
   const configureTab = document.getElementById('ghConfigureTab');
@@ -1738,6 +1777,7 @@ const setActiveSyncTabPageType = function(pageType) {
     configureTab.removeAttribute('aria-current');
   }
   else {
+    // configure tab
     configureTab.classList.add('active');
     
     if (restoreTab.classList.contains('active')) {
@@ -1756,6 +1796,53 @@ const setActiveSyncTabPageType = function(pageType) {
   const cacheKey = SETTINGS.pageTypeCacheKey(SITE.GITHUB);
   localStorage.setItem(cacheKey, pageType);
 }
+
+const btnDismissGithubFaq = document.getElementById('btnDismissGithubFaq');
+btnDismissGithubFaq.onclick = function(event) {
+  hideGithubFaq();
+  return false;
+};
+
+const hideGithubFaq = function(reshow) {
+  if (reshow == true) {
+    document.getElementById('ghFirstTime').style.display = 'block';
+    document.getElementById('ghConfigureSection').style.display = 'none';
+  }
+  else {
+    document.getElementById('ghFirstTime').style.display = 'none';
+    document.getElementById('ghConfigureSection').style.display = 'block';
+  }
+}
+
+const githubConnFailureMsg = document.getElementById('githubConnFailureMsg');
+const setGithubConnFailureMsg = function(msg) {
+  if (STR.hasLen(msg)) {
+    // unhide
+    githubConnFailureMsg.classList.remove('d-none');
+    githubConnFailureMsg.textContent = msg;
+  }
+  else {
+    // hide
+    githubConnFailureMsg.classList.add('d-none');
+    githubConnFailureMsg.textContent = '';
+  }
+}
+
+const btnSubmitGithubToken = document.getElementById('btnSubmitGithubToken');
+btnSubmitGithubToken.onclick = async function(event) {
+  const txtGithubToken = document.getElementById('txtGithubToken');
+  const tokenVal = txtGithubToken.value;
+  if (STR.hasLen(tokenVal)) {
+    setGithubConnFailureMsg(null);
+    await SETTINGS.GITHUB.saveSyncToken(tokenVal);
+    await testGithubConnection();
+  }
+  else {
+    // show warning
+    setGithubConnFailureMsg('Paste a token in the textbox before continuing.');
+  }
+  return false;
+};
 
 const updateForSite = function() {
   stopExport();
@@ -1898,13 +1985,6 @@ const setConnOptionVisibility = function() {
     optPosts.style.display = 'inline';
   }
 }
-
-const btnDismissGitHubFaq = document.getElementById('btnDismissGitHubFaq');
-btnDismissGitHubFaq.onclick = function(event) {
-  document.getElementById('ghFirstTime').style.display = 'none';
-  document.getElementById('ghConfigureSection').style.display = 'block';
-  return false;
-};
 
 /************************/
 // Mastodon events

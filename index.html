@@ -53,7 +53,7 @@
               Configure</a>
           </li>
           <li class="nav-item">
-            <a id="ghBackupTab" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Backup this database'>
+            <a id="ghBackupTab" class="nav-link" aria-current="page" href="#" data-toggle='tooltip' title='Backup this database'>
               <i class="bi-arrow-up-circle"></i>
               Backup</a>
           </li>
@@ -87,7 +87,7 @@
               </ol>
             </div>
             <div class="pt-2 ps-4">
-              <a href="#" id="btnDismissGitHubFaq" role="button" class="btn btn-primary">I made my <i class="bi-github"></i> account. Let's go!</a>
+              <a href="#" id="btnDismissGithubFaq" role="button" class="btn btn-primary">I made my <i class="bi-github"></i> account. Let's go!</a>
             </div>
           </div>
           <div id="ghConfigureSection" style="display: none;">
@@ -97,7 +97,7 @@
             </p>
             <ol>
               <li><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository named <code>MyWhosum</code>.</li>
-              <li>Remember to scroll down and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
+              <li>Remember to scroll down on that page and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
               <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
               <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
             </ol>
@@ -105,11 +105,13 @@
               <label for="txtGithubToken" class="text-muted">Paste code</label>
               <input type="password" name="txtGithubToken" id="txtGithubToken" placeholder="github_pat_123456" style="width: 300px; border-right: 1px solid #ced4da; text-align: left;">
               <a href="#" id="btnSubmitGithubToken" role="button" class="btn btn-primary">Connect!</a>
+              <p id="githubConnFailureMsg" class="text-danger d-none">Paste a token in the textbox before continuing.</p>
             </div>
-            <div class="mt-4 pt-2" style="border-top: solid 1px #ced4da;">
-              <h5 class="inkfree">Figure 1</h5>
+            <br>
+            <div class="mt-4 pt-2" style="border-top: solid 3px #ced4da;">
+              <h3 class="inkfree">Figure 1</h3>
               <p>
-                How to name a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> <code>MyWhosumSyncToken</code> and grant permission of <code>Contents: Read and write</code> for the <code>MyWhosum</code> repository only:
+                How to create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> with permission of <code>Contents: Read and write</code> for the <code>MyWhosum</code> repository only:
               </p>
               <img src="/images/ghpathelp.png" alt="Token generation screenshot" style="width: 800px; height: auto;">
             </div>
@@ -436,7 +438,6 @@
     <script src='lib/dbui/tagginglib.js'></script>
     <script src='lib/dbui/connexportlib.js'></script>
     <script src='lib/apis/mastodonlib.js'></script>
-    <script src='lib/apis/githublib.js'></script>
     <script src='index.js'></script>
   </body>
 </html>
