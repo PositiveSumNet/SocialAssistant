@@ -91,31 +91,63 @@
             </div>
           </div>
           <div id="ghConfigureSection" style="display: none;">
-            <h3 class="pt-4">Connect this app to <a href="https://github.com" target="_blank"><i class="bi-github"></i> your GitHub account</a></h3>
-            <p>
-              Follow the steps below to connect this app with a sync repository that you own and control. 
-            </p>
-            <ol>
-              <li><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository named <code>MyWhosum</code>.</li>
-              <li>Remember to scroll down on that page and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
-              <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
-              <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
-            </ol>
-            <div id="submitGhTokenSection">
-              <label for="txtGithubToken" class="text-muted">Paste code</label>
-              <input type="password" name="txtGithubToken" id="txtGithubToken" placeholder="github_pat_123456" style="width: 300px; border-right: 1px solid #ced4da; text-align: left;">
-              <a href="#" id="btnSubmitGithubToken" role="button" class="btn btn-primary">Connect!</a>
-              <p id="githubConnFailureMsg" class="text-danger d-none">Paste a token in the textbox before continuing.</p>
+            <div id="ghConfiguredUi" style="display: none;">
+              <h3 class="pt-4">Review <i class="bi-github"></i> GitHub connection</h3>
+              <div class="h5 p-1">
+                <img id="ghUserAvatar" src="/images/noprofilepic.png" alt="User" style="width: 50px; height: 50px;">
+                &nbsp;
+                <a id="ghUsername">--not connected--</a>
+              </div>
+              <div class="p-1">
+                <span>Connected: </span>
+                <i id="ghConnCheck" class="bi-check-circle-fill text-success d-none"></i> 
+                <span id="ghLastConnOk">N/A</span>
+              </div>
+              <div class="p-1">
+                <label for="txtGithubRepoName">Repository: </label>
+                <input type="text" name="txtGithubRepoName" id="txtGithubRepoName" style="width: 300px; text-align: left;">
+                <span id="ghPublicMsg" class="d-none">
+                  <span id="ghRepoIsPublic" class="d-none fw-bold">
+                    <i class="bi-unlock-fill"></i> Public!
+                  </span>
+                  <span id="ghRepoIsPrivate" class="d-none">
+                    <i class="bi-lock-fill"></i> Private
+                  </span>
+                </span>
+              </div>
+              <div class="pb-1 pt-4">
+                <a href="#" id="btnRetestGithubConn" role="button" class="btn btn-success">Test Connection</a>
+                <a href="#" id="btnResetGithubConn" role="button" class="btn btn-outline-danger ms-2">Reset Connection</a>
+              </div>
             </div>
-            <br>
-            <div class="mt-4 pt-2" style="border-top: solid 3px #ced4da;">
-              <h3 class="inkfree">Figure 1</h3>
+            <div id="ghConfigurationUi">
+              <h3 class="pt-4">Connect this app to <a href="https://github.com" target="_blank"><i class="bi-github"></i> your GitHub account</a></h3>
               <p>
-                How to create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> with permission of <code>Contents: Read and write</code> for the <code>MyWhosum</code> repository only:
+                Follow the steps below to connect this app with a sync repository that you own and control. 
               </p>
-              <img src="/images/ghpathelp.png" alt="Token generation screenshot" style="width: 800px; height: auto;">
+              <ol>
+                <li>Ensure that you've finished account setup by <a href="https://docs.github.com/en/get-started/signing-up-for-github/verifying-your-email-address" target="_blank">verifying your email address</a>.</li>
+                <li><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository named <code>MyWhosum</code>.</li>
+                <li>Remember to scroll down on that page and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
+                <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
+                <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
+              </ol>
+              <div id="submitGhTokenSection">
+                <label for="txtGithubToken" class="text-muted">Paste code</label>
+                <input type="password" name="txtGithubToken" id="txtGithubToken" placeholder="github_pat_123456" style="width: 300px; border-right: 1px solid #ced4da; text-align: left;">
+                <a href="#" id="btnSubmitGithubToken" role="button" class="btn btn-primary">Connect!</a>
+              </div>
+              <br>
+              <div class="mt-4 p-2" style="border-top: solid 3px #ced4da; background-color: #ececec;">
+                <h3 class="inkfree">Figure 1</h3>
+                <p>
+                  How to create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> with permission of <code>Contents: Read and write</code> for the <code>MyWhosum</code> repository only:
+                </p>
+                <img src="/images/ghpathelp.png" alt="Token generation screenshot" class="center">
+              </div>
             </div>
           </div>
+          <p id="githubConnFailureMsg" class="text-danger d-none">Paste a token in the textbox before continuing.</p>
           <p class="small">
             <br>
             You can still access the legacy approach to 

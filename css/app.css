@@ -520,3 +520,10 @@ a.postAnotherTag {
 #txtGithubToken {
   width: 300px;
 }
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 75%;
+}

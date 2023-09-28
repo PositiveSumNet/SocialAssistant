@@ -497,6 +497,7 @@ btnChooseVideoExtracter.addEventListener('click', async () => {
 });
 
 const enterRecordingFinisherMode = async function(videoMode) {
+  document.getElementById('txtNavFilterOwner').value = SETTINGS.RECORDING.getAuthorFilter();
   setVideoMode(videoMode);
   await loadThreadList();
   cmbNavThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
@@ -539,6 +540,12 @@ cmbNavThreadHow.addEventListener('change', (event) => {
   }
 });
 
+const btnNavFilterOwner = document.getElementById('btnNavFilterOwner');
+btnNavFilterOwner.onclick = async function(event) {
+  await loadThreadList();
+  return false;
+};
+
 const lstNavFinisher = document.getElementById('lstNavFinisher');
 lstNavFinisher.addEventListener('change', async (event) => {
   const urlKey = lstNavFinisher.value;
@@ -559,17 +566,22 @@ lstNavFinisher.addEventListener('change', async (event) => {
 });
 
 const loadThreadList = async function() {
+  // make sure the setting is stored (in case they didn't hit 'Apply' but they're hitting some other action like 'next page'; they'll still expect textbox edits to take effect on that click)
+  SETTINGS.RECORDING.setAuthorFilter(document.getElementById('txtNavFilterOwner').value);
+  const owner = SETTINGS.RECORDING.getAuthorFilter();
+
   const videoMode = getVideoMode();
   const skip = (_guidedNavPageNum - 1) * _guidedNavPageSize;
+  
   let urlKeys = [];
 
   if (videoMode == true) {
     // urlKeys to finish videos
-    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_guidedNavPageSize, skip);
+    urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys(_guidedNavPageSize, skip, owner);
   }
   else {
     // urlKeys are for visiting and expanding threads
-    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_guidedNavPageSize, skip);
+    urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys(_guidedNavPageSize, skip, owner);
   }
   
   let html = '';
@@ -660,10 +672,16 @@ btnNavNext.addEventListener('click', async () => {
 const btnClearSelNav = document.getElementById('btnClearSelNav');
 btnClearSelNav.addEventListener('click', async () => {
   const optElms = Array.from(lstNavFinisher.querySelectorAll('option'));
+  const videoMode = getVideoMode();
   for (let i = 0; i < optElms.length; i++) {
     let optElm = optElms[i];
     let urlKey = optElm.getAttribute('value');
-    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
+    if (videoMode == true) {
+      await SETTINGS.RECORDING.VIDEO_EXTRACTION.removeVideoUrlKey(urlKey);
+    }
+    else {
+      await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
+    }
   }
   
   // reload

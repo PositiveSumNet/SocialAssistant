@@ -1679,22 +1679,28 @@ const testGithubConnection = async function() {
   await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubConnectFailure);
 }
 
-const onGithubConnectedOk = function(result) {
-  console.log('github ok');
+const onGithubConnectedOk = async function() {
+  await reflectGithubTokenStatus();
 }
 
 const onGithubConnectFailure = function(result) {
+  const lastOkElm = document.getElementById('ghLastConnOk');
+  const ghCheckElm = document.getElementById('ghConnCheck');
+  lastOkElm.classList.remove('text-success');
+  lastOkElm.textContent = 'N/A';
+  ghCheckElm.classList.add('d-none');
+
   switch (result.reason) {
     case 'lacksToken':
     case 'tokenFailed':
       setGithubConnFailureMsg('Missing or invalid token. Please try again.');
       break;
     case 'writeFailed':
-      setGithubConnFailureMsg(`Attempting to write a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built using the instructions below.`);
+      setGithubConnFailureMsg(`Attempting to write a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built per the instructions (or reset the connection and generate a new token).`);
       break;
     case 'deleteFailed':
       // unexpected
-      setGithubConnFailureMsg(`Attempting to write & delete a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built using the instructions below.`);
+      setGithubConnFailureMsg(`Attempting to write & delete a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built per the instructions (or reset the connection and generate a new token).`);
       break;
     default:
       console.log('GH connection error');
@@ -1702,22 +1708,98 @@ const onGithubConnectFailure = function(result) {
   }
 }
 
-const reflectGithubTokenStatus = function(hasToken) {
-  if (hasToken == true) {
-    hideGithubFaq();
-    // show status and offer Test Connection or Disconnect
+const reflectGithubSyncRepoPrivacy = function(isPublic) {
+  document.getElementById('ghPublicMsg').classList.remove('d-none');
+  const publicElm = document.getElementById('ghRepoIsPublic');
+  const privateElm = document.getElementById('ghRepoIsPrivate');
+  if (isPublic) {
+    publicElm.classList.remove('d-none');
+    privateElm.classList.add('d-none');
   }
   else {
-    // show it again
+    publicElm.classList.add('d-none');
+    privateElm.classList.remove('d-none');
+  }
+}
+
+const reflectGithubTokenStatus = async function() {
+  const hasToken = await SETTINGS.GITHUB.hasSyncToken();
+  if (hasToken == true) {
+    hideGithubFaq();
+    document.getElementById('ghConfigurationUi').style.display = 'none';
+    document.getElementById('ghConfiguredUi').style.display = 'block';
+    // show status and offer Test Connection or Disconnect
+    const userName = await SETTINGS.GITHUB.getUserName();
+    const avatarUrl = await SETTINGS.GITHUB.getAvatarUrl();
+    const repoName = await SETTINGS.GITHUB.getSyncRepoName();
+    const lastOk = await SETTINGS.GITHUB.getSyncLastOk();
+    const isPublic = await SETTINGS.GITHUB.getSyncRepoIsPublic();
+    
+    const userNameElm = document.getElementById('ghUsername');
+    userNameElm.textContent = userName || '--not connected--';
+    if (STR.hasLen(userName)) {
+      userNameElm.setAttribute('href', `https://github.com/${userName}`);
+    }
+    else {
+      userNameElm.removeAttribute('href');
+    }
+   
+    document.getElementById('ghUserAvatar').setAttribute('src', avatarUrl || '/images/noprofilepic.png');
+    document.getElementById('txtGithubRepoName').value = repoName;
+
+    const isError = isNaN(parseInt(lastOk));
+    const lastOkElm = document.getElementById('ghLastConnOk');
+    const ghCheckElm = document.getElementById('ghConnCheck');
+    if (isError) {
+      lastOkElm.textContent = 'N/A';
+      lastOkElm.classList.remove('text-success');
+      ghCheckElm.classList.add('d-none');
+    }
+    else {
+      lastOkElm.textContent = new Date(lastOk).toString();
+      lastOkElm.classList.add('text-success');
+      ghCheckElm.classList.remove('d-none');
+    }
+
+    reflectGithubSyncRepoPrivacy(isPublic);
+  }
+  else {
+    // show faq again
+    hideGithubFaq(true);
+    document.getElementById('ghPublicMsg').classList.add('d-none');
+  }
+}
+
+const btnRetestGithubConn = document.getElementById('btnRetestGithubConn');
+btnRetestGithubConn.onclick = async function(event) {
+  setGithubConnFailureMsg('');
+  const repoName = document.getElementById('txtGithubRepoName').value;
+  await SETTINGS.GITHUB.saveSyncRepoName(repoName);
+  await testGithubConnection();
+
+  return false;
+}
+
+const btnResetGithubConn = document.getElementById('btnResetGithubConn');
+btnResetGithubConn.onclick = async function(event) {
+  if (confirm('Clear the GitHub configuration stored by this app?') == true) {
+    setGithubConnFailureMsg('');
+    await SETTINGS.GITHUB.removeSyncToken();
+    await SETTINGS.GITHUB.removeSyncUserName();
+    await SETTINGS.GITHUB.removeSyncRepoIsPublic();
+    await SETTINGS.GITHUB.removeAvatarUrl();
+    await SETTINGS.GITHUB.removeSyncLastOk();
+    await SETTINGS.GITHUB.removeSyncRepoName();
     hideGithubFaq(true);
   }
+  
+  return false;
 }
 
 const configureSyncUi = document.getElementById('configureSyncUi');
 
 const activateGhConfigureTab = async function() {
-  const hasToken = await SETTINGS.GITHUB.hasSyncToken();
-  reflectGithubTokenStatus(hasToken); 
+  await reflectGithubTokenStatus(); 
   await setActiveSyncTabPageType(PAGETYPE.GITHUB.CONFIGURE);
   configureSyncUi.style.display = 'block';
   backupUi.style.display = 'none';
