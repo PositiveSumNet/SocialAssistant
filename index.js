@@ -1595,8 +1595,11 @@ const handleExportedResults = function(payload) {
     document.getElementById('showLegacyExportUiBtn').innerText = 'Export Again';
     document.getElementById('showLegacyExportUiBtn').style.display = 'inline-block';
     document.getElementById('legacyExportUi').style.display = 'none';
-    document.getElementById('dbui').style.display = 'flex';
-    document.getElementById('mdonDownloadConnsUi').style.display = 'block';
+
+    if (site != SITE.GITHUB) {
+      document.getElementById('dbui').style.display = 'flex';
+      document.getElementById('mdonDownloadConnsUi').style.display = 'block';
+    }
   }
 }
 
