@@ -1862,6 +1862,8 @@ const activateGhBackupTab = async function() {
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'block';
   restoreUi.style.display = 'none';
+
+  // specific backup tab ui elements
 }
 
 const activateGhRestoreTab = async function() {
