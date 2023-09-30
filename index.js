@@ -1280,7 +1280,7 @@ btnClearCache.addEventListener('click', async () => {
 });
 
 /************************/
-// Upload/Import 
+// Legacy Upload/Import 
 // smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
 /************************/
 document.getElementById('startLegacyImportBtn').onclick = function(event) {
@@ -1397,7 +1397,7 @@ const updateUploadDoneBtnText = function() {
 }
 
 /************************/
-// Backup
+// Legacy Backup
 /************************/
 
 document.getElementById('showLegacyExportUiBtn').onclick = function(event) {
@@ -1405,12 +1405,12 @@ document.getElementById('showLegacyExportUiBtn').onclick = function(event) {
   return false;
 };
 
-document.getElementById('btnCancelExport').onclick = function(event) {
+document.getElementById('btnCancelLegacyExport').onclick = function(event) {
   stopExport();
   return false;
 };
-document.getElementById('btnConfirmExport').onclick = function(event) {
-  startExport();
+document.getElementById('btnConfirmLegacyExport').onclick = function(event) {
+  startLegacyExport();
   return false;
 };
 
@@ -1434,7 +1434,7 @@ const showExportUi = function() {
   initiallySelectExportWhatAll();
 
   document.getElementById('legacyExportUi').style.display = 'flex';
-  document.getElementById('btnConfirmExport').style.display = 'inline-block';
+  document.getElementById('btnConfirmLegacyExport').style.display = 'inline-block';
 
   document.getElementById('uploadui').style.display = 'none';
   document.getElementById('dbui').style.display = 'none';
@@ -1534,7 +1534,7 @@ const buildExportRequest = function() {
   };
 }
 
-const startExport = function() {
+const startLegacyExport = function() {
   
   const msg = buildExportRequest();
 
@@ -1544,7 +1544,7 @@ const startExport = function() {
   document.getElementById('showLegacyExportUiBtn').style.display = 'none';
   
   // within the form
-  document.getElementById('btnConfirmExport').style.display = 'none';
+  document.getElementById('btnConfirmLegacyExport').style.display = 'none';
 
   worker.postMessage(msg);
 }
@@ -1601,6 +1601,40 @@ const handleExportedResults = function(payload) {
       document.getElementById('mdonDownloadConnsUi').style.display = 'block';
     }
   }
+}
+
+/************************/
+// Github Backup
+/************************/
+
+const renderSyncBackupMsg = function(msg) {
+  document.getElementById('ghBackupStatusMsg').textContent = msg;
+}
+
+const btnGhBkpStart = document.getElementById('btnGhBkpStart');
+btnGhBkpStart.onclick = async function(event) {
+  await SYNCFLOW.resumeSync(SYNCFLOW.DIRECTION.BACKUP);
+  return false;
+};
+
+const btnGhBkpPause = document.getElementById('btnGhBkpPause');
+btnGhBkpPause.onclick = function(event) {
+  SYNCFLOW.pauseSync(SYNCFLOW.DIRECTION.BACKUP);
+  return false;
+};
+
+const btnGhBkpRestart = document.getElementById('btnGhBkpRestart');
+btnGhBkpRestart.onclick = async function(event) {
+  SYNCFLOW.startOverSync(SYNCFLOW.DIRECTION.BACKUP);
+  return false;
+};
+
+/************************/
+// Github Restore
+/************************/
+
+const renderSyncRestoreMsg = function(msg) {
+  // ghBackupStatusMsg
 }
 
 /************************/
