@@ -1607,8 +1607,23 @@ const handleExportedResults = function(payload) {
 // Github Backup
 /************************/
 
-const renderSyncBackupMsg = function(msg) {
-  document.getElementById('ghBackupStatusMsg').textContent = msg;
+const renderSyncBackupMsg = function(status) {
+  status = status || SYNCFLOW.buildStatus(SYNCFLOW.DIRECTION.BACKUP);
+  document.getElementById('ghBackupStatusMsg').textContent = status.msg;
+  const checkElm = document.getElementById('ghBackupStatusCheck');
+  const exclamElm = document.getElementById('ghBackupStatusFail');
+  if (status.ok === true) {
+    checkElm.classList.remove('d-none');
+    exclamElm.classList.add('d-none');
+  }
+  else if (status.ok === false) {
+    checkElm.classList.add('d-none');
+    exclamElm.classList.remove('d-none');
+  }
+  else {
+    checkElm.classList.add('d-none');
+    exclamElm.classList.add('d-none');
+  }
 }
 
 const btnGhBkpStart = document.getElementById('btnGhBkpStart');
@@ -1633,7 +1648,7 @@ btnGhBkpRestart.onclick = async function(event) {
 // Github Restore
 /************************/
 
-const renderSyncRestoreMsg = function(msg) {
+const renderSyncRestoreMsg = function() {
   // ghBackupStatusMsg
 }
 
@@ -1777,7 +1792,7 @@ const reflectGithubTokenStatus = async function() {
     const userName = await SETTINGS.GITHUB.getUserName();
     const avatarUrl = await SETTINGS.GITHUB.getAvatarUrl();
     const repoName = await SETTINGS.GITHUB.getSyncRepoName();
-    const lastOk = await SETTINGS.GITHUB.getSyncLastOk();
+    const lastOk = await SETTINGS.GITHUB.getSyncConnLastOk();
     const isPublic = await SETTINGS.GITHUB.getSyncRepoIsPublic();
     
     const userNameElm = document.getElementById('ghUsername');
@@ -1862,8 +1877,7 @@ const activateGhBackupTab = async function() {
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'block';
   restoreUi.style.display = 'none';
-
-  // specific backup tab ui elements
+  renderSyncBackupMsg();
 }
 
 const activateGhRestoreTab = async function() {
