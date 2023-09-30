@@ -1682,8 +1682,13 @@ const testGithubConnection = async function() {
   await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubConnectFailure);
 }
 
-const onGithubConnectedOk = async function() {
+const onGithubConnectedOk = async function(rateLimit) {
   await reflectGithubTokenStatus();
+  renderRateLimit(rateLimit);
+}
+
+const renderRateLimit = function(rateLimit) {
+  document.getElementById('ghRateLimit').textContent = GITHUB.writeRateLimitDisplay(rateLimit);
 }
 
 const onGithubConnectFailure = function(result) {
@@ -1696,7 +1701,7 @@ const onGithubConnectFailure = function(result) {
   switch (result.reason) {
     case 'lacksToken':
     case 'tokenFailed':
-      setGithubConnFailureMsg('Missing or invalid token. Please try again.');
+      setGithubConnFailureMsg("Missing or invalid token. Please try again or click 'Reset Connection'.");
       break;
     case 'writeFailed':
       setGithubConnFailureMsg(`Attempting to write a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built per the instructions (or reset the connection and generate a new token).`);
@@ -1727,6 +1732,9 @@ const reflectGithubSyncRepoPrivacy = function(isPublic) {
 
 const reflectGithubTokenStatus = async function() {
   const hasToken = await SETTINGS.GITHUB.hasSyncToken();
+  const ghBackupTab = document.getElementById('ghBackupTab');
+  const ghRestoreTab = document.getElementById('ghRestoreTab');
+
   if (hasToken == true) {
     hideGithubFaq();
     document.getElementById('ghConfigurationUi').style.display = 'none';
@@ -1757,11 +1765,15 @@ const reflectGithubTokenStatus = async function() {
       lastOkElm.textContent = 'N/A';
       lastOkElm.classList.remove('text-success');
       ghCheckElm.classList.add('d-none');
+      ghBackupTab.classList.add('d-none');
+      ghRestoreTab.classList.add('d-none');
     }
     else {
       lastOkElm.textContent = new Date(lastOk).toString();
       lastOkElm.classList.add('text-success');
       ghCheckElm.classList.remove('d-none');
+      ghBackupTab.classList.remove('d-none');
+      ghRestoreTab.classList.remove('d-none');
     }
 
     reflectGithubSyncRepoPrivacy(isPublic);
@@ -1770,6 +1782,8 @@ const reflectGithubTokenStatus = async function() {
     // show faq again
     hideGithubFaq(true);
     document.getElementById('ghPublicMsg').classList.add('d-none');
+    ghBackupTab.classList.add('d-none');
+    ghRestoreTab.classList.add('d-none');
   }
 }
 
@@ -1793,7 +1807,7 @@ btnResetGithubConn.onclick = async function(event) {
     await SETTINGS.GITHUB.removeAvatarUrl();
     await SETTINGS.GITHUB.removeSyncLastOk();
     await SETTINGS.GITHUB.removeSyncRepoName();
-    hideGithubFaq(true);
+    await reflectGithubTokenStatus();
   }
   
   return false;

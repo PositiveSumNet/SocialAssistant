@@ -131,6 +131,7 @@
                 <li>Remember to scroll down on that page and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
                 <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
                 <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
+                <li>Treat your token with care, as you would a password.</li>
               </ol>
               <div id="submitGhTokenSection">
                 <label for="txtGithubToken" class="text-muted">Paste code</label>
@@ -148,17 +149,26 @@
             </div>
           </div>
           <p id="githubConnFailureMsg" class="text-danger d-none">Paste a token in the textbox before continuing.</p>
-          <p class="small">
-            <br>
-            You can still access the legacy approach to 
-            <a href="#" id="showLegacyExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>export</a> 
-            and 
-            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import</a>
-            follow networks (but not posts).
-          </p>
         </div>
         <div id="backupUi" class="row pb-2" style="display:none;">
-          Backup (to-do)...
+          <h3 class="pt-4">Backup Your Data</h3>
+          <div class="pb-1">
+            <span>Status: </span>
+            <i id="ghBackupStatusCheck" class="bi-check-circle-fill text-success d-none"></i> 
+            <span id="ghBackupStatusMsg">ready</span>
+          </div>
+          <div class="pb-1 pt-4">
+            <a href="#" id="btnGhBkpStart" role="button" class="btn btn-success">Start</a>
+            <a href="#" id="btnGhBkpPause" role="button" class="btn btn-secondary ms-2">Pause</a>
+            <a href="#" id="btnGhBkpRestart" role="button" class="btn btn-outline-danger ms-2">Start Over</a>
+          </div>
+          <h3 class="pt-4">Upload Extracted Videos</h3>
+          <p>
+            If you've used our 'Extract videos' feature, you can upload those videos here:
+          </p>
+          <div>
+            drag here...
+          </div>
         </div>
         <div id="restoreUi" class="row pb-2" style="display:none;">
           Restore (to-do)...
@@ -260,6 +270,16 @@
             <a href="#" id="btnConfirmExport" role="button" class="btn btn-primary">Start Backup</a>
             <a href="#" id="btnCancelExport" role="button" class="btn btn-secondary ms-2">Cancel</a>
           </div>
+        </div>
+        <div id="syncFooter" class="mt-3" style="border-top: solid 1px #ced4da;">
+          <p id="ghRateLimit" class="small mt-2"></p>
+          <p class="small">
+            You can still access the legacy approach to 
+            <a href="#" id="showLegacyExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>export</a> 
+            and 
+            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import</a>
+            follow networks (but not posts).
+          </p>
         </div>
       </div>
       <div id='mdonApiUi' class='row' style="display:none;padding:10px 20px;">
