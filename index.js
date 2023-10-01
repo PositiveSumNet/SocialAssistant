@@ -1655,6 +1655,7 @@ btnGhBkpStart.onclick = function(event) {
 
 const btnGhBkpPause = document.getElementById('btnGhBkpPause');
 btnGhBkpPause.onclick = function(event) {
+  btnGhBkpPause.classList.add('d-none');
   SYNCFLOW.pauseSync(SYNCFLOW.DIRECTION.BACKUP);
   btnGhBkpStart.classList.remove('d-none');
   btnGhBkpRestart.classList.remove('d-none');
