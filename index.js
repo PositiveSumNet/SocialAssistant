@@ -1627,8 +1627,8 @@ const renderSyncBackupMsg = function(status) {
 }
 
 const btnGhBkpStart = document.getElementById('btnGhBkpStart');
-btnGhBkpStart.onclick = async function(event) {
-  await SYNCFLOW.resumeSync(SYNCFLOW.DIRECTION.BACKUP);
+btnGhBkpStart.onclick = function(event) {
+  SYNCFLOW.resumeSync(SYNCFLOW.DIRECTION.BACKUP);
   return false;
 };
 
