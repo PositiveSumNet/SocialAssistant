@@ -1607,7 +1607,7 @@ const handleExportedResults = function(payload) {
 // Github Backup
 /************************/
 
-const renderSyncBackupMsg = function(status) {
+const renderSyncBackupStatus = function(status) {
   status = status || SYNCFLOW.buildStatus(SYNCFLOW.DIRECTION.BACKUP);
   document.getElementById('ghBackupStatusMsg').textContent = status.msg;
   const checkElm = document.getElementById('ghBackupStatusCheck');
@@ -1624,23 +1624,49 @@ const renderSyncBackupMsg = function(status) {
     checkElm.classList.add('d-none');
     exclamElm.classList.add('d-none');
   }
+
+  if (status.running === true) {
+    btnGhBkpPause.classList.remove('d-none');
+    btnGhBkpStart.classList.add('d-none');
+    btnGhBkpRestart.classList.add('d-none');
+  }
+  else {
+    btnGhBkpPause.classList.add('d-none');
+    btnGhBkpStart.classList.remove('d-none');
+
+    if (status.ok === true) {
+      // we're at the beginning, so start and restart mean the same thing
+      btnGhBkpRestart.classList.add('d-none');
+    }
+    else {
+      btnGhBkpRestart.classList.remove('d-none');
+    }
+  }
 }
 
 const btnGhBkpStart = document.getElementById('btnGhBkpStart');
 btnGhBkpStart.onclick = function(event) {
   SYNCFLOW.resumeSync(SYNCFLOW.DIRECTION.BACKUP);
+  btnGhBkpPause.classList.remove('d-none');
+  btnGhBkpStart.classList.add('d-none');
+  btnGhBkpRestart.classList.add('d-none');
   return false;
 };
 
 const btnGhBkpPause = document.getElementById('btnGhBkpPause');
 btnGhBkpPause.onclick = function(event) {
   SYNCFLOW.pauseSync(SYNCFLOW.DIRECTION.BACKUP);
+  btnGhBkpStart.classList.remove('d-none');
+  btnGhBkpRestart.classList.remove('d-none');
   return false;
 };
 
 const btnGhBkpRestart = document.getElementById('btnGhBkpRestart');
 btnGhBkpRestart.onclick = async function(event) {
   SYNCFLOW.startOverSync(SYNCFLOW.DIRECTION.BACKUP);
+  btnGhBkpPause.classList.remove('d-none');
+  btnGhBkpStart.classList.add('d-none');
+  btnGhBkpRestart.classList.add('d-none');
   return false;
 };
 
@@ -1648,8 +1674,8 @@ btnGhBkpRestart.onclick = async function(event) {
 // Github Restore
 /************************/
 
-const renderSyncRestoreMsg = function() {
-  // ghBackupStatusMsg
+const renderSyncRestoreStatus = function() {
+  // ghBackupStatusStatus
 }
 
 /************************/
@@ -1877,7 +1903,7 @@ const activateGhBackupTab = async function() {
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'block';
   restoreUi.style.display = 'none';
-  renderSyncBackupMsg();
+  renderSyncBackupStatus();
 }
 
 const activateGhRestoreTab = async function() {
