@@ -446,6 +446,9 @@ worker.onmessage = async function ({ data }) {
     case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
       onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
+    case MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP:
+      SYNCFLOW.onFetchedForBackup(data.step, data.pushable);
+      break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
       break;
@@ -1634,7 +1637,7 @@ const renderSyncBackupStatus = function(status) {
     btnGhBkpPause.classList.add('d-none');
     btnGhBkpStart.classList.remove('d-none');
 
-    if (status.ok === true) {
+    if (status.ok === true || status.msg == SYNCFLOW.START_MSG) {
       // we're at the beginning, so start and restart mean the same thing
       btnGhBkpRestart.classList.add('d-none');
     }

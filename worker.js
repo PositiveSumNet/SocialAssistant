@@ -21,6 +21,7 @@ importScripts('/lib/shared/strlib.js');
 importScripts('/lib/shared/appgraphs.js');
 importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
+importScripts('/lib/shared/syncflow.js');
 importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
 importScripts('/lib/worker/twitterprofilesavemapper.js');
@@ -274,10 +275,23 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
       savePageRecords(evt.data)
       break;
+    case MSGTYPE.TODB.FETCH_FOR_BACKUP:
+      fetchForBackup(evt.data);
+      break;
     default:
       break;
   }
 };
+
+const fetchForBackup = function(request) {
+  const step = request.step;
+  const pushable = SYNCFLOW.buildPushable(step);
+  
+  postMessage({ 
+    type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
+    step: step,
+    pushable: pushable });
+}
 
 const inputOwner = function(request) {
   switch (request.pageType) {
