@@ -60,10 +60,19 @@ const getPersonRenderAnchorsRule = function() {
 
 // when sqlite pushes unhandled exception log messages, they log (ugly) as rendered divs
 const logHtml = function (cssClass, ...args) {
-  const ln = document.createElement('div');
-  if (cssClass) ln.classList.add(cssClass);
-  ln.append(document.createTextNode(args.join(' ')));
-  document.body.append(ln);
+  let elm = document.getElementById('logMsgSection')
+  
+  if (!elm) { 
+    elm = document.createElement('div') 
+    elm.append(document.createTextNode(args.join(' ')));
+    document.body.append(elm);
+  }
+  else {
+    elm.classList.remove('d-none');
+    elm.textContent = args.join('\n');
+  }
+  
+  if (cssClass) elm.classList.add(cssClass);
 };
 
 // specific logging
