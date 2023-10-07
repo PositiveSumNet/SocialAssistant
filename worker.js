@@ -286,7 +286,7 @@ onmessage = (evt) => {
 const fetchForBackup = function(request) {
   const step = request.step;
   const pushable = SYNCFLOW.buildPushable(step);
-  
+
   postMessage({ 
     type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
     step: step,
