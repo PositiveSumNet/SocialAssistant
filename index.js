@@ -1637,7 +1637,9 @@ const renderSyncBackupStatus = function(status) {
     exclamElm.classList.add('d-none');
   }
 
-  if (status.running === true) {
+  // special handling of _backupStartedThisSession is in case running was calculated as true based on last step being very recent
+  // but guarding against the case where the user hit F5 (and so it isn't actually running in this session)
+  if (status.running === true && _backupStartedThisSession == true) {
     btnGhBkpPause.classList.remove('d-none');
     btnGhBkpStart.classList.add('d-none');
     btnGhBkpRestart.classList.add('d-none');
