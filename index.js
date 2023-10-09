@@ -456,7 +456,7 @@ worker.onmessage = async function ({ data }) {
       onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
     case MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP:
-      SYNCFLOW.onFetchedForBackup(data.step, data.pushable);
+      await SYNCFLOW.onFetchedForBackup(data.step, data.pushable);
       break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
@@ -1769,7 +1769,7 @@ document.getElementById('ghRestoreTab').onclick = async function(event) {
 }
 
 const testGithubConnection = async function() {
-  await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubConnectFailure);
+  await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubFailure);
 }
 
 const onGithubConnectedOk = async function(rateLimit) {
@@ -1781,7 +1781,7 @@ const renderRateLimit = function(rateLimit) {
   document.getElementById('ghRateLimit').textContent = GITHUB.writeRateLimitDisplay(rateLimit);
 }
 
-const onGithubConnectFailure = function(result) {
+const onGithubFailure = function(result) {
   const lastOkElm = document.getElementById('ghLastConnOk');
   const ghCheckElm = document.getElementById('ghConnCheck');
   lastOkElm.classList.remove('text-success');
@@ -1789,14 +1789,20 @@ const onGithubConnectFailure = function(result) {
   ghCheckElm.classList.add('d-none');
 
   switch (result.reason) {
-    case 'lacksToken':
-    case 'tokenFailed':
+    case GITHUB.SYNC.ERROR_CODE.lacksToken:
+    case GITHUB.SYNC.ERROR_CODE.tokenFailed:
       setGithubConnFailureMsg("Missing or invalid token. Please try again or click 'Reset Connection'.");
       break;
-    case 'writeFailed':
+    case GITHUB.SYNC.ERROR_CODE.userNameMissing:
+      setGithubConnFailureMsg("User not connected. Please try again or click 'Reset Connection'.");
+      break;
+    case GITHUB.SYNC.ERROR_CODE.syncRepoSettingMissing:
+      setGithubConnFailureMsg("Sync repository not connected. Please try again or click 'Reset Connection'.");
+      break;
+    case GITHUB.SYNC.ERROR_CODE.testWriteFailed:
       setGithubConnFailureMsg(`Attempting to write a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built per the instructions (or reset the connection and generate a new token).`);
       break;
-    case 'deleteFailed':
+    case GITHUB.SYNC.ERROR_CODE.testDeleteFailed:
       // unexpected
       setGithubConnFailureMsg(`Attempting to write & delete a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built per the instructions (or reset the connection and generate a new token).`);
       break;
