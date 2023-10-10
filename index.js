@@ -456,7 +456,7 @@ worker.onmessage = async function ({ data }) {
       onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
     case MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP:
-      await SYNCFLOW.onFetchedForBackup(data.step, data.pushable);
+      await SYNCFLOW.onFetchedForBackup(data.pushable);
       break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
@@ -1805,6 +1805,10 @@ const onGithubFailure = function(result) {
     case GITHUB.SYNC.ERROR_CODE.testDeleteFailed:
       // unexpected
       setGithubConnFailureMsg(`Attempting to write & delete a test file to ${result.userName}/${result.repoName} failed. Please check that the repository has the expected name and that the token was built per the instructions (or reset the connection and generate a new token).`);
+      break;
+    case GITHUB.SYNC.ERROR_CODE.pushBackupFileFailed:
+      setGithubConnFailureMsg(SYNCFLOW.writePushFailureMsg(result));
+      renderRateLimit(result.rateLimit);
       break;
     default:
       console.log('GH connection error');

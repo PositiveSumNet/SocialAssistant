@@ -289,7 +289,6 @@ const fetchForBackup = function(request) {
 
   postMessage({ 
     type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
-    step: step,
     pushable: pushable });
 }
 
