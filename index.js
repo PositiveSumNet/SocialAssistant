@@ -1445,8 +1445,8 @@ const showExportUi = function() {
   document.getElementById('optExportWhomActiveAccountFollowingOnlyLabel').textContent = `Followed by ${SETTINGS.getCachedOwner()}`;
   document.getElementById('optExportWhomActiveAccountFollowersOnlyLabel').textContent = `Followers of ${SETTINGS.getCachedOwner()}`;
 
-  document.getElementById('optExportWhomAll').checked = true;
-  document.getElementById('optExportWhenAll').checked = true;
+  document.getElementById('optExportWhomAllLegacy').checked = true;
+  document.getElementById('optExportWhenAllLegacy').checked = true;
   initiallySelectExportWhatAll();
 
   document.getElementById('legacyExportUi').style.display = 'flex';
@@ -1462,30 +1462,30 @@ const buildExportRequest = function() {
   let direction = undefined;
   let site = undefined;
   let owner = undefined;
-  if (document.getElementById('optExportWhomActiveAccountFollowingOnly').checked) {
+  if (document.getElementById('optExportWhomActiveAccountFollowingOnlyLegacy').checked) {
     site = SETTINGS.getCachedSite();
     direction = CONN_DIRECTION.FOLLOWING;
     owner = SETTINGS.getCachedOwner();
   }
-  else if (document.getElementById('optExportWhomActiveAccountFollowersOnly').checked) {
+  else if (document.getElementById('optExportWhomActiveAccountFollowersOnlyLegacy').checked) {
     site = SETTINGS.getCachedSite();
     direction = CONN_DIRECTION.FOLLOWERS;
     owner = SETTINGS.getCachedOwner();
   }
-  else if (document.getElementById('optExportWhomActiveSiteOnly').checked) {
+  else if (document.getElementById('optExportWhomActiveSiteOnlyLegacy').checked) {
     site = SETTINGS.getCachedSite();
   }
   
   let siteFilter = site ? CONN_EXPORT_HELPER.justThisSiteFilter(site) : undefined;
 
   let hoursAgo = undefined;
-  if (document.getElementById('optExportWhenLastWeek').checked) {
+  if (document.getElementById('optExportWhenLastWeekLegacy').checked) {
     hoursAgo = 24 * 7;
   }
-  else if (document.getElementById('optExportWhenLastDay').checked) {
+  else if (document.getElementById('optExportWhenLastDayLegacy').checked) {
     hoursAgo = 24;
   }
-  else if (document.getElementById('optExportWhenLastHour').checked) {
+  else if (document.getElementById('optExportWhenLastHourLegacy').checked) {
     hoursAgo = 1;
   }
 
@@ -1499,24 +1499,24 @@ const buildExportRequest = function() {
       APPSCHEMA.SocialListMember
     ];
 
-  if (document.getElementById('optExportWhatFollowers').checked) {
+  if (document.getElementById('optExportWhatFollowersLegacy').checked) {
     entities.push(APPSCHEMA.SocialConnHasFollower);
   }
-  if (document.getElementById('optExportWhatFollowing').checked) {
+  if (document.getElementById('optExportWhatFollowingLegacy').checked) {
     entities.push(APPSCHEMA.SocialConnIsFollowing);
   }
-  if (document.getElementById('optExportDisplayNames').checked) {
+  if (document.getElementById('optExportDisplayNamesLegacy').checked) {
     entities.push(APPSCHEMA.SocialProfileDisplayName);
   }
-  if (document.getElementById('optExportProfileDescriptions').checked) {
+  if (document.getElementById('optExportProfileDescriptionsLegacy').checked) {
     entities.push(APPSCHEMA.SocialProfileDescription);
   }
-  if (document.getElementById('optExportProfileLinks').checked) {
+  if (document.getElementById('optExportProfileLinksLegacy').checked) {
     entities.push(APPSCHEMA.SocialProfileLinkMastodonAccount);
     entities.push(APPSCHEMA.SocialProfileLinkExternalUrl);
     entities.push(APPSCHEMA.SocialProfileLinkEmailAddress);
   }
-  if (document.getElementById('optExportPhotos').checked) {
+  if (document.getElementById('optExportPhotosLegacy').checked) {
     entities.push(APPSCHEMA.SocialProfileImgSourceUrl);
     entities.push(APPSCHEMA.SocialProfileImgBinary);
   }

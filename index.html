@@ -195,75 +195,75 @@
         <div id="legacyExportUi" class="row pb-2" style="display:none;">
           <h3>Customize the Backup</h3>
           <p class="text-secondary">This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.</p>
-          <div id="exportOpts" class="row">
+          <div class="row">
             <div class="col">
               <p class="h5 mt-3">Which Networks</p>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomAll">
-                <label class="form-check-label" for="optExportWhomAll">All networks</label>
+                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomAllLegacy">
+                <label class="form-check-label" for="optExportWhomAllLegacy">All networks</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveSiteOnly">
-                <label class="form-check-label" id="optExportWhomActiveSiteOnlyLabel" for="optExportWhomActiveSiteOnly">This account type only</label>
+                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomActiveSiteOnlyLegacy">
+                <label class="form-check-label" id="optExportWhomActiveSiteOnlyLabel" for="optExportWhomActiveSiteOnlyLegacy">This account type only</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveAccountFollowingOnly">
-                <label class="form-check-label" id="optExportWhomActiveAccountFollowingOnlyLabel" for="optExportWhomActiveAccountFollowingOnly">Followed by this account only</label>
+                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomActiveAccountFollowingOnlyLegacy">
+                <label class="form-check-label" id="optExportWhomActiveAccountFollowingOnlyLabel" for="optExportWhomActiveAccountFollowingOnlyLegacy">Followed by this account only</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveAccountFollowersOnly">
-                <label class="form-check-label" id="optExportWhomActiveAccountFollowersOnlyLabel" for="optExportWhomActiveAccountFollowersOnly">Followers of this account only</label>
+                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomActiveAccountFollowersOnlyLegacy">
+                <label class="form-check-label" id="optExportWhomActiveAccountFollowersOnlyLabel" for="optExportWhomActiveAccountFollowersOnlyLegacy">Followers of this account only</label>
               </div>
             </div>
             <div class="col">
               <p class="h5 mt-3">If Recorded When</p>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenAll">
-                <label class="form-check-label" for="optExportWhenAll">All date ranges</label>
+                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenAllLegacy">
+                <label class="form-check-label" for="optExportWhenAllLegacy">All date ranges</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastWeek">
-                <label class="form-check-label" for="optExportWhenLastWeek">In the last week</label>
+                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenLastWeekLegacy">
+                <label class="form-check-label" for="optExportWhenLastWeekLegacy">In the last week</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastDay">
-                <label class="form-check-label" for="optExportWhenLastDay">In the last day</label>
+                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenLastDayLegacy">
+                <label class="form-check-label" for="optExportWhenLastDayLegacy">In the last day</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastHour">
-                <label class="form-check-label" for="optExportWhenLastHour">In the last hour</label>
+                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenLastHourLegacy">
+                <label class="form-check-label" for="optExportWhenLastHourLegacy">In the last hour</label>
               </div>
             </div>
             <div class="col">
               <p class="h5 mt-3">Which Aspects</p>
               <div class="ms-2" id="exportWhatDetail">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportWhatFollowers">
-                  <label class="form-check-label" for="optExportWhatFollowers">Followers</label>
+                  <input class="form-check-input" type="checkbox" id="optExportWhatFollowersLegacy">
+                  <label class="form-check-label" for="optExportWhatFollowersLegacy">Followers</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportWhatFollowing">
-                  <label class="form-check-label" for="optExportWhatFollowing">Following</label>
+                  <input class="form-check-input" type="checkbox" id="optExportWhatFollowingLegacy">
+                  <label class="form-check-label" for="optExportWhatFollowingLegacy">Following</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportDisplayNames">
-                  <label class="form-check-label" for="optExportDisplayNames">Profile names</label>
+                  <input class="form-check-input" type="checkbox" id="optExportDisplayNamesLegacy">
+                  <label class="form-check-label" for="optExportDisplayNamesLegacy">Profile names</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportProfileDescriptions">
-                  <label class="form-check-label" for="optExportProfileDescriptions">Profile descriptions</label>
+                  <input class="form-check-input" type="checkbox" id="optExportProfileDescriptionsLegacy">
+                  <label class="form-check-label" for="optExportProfileDescriptionsLegacy">Profile descriptions</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportProfileLinks">
-                  <label class="form-check-label" for="optExportProfileLinks">Profile links</label>
+                  <input class="form-check-input" type="checkbox" id="optExportProfileLinksLegacy">
+                  <label class="form-check-label" for="optExportProfileLinksLegacy">Profile links</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportPhotos">
-                  <label class="form-check-label" for="optExportPhotos" data-toggle='tooltip' title='These files are relatively large'>Profile photos (big files)</label>
+                  <input class="form-check-input" type="checkbox" id="optExportPhotosLegacy">
+                  <label class="form-check-label" for="optExportPhotosLegacy" data-toggle='tooltip' title='These files are relatively large'>Profile photos (big files)</label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="optFollowerCounts">
-                  <label class="form-check-label" for="optExportPhotos">Follower counts</label>
+                  <label class="form-check-label" for="optExportPhotosLegacy">Follower counts</label>
                 </div>
               </div>
             </div>
