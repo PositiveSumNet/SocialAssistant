@@ -1793,6 +1793,12 @@ const onGithubFailure = function(result) {
     case GITHUB.SYNC.ERROR_CODE.tokenFailed:
       setGithubConnFailureMsg("Missing or invalid token. Please try again or click 'Reset Connection'.");
       break;
+    case GITHUB.SYNC.ERROR_CODE.notConnected:
+      setGithubConnFailureMsg("Could not connect. Are you online?");
+      break;
+    case GITHUB.SYNC.ERROR_CODE.rateLimited:
+      setGithubConnFailureMsg("Rate limit exceeded! " + GITHUB.writeRateLimitDisplay(result.rateLimit));
+      break;
     case GITHUB.SYNC.ERROR_CODE.userNameMissing:
       setGithubConnFailureMsg("User not connected. Please try again or click 'Reset Connection'.");
       break;
@@ -1811,7 +1817,8 @@ const onGithubFailure = function(result) {
       renderRateLimit(result.rateLimit);
       break;
     default:
-      console.log('GH connection error');
+      logHtml('text-danger', ['Unexpected GitHub error']);
+      console.log(result);
       break;
   }
 }
