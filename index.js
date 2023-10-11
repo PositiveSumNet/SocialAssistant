@@ -1435,7 +1435,11 @@ const initiallySelectExportWhatAll = function() {
 }
 
 const showExportUi = function() {
-  const site = SETTINGS.getCachedSite();
+  let site = SETTINGS.getCachedSite();
+  if (site == SITE.GITHUB) {
+    site = SITE.TWITTER;
+  }
+
   document.getElementById('optExportWhomActiveSiteOnlyLabel').textContent = site;
 
   document.getElementById('optExportWhomActiveAccountFollowingOnlyLabel').textContent = `Followed by ${SETTINGS.getCachedOwner()}`;
