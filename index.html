@@ -159,7 +159,53 @@
             <i id="ghBackupStatusFail" class="bi-exclamation-circle-fill text-danger d-none"></i> 
             <span id="ghBackupStatusMsg">ready</span>
           </div>
-          <div class="pb-1 pt-4">
+          <div id="exportFilterSection">
+            <div class="pt-2 pb-1 text-muted">
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithFavorites" id="optExportWithFavorites">
+                <label class="form-check-label" id="optExportWithFavoritesLabel" for="optExportWithFavorites">Favorites</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithProfiles" id="optExportWithProfiles">
+                <label class="form-check-label" id="optExportWithProfilesLabel" for="optExportWithProfiles">Profiles</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithAvatars" id="optExportWithAvatars">
+                <label class="form-check-label" id="optExportWithAvatarsLabel" for="optExportWithAvatars">Avatars</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithNetworks" id="optExportWithNetworks">
+                <label class="form-check-label" id="optExportWithNetworksLabel" for="optExportWithNetworks">Networks</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithPosts" id="optExportWithPosts">
+                <label class="form-check-label" id="optExportWithPostsLabel" for="optExportWithPosts">Posts</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithPostImages" id="optExportWithPostImages">
+                <label class="form-check-label" id="optExportWithPostImagesLabel" for="optExportWithPostImages">Images</label>
+              </span>
+            </div>
+            <div class="pb-3 text-muted">
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportTwitter" id="optExportTwitter">
+                <label class="form-check-label" id="optExportTwitterLabel" for="optExportTwitter">Twitter/X</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportMastodon" id="optExportMastodon">
+                <label class="form-check-label" id="optExportMastodonLabel" for="optExportMastodon">Mastodon</label>
+              </span>
+              <span class="ps-2" data-toggle='tooltip' title='optional author filter'>
+                <input type="text" name="optExportForAuthor" id="optExportForAuthor" placeholder="@optional_author_filter">
+              </span>
+              <span class="ps-2" data-toggle='tooltip' title='optional filter for date of posts'>
+                <input type="text" id="optExportPostsFrom" placeholder="mm/dd/yyyy" style="width: 100px;">
+                <span> - </span>
+                <input type="text" id="optExportPostsUntil" placeholder="mm/dd/yyyy" style="width: 100px;">
+              </span>
+            </div>
+          </div>
+          <div class="pb-1">
             <a href="#" id="btnGhBkpStart" role="button" class="btn btn-success">Start</a>
             <a href="#" id="btnGhBkpPause" role="button" class="btn btn-secondary ms-2">Pause</a>
             <a href="#" id="btnGhBkpRestart" role="button" class="btn btn-outline-secondary ms-2">Start Over</a>
@@ -193,7 +239,7 @@
           </div>
         </div>
         <div id="legacyExportUi" class="row pb-2" style="display:none;">
-          <h3>Customize the Backup</h3>
+          <h3>Customize the (Legacy) Backup</h3>
           <p class="text-secondary">This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.</p>
           <div class="row">
             <div class="col">

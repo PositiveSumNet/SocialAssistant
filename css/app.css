@@ -527,3 +527,7 @@ a.postAnotherTag {
   margin-right: auto;
   width: 75%;
 }
+
+.text-muted input[type=text] {
+  border: solid 1px #e9ecef;
+}

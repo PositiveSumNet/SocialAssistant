@@ -456,7 +456,7 @@ worker.onmessage = async function ({ data }) {
       onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
     case MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP:
-      await SYNCFLOW.onFetchedForBackup(data.pushable);
+      await SYNCFLOW.onFetchedForBackup(data.pushable, data.config);
       break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
@@ -1623,6 +1623,82 @@ const handleExportedResults = function(payload) {
 // Github Backup
 /************************/
 
+const getBackupSettingFromUi = function(setting, elmId) {
+  const elm = document.getElementById(elmId);
+  if (elm.type == 'checkbox') {
+    return elm.checked;
+  }
+  else if (setting == SETTINGS.SYNCFLOW.CONFIG.AUTHOR_FILTER) {
+    return STR.hasLen(elm.value) ? elm.value : '';
+  }
+  else if (setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_FROM || setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_UNTIL) {
+    if (!STR.hasLen(elm.value)) {
+      return '';
+    }
+    else {
+      return STR.dateFromMmDdYyyy(elm.value) || '';
+    }
+  }
+}
+
+const reflectBackupSettingInUi = function(config, setting, elmId) {
+  const elm = document.getElementById(elmId);
+  if (elm.type == 'checkbox') {
+    elm.checked = STR.isTruthy(config[setting]);
+  }
+  else if (setting == SETTINGS.SYNCFLOW.CONFIG.AUTHOR_FILTER) {
+    elm.value = STR.hasLen(config[setting]) ? config[setting] : '';
+  }
+  else if (setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_FROM || setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_UNTIL) {
+    if (!STR.hasLen(config[setting])) {
+      elm.value = '';
+    }
+    else {
+      const dt = new Date(config[setting]);
+      if (isNaN(dt)) {
+        elm.value = '';
+      }
+      else {
+        elm.value = `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear()}`;
+      }
+    }
+  }
+}
+
+const reflectBackupSettings = function() {
+  const config = SETTINGS.SYNCFLOW.BACKUP.getExportConfig();
+  const ns = SETTINGS.SYNCFLOW.CONFIG;
+  reflectBackupSettingInUi(config, ns.WITH_FAVORITES, 'optExportWithFavorites');
+  reflectBackupSettingInUi(config, ns.WITH_PROFILES, 'optExportWithProfiles');
+  reflectBackupSettingInUi(config, ns.WITH_AVATARS, 'optExportWithAvatars');
+  reflectBackupSettingInUi(config, ns.WITH_NETWORKS, 'optExportWithNetworks');
+  reflectBackupSettingInUi(config, ns.WITH_POSTS, 'optExportWithPosts');
+  reflectBackupSettingInUi(config, ns.WITH_POST_IMAGES, 'optExportWithPostImages');
+  reflectBackupSettingInUi(config, ns.DO_TWITTER, 'optExportTwitter');
+  reflectBackupSettingInUi(config, ns.DO_MASTODON, 'optExportMastodon');
+  reflectBackupSettingInUi(config, ns.AUTHOR_FILTER, 'optExportForAuthor');
+  reflectBackupSettingInUi(config, ns.POSTED_FROM, 'optExportPostsFrom');
+  reflectBackupSettingInUi(config, ns.POSTED_UNTIL, 'optExportPostsUntil');
+}
+
+// saves and returns
+const saveBackupSettingsFromUi = function() {
+  const config = {};
+  const ns = SETTINGS.SYNCFLOW.CONFIG;
+  config[ns.WITH_FAVORITES] = getBackupSettingFromUi(ns.WITH_FAVORITES, 'optExportWithFavorites');
+  config[ns.WITH_PROFILES] = getBackupSettingFromUi(ns.WITH_PROFILES, 'optExportWithProfiles');
+  config[ns.WITH_AVATARS] = getBackupSettingFromUi(ns.WITH_AVATARS, 'optExportWithAvatars');
+  config[ns.WITH_NETWORKS] = getBackupSettingFromUi(ns.WITH_NETWORKS, 'optExportWithNetworks');
+  config[ns.WITH_POSTS] = getBackupSettingFromUi(ns.WITH_POSTS, 'optExportWithPosts');
+  config[ns.WITH_POST_IMAGES] = getBackupSettingFromUi(ns.WITH_POST_IMAGES, 'optExportWithPostImages');
+  config[ns.DO_TWITTER] = getBackupSettingFromUi(ns.DO_TWITTER, 'optExportTwitter');
+  config[ns.DO_MASTODON] = getBackupSettingFromUi(ns.DO_MASTODON, 'optExportMastodon');
+  config[ns.AUTHOR_FILTER] = getBackupSettingFromUi(ns.AUTHOR_FILTER, 'optExportForAuthor');
+  config[ns.POSTED_FROM] = getBackupSettingFromUi(ns.POSTED_FROM, 'optExportPostsFrom');
+  config[ns.POSTED_UNTIL] = getBackupSettingFromUi(ns.POSTED_UNTIL, 'optExportPostsUntil');
+  SETTINGS.SYNCFLOW.BACKUP.saveExportConfig(config);
+}
+
 const renderSyncBackupStatus = function(status) {
   status = status || SYNCFLOW.buildStatus(SYNCFLOW.DIRECTION.BACKUP);
   document.getElementById('ghBackupStatusMsg').textContent = status.msg;
@@ -1649,6 +1725,7 @@ const renderSyncBackupStatus = function(status) {
     btnGhBkpRestart.classList.add('d-none');
   }
   else {
+    reflectBackupSettings();
     btnGhBkpPause.classList.add('d-none');
     btnGhBkpStart.classList.remove('d-none');
 
@@ -1664,6 +1741,7 @@ const renderSyncBackupStatus = function(status) {
 
 const btnGhBkpStart = document.getElementById('btnGhBkpStart');
 btnGhBkpStart.onclick = function(event) {
+  saveBackupSettingsFromUi();
   SYNCFLOW.resumeSync(SYNCFLOW.DIRECTION.BACKUP);
   btnGhBkpPause.classList.remove('d-none');
   btnGhBkpStart.classList.add('d-none');
@@ -1682,6 +1760,7 @@ btnGhBkpPause.onclick = function(event) {
 
 const btnGhBkpRestart = document.getElementById('btnGhBkpRestart');
 btnGhBkpRestart.onclick = async function(event) {
+  saveBackupSettingsFromUi();
   SYNCFLOW.startOverSync(SYNCFLOW.DIRECTION.BACKUP);
   btnGhBkpPause.classList.remove('d-none');
   btnGhBkpStart.classList.add('d-none');
