@@ -289,8 +289,7 @@ const fetchForBackup = function(request) {
 
   postMessage({ 
     type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
-    pushable: pushable,
-    config: request.config });
+    pushable: pushable });
 }
 
 const inputOwner = function(request) {

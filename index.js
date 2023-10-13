@@ -456,7 +456,7 @@ worker.onmessage = async function ({ data }) {
       onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
     case MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP:
-      await SYNCFLOW.onFetchedForBackup(data.pushable, data.config);
+      await SYNCFLOW.onFetchedForBackup(data.pushable);
       break;
     default:
       logHtml('error', 'Unhandled message:', data.type);
@@ -1902,6 +1902,7 @@ const onGithubFailure = function(result) {
     default:
       logHtml('text-danger', ['Unexpected GitHub error']);
       console.log(result);
+      console.trace();
       break;
   }
 }
