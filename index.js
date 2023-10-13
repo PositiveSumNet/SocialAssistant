@@ -1629,14 +1629,14 @@ const getBackupSettingFromUi = function(setting, elmId) {
     return elm.checked;
   }
   else if (setting == SETTINGS.SYNCFLOW.CONFIG.AUTHOR_FILTER) {
-    return STR.hasLen(elm.value) ? elm.value : '';
+    return elm.value;
   }
   else if (setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_FROM || setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_UNTIL) {
     if (!STR.hasLen(elm.value)) {
-      return '';
+      return null;
     }
     else {
-      return STR.dateFromMmDdYyyy(elm.value) || '';
+      return STR.dateFromMmDdYyyy(elm.value);
     }
   }
 }
@@ -1693,9 +1693,9 @@ const saveBackupSettingsFromUi = function() {
   config[ns.WITH_POST_IMAGES] = getBackupSettingFromUi(ns.WITH_POST_IMAGES, 'optExportWithPostImages');
   config[ns.DO_TWITTER] = getBackupSettingFromUi(ns.DO_TWITTER, 'optExportTwitter');
   config[ns.DO_MASTODON] = getBackupSettingFromUi(ns.DO_MASTODON, 'optExportMastodon');
-  config[ns.AUTHOR_FILTER] = getBackupSettingFromUi(ns.AUTHOR_FILTER, 'optExportForAuthor');
-  config[ns.POSTED_FROM] = getBackupSettingFromUi(ns.POSTED_FROM, 'optExportPostsFrom');
-  config[ns.POSTED_UNTIL] = getBackupSettingFromUi(ns.POSTED_UNTIL, 'optExportPostsUntil');
+  config[ns.AUTHOR_FILTER] = getBackupSettingFromUi(ns.AUTHOR_FILTER, 'optExportForAuthor') || '';
+  config[ns.POSTED_FROM] = getBackupSettingFromUi(ns.POSTED_FROM, 'optExportPostsFrom') || '';
+  config[ns.POSTED_UNTIL] = getBackupSettingFromUi(ns.POSTED_UNTIL, 'optExportPostsUntil') || '';
   SETTINGS.SYNCFLOW.BACKUP.saveExportConfig(config);
 }
 
@@ -1862,6 +1862,10 @@ const onGithubConnectedOk = async function(rateLimit) {
 
 const renderRateLimit = function(rateLimit) {
   document.getElementById('ghRateLimit').textContent = GITHUB.writeRateLimitDisplay(rateLimit);
+}
+
+const clearGithubFailureMsg = function() {
+  setGithubConnFailureMsg('');
 }
 
 const onGithubFailure = function(result) {
