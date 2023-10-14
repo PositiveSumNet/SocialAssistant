@@ -96,15 +96,10 @@
           <input class="form-check-input" type="checkbox" id="chkManualRecordsTweets">
           <label class="form-check-label" for="chkManualRecordsTweets">Tweets</label>
         </div>
-        <div class="indented-switches">
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="chkManualRecordsTweetImages" disabled>
-            <label class="form-check-label" for="chkManualRecordsTweetImages">With images <span class="small">(more disk space)</span></label>
-          </div>
-        </div>
         <div id="manualNonSelError" style="color:red;display:none;">Pick at least one above</div>
         <br>
         <p><i class="bi-info-circle"></i> Recording will stop in <code id="startClockFor">10:00</code> minutes -- or sooner if you return here and click 'Stop Recording'.</p>
+        <p><i class="bi-info-circle"></i> You can focus on a specific date range <a id="linkManualSampleDateRange" href="#">like this</a>.</p>
         <div class="d-grid gap-3">
           <button id="btnStartManualRecording" class="btn btn-primary" data-toggle='tooltip' title='Click to close this dialog and start recording.'>Start Recording</button>
           <button id="btnManualPreviewExamplePage" class="btn btn-secondary" data-toggle='tooltip' title='Click to view an example page.'>View Example Page</button>
@@ -140,11 +135,9 @@
           <input class="form-check-input optAutoHow" name="optAutoRecord" type="radio" id="optAutoRecordTweets">
           <label class="form-check-label" for="optAutoRecordTweets">Their tweets</label> <span class="text-danger small" style="display:none;"> *choose Nitter or Twitter</span>
         </div>
-        <div class="indented-switches">
-          <div class="form-check form-switch">
-            <input class="form-check-input optAutoTweetSetting" type="checkbox" id="chkAutoRecordTweetImages">
-            <label class="form-check-label" for="chkAutoRecordTweetImages">With images <span class="small">(more disk space)</span></label>
-          </div>
+        <div class="indented-from-switches text-muted">
+          <label for="optAutoRecordPriorTo">(optional) prior to</label>
+          <input id="optAutoRecordPriorTo" name="optAutoRecordPriorTo" type="text" placeholder="mm/dd/yyyy">
         </div>
         <div id="autoNonSelError" style="color:red;display:none;"></div>
         <br>

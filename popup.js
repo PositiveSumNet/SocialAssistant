@@ -70,10 +70,6 @@ btnChooseManual.addEventListener('click', async () => {
   document.getElementById('chkManualRecordsFollowLists').checked = SETTINGS.RECORDING.getManualRecordsFollows(context);
   const manualRecordsTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
   document.getElementById('chkManualRecordsTweets').checked = manualRecordsTweets;
-  const manualRecordsTweetImages = SETTINGS.RECORDING.getRecordsTweetImages(context);
-  const tweetImagesElm = document.getElementById('chkManualRecordsTweetImages');
-  tweetImagesElm.checked = manualRecordsTweetImages;
-  tweetImagesElm.disabled = !manualRecordsTweets;
 
   // now the timer
   document.getElementById('startClockFor').textContent = STR.toFancyTimeFormat(SETTINGS.RECORDING.DEFAULT_MANUAL_SECONDS);
@@ -125,9 +121,6 @@ btnChooseAutoScroll.addEventListener('click', async () => {
     document.getElementById('optAutoRecordFollowing').checked = true;
   }
 
-  const chkWithImages = document.getElementById('chkAutoRecordTweetImages');
-  chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
-
   onUpdateAutoOption();
   // unveil the div
   showRecordingDiv('configureAutoRecordingSection');
@@ -144,14 +137,24 @@ btnManualViewExamplePage.addEventListener('click', async () => {
   const context = await SETTINGS.RECORDING.getContext();
   const forTweets = context.manual.recordsTweets;
   await viewExamplePage(forTweets);
-  await closeWindow();
 });
 const btnManualPreviewExamplePage = document.getElementById('btnManualPreviewExamplePage');
 btnManualPreviewExamplePage.addEventListener('click', async () => {
   const forTweets = document.getElementById('chkManualRecordsTweets').checked == true;
   await viewExamplePage(forTweets);
-  await closeWindow();
 });
+
+const linkManualSampleDateRange = document.getElementById('linkManualSampleDateRange');
+linkManualSampleDateRange.addEventListener('click', async() => {
+  await viewSampleForDateRange();
+  return false;
+});
+
+const viewSampleForDateRange = async function() {
+  const url = 'https://twitter.com/search?q=%40positivesumnet%20until%3A2023-03-01&src=typed_query&f=top';
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  chrome.tabs.update(tab.id, {url: url});
+}
 
 document.getElementById('btnDoneNav').addEventListener('click', async () => {
   showRecordingDiv('notYetRecordingSection');
@@ -190,14 +193,6 @@ btnStartManualRecording.addEventListener('click', async () => {
   context.manual.timeoutAt = ES6.addSeconds(Date.now(), STR.fromFancyTimeToSeconds(document.getElementById('startClockFor').textContent));
   context.manual.recordsFollows = shouldRecordFollows;
   context.manual.recordsTweets = shouldRecordTweets;
-  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
-  context.recordsTweetImages = chkWithImages.checked == true;
-  if (shouldRecordTweets == true) {
-    chkWithImages.disabled = false;
-  }
-  else {
-    chkWithImages.disabled = true;
-  }
 
   await SETTINGS.RECORDING.saveContext(context);
 
@@ -217,17 +212,6 @@ const updateExpirationDisplay = async function() {
   document.getElementById('sessionExpiration').textContent = secondsDisplay;
 }
 
-const chkManualRecordsTweets = document.getElementById('chkManualRecordsTweets');
-chkManualRecordsTweets.addEventListener('change', (event) => {
-  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
-  if (event.target.checked == true) {
-    chkWithImages.disabled = false;
-  }
-  else {
-    chkWithImages.disabled = true;
-  }
-});
-
 const updateManuallyRecordingWhatDisplay = function(context) {
   const shouldRecordFollows = SETTINGS.RECORDING.getManualRecordsFollows(context);
   document.getElementById('chkManualRecordsFollowLists').checked == shouldRecordFollows;
@@ -235,15 +219,6 @@ const updateManuallyRecordingWhatDisplay = function(context) {
   const shouldRecordTweets = SETTINGS.RECORDING.getManualRecordsTweets(context);
   document.getElementById('chkManualRecordsTweets').checked == shouldRecordTweets;
   
-  const chkWithImages = document.getElementById('chkManualRecordsTweetImages');
-  if (shouldRecordTweets) {
-    chkWithImages.checked = SETTINGS.RECORDING.getRecordsTweetImages(context);
-    chkWithImages.disabled = false;
-  }
-  else {
-    chkWithImages.disabled = true;
-  }
-
   let display = '';
   if (shouldRecordFollows == true && shouldRecordTweets) {
     display = ' (follows and tweets)';
@@ -325,7 +300,6 @@ btnStartAutoRecording.addEventListener('click', async () => {
   context.auto.owner = STR.stripPrefix(owner, '@');
   context.auto.site = site;
   context.auto.pageType = pageType;
-  context.recordsTweetImages = document.getElementById('chkAutoRecordTweetImages').checked == true;
   await SETTINGS.RECORDING.saveContext(context);
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
