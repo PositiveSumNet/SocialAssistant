@@ -303,7 +303,16 @@ btnStartAutoRecording.addEventListener('click', async () => {
   await SETTINGS.RECORDING.saveContext(context);
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
-  activateOrLaunchParsedUrlTab(parsedUrl);
+
+  const txtAfterElm = document.getElementById('txtAutoRecordPriorTo');
+  if (STR.hasLen(txtAfterElm.value) && !isNaN(STR.dateFromMmDdYyyy(txtAfterElm.value))) {
+    const afterDt = STR.dateFromMmDdYyyy(txtAfterElm.value);
+    await launchTwitterSearchTab(parsedUrl, afterDt);
+  }
+  else {
+    await activateOrLaunchParsedUrlTab(parsedUrl);
+  }
+
   await closeWindow();
 });
 
@@ -417,6 +426,16 @@ btnAutoRecordingWhat.addEventListener('click', async () => {
   await activateOrLaunchParsedUrlTab(contextParsedUrl);
   await closeWindow();
 });
+
+// https://twitter.com/search?q=%40positivesumnet%20until%3A2023-03-01&src=typed_query&f=top
+const launchTwitterSearchTab = async function(parsedUrl, postedAfterDt) {
+  let owner = STR.stripPrefix(parsedUrl.owner, '@');
+  const yy = postedAfterDt.getFullYear();
+  const mm = STR.padLeft(postedAfterDt.getMonth() + 1, '0', 2);
+  const dd = STR.padLeft(postedAfterDt.getDate(), '0', 2);
+  const url = `https://x.com/search?q=%40${owner}%20until%3A${yy}-${mm}-${dd}&src=typed_query&f=top`;
+  chrome.tabs.create({ url: url });
+}
 
 // activate the tab that has the corresponding url...
 // OR open a new tab having it
