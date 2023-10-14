@@ -18,6 +18,7 @@ importScripts('/lib/shared/pagetypes.js');
 importScripts('/lib/shared/settingslib.js');
 importScripts('/lib/shared/es6lib.js');
 importScripts('/lib/shared/strlib.js');
+importScripts('/lib/shared/cryptolib.js');
 importScripts('/lib/shared/appgraphs.js');
 importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
