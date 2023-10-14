@@ -151,7 +151,7 @@ linkManualSampleDateRange.addEventListener('click', async() => {
 });
 
 const viewSampleForDateRange = async function() {
-  const url = 'https://twitter.com/search?q=%40positivesumnet%20until%3A2023-03-01&src=typed_query&f=top';
+  const url = 'https://twitter.com/search?q=%40positivesumnet%20until%3A2023-03-01&src=typed_query&f=live';
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
   chrome.tabs.update(tab.id, {url: url});
 }
@@ -427,13 +427,13 @@ btnAutoRecordingWhat.addEventListener('click', async () => {
   await closeWindow();
 });
 
-// https://twitter.com/search?q=%40positivesumnet%20until%3A2023-03-01&src=typed_query&f=top
+// https://twitter.com/search?q=%40positivesumnet%20until%3A2023-03-01&src=typed_query&f=live
 const launchTwitterSearchTab = async function(parsedUrl, postedAfterDt) {
   let owner = STR.stripPrefix(parsedUrl.owner, '@');
   const yy = postedAfterDt.getFullYear();
   const mm = STR.padLeft(postedAfterDt.getMonth() + 1, '0', 2);
   const dd = STR.padLeft(postedAfterDt.getDate(), '0', 2);
-  const url = `https://x.com/search?q=%40${owner}%20until%3A${yy}-${mm}-${dd}&src=typed_query&f=top`;
+  const url = `https://x.com/search?q=%40${owner}%20until%3A${yy}-${mm}-${dd}&src=typed_query&f=live`;
   chrome.tabs.create({ url: url });
 }
 
