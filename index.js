@@ -1672,6 +1672,7 @@ const reflectBackupSettings = function() {
   reflectBackupSettingInUi(config, ns.WITH_PROFILES, 'optExportWithProfiles');
   reflectBackupSettingInUi(config, ns.WITH_AVATARS, 'optExportWithAvatars');
   reflectBackupSettingInUi(config, ns.WITH_NETWORKS, 'optExportWithNetworks');
+  reflectBackupSettingInUi(config, ns.WITH_TOPICS, 'optExportWithTopics');
   reflectBackupSettingInUi(config, ns.WITH_POSTS, 'optExportWithPosts');
   reflectBackupSettingInUi(config, ns.WITH_POST_IMAGES, 'optExportWithPostImages');
   reflectBackupSettingInUi(config, ns.DO_TWITTER, 'optExportTwitter');
@@ -1689,6 +1690,7 @@ const saveBackupSettingsFromUi = function() {
   config[ns.WITH_PROFILES] = getBackupSettingFromUi(ns.WITH_PROFILES, 'optExportWithProfiles');
   config[ns.WITH_AVATARS] = getBackupSettingFromUi(ns.WITH_AVATARS, 'optExportWithAvatars');
   config[ns.WITH_NETWORKS] = getBackupSettingFromUi(ns.WITH_NETWORKS, 'optExportWithNetworks');
+  config[ns.WITH_TOPICS] = getBackupSettingFromUi(ns.WITH_TOPICS, 'optExportWithTopics');
   config[ns.WITH_POSTS] = getBackupSettingFromUi(ns.WITH_POSTS, 'optExportWithPosts');
   config[ns.WITH_POST_IMAGES] = getBackupSettingFromUi(ns.WITH_POST_IMAGES, 'optExportWithPostImages');
   config[ns.DO_TWITTER] = getBackupSettingFromUi(ns.DO_TWITTER, 'optExportTwitter');
