@@ -107,6 +107,11 @@ btnChooseAutoScroll.addEventListener('click', async () => {
       case PAGETYPE.TWITTER.TWEETS:
         document.getElementById('optAutoRecordTweets').checked = true;
         recordTweets = true;
+        const priorTo = SETTINGS.RECORDING.getAutoRecordPriorTo(context);
+        const priorToElm = document.getElementById('txtAutoRecordPriorTo');
+        if (STR.hasLen(priorTo) && !STR.hasLen(priorToElm.value)) {
+          priorToElm.value = priorTo;
+        }
         break;
       case PAGETYPE.TWITTER.FOLLOWERS:
         document.getElementById('optAutoRecordFollowers').checked = true;
@@ -294,19 +299,21 @@ btnStartAutoRecording.addEventListener('click', async () => {
     }
   }
 
+  const txtPriorToElm = document.getElementById('txtAutoRecordPriorTo');
+
   const context = await SETTINGS.RECORDING.getContext();
   context.state = SETTINGS.RECORDING.STATE.AUTO_SCROLL;
   context.auto = {};
   context.auto.owner = STR.stripPrefix(owner, '@');
   context.auto.site = site;
   context.auto.pageType = pageType;
+  context.auto.priorTo = txtPriorToElm.value;
   await SETTINGS.RECORDING.saveContext(context);
   const parsedUrl = SETTINGS.RECORDING.getAutoParsedUrl(context);
   SETTINGS.RECORDING.setLastParsedUrl(parsedUrl);
 
-  const txtAfterElm = document.getElementById('txtAutoRecordPriorTo');
-  if (STR.hasLen(txtAfterElm.value) && !isNaN(STR.dateFromMmDdYyyy(txtAfterElm.value))) {
-    const afterDt = STR.dateFromMmDdYyyy(txtAfterElm.value);
+  if (STR.hasLen(txtPriorToElm.value) && !isNaN(STR.dateFromMmDdYyyy(txtPriorToElm.value))) {
+    const afterDt = STR.dateFromMmDdYyyy(txtPriorToElm.value);
     await launchTwitterSearchTab(parsedUrl, afterDt);
   }
   else {
@@ -323,6 +330,7 @@ btnEscapeAutoRecordingConfig.addEventListener('click', async () => {
 
 const updateAutoRecordingWhatDisplay = function(context) {
   let display = 'Recording Twitter';
+  let priorTo = '';
   if (context && context.auto && context.auto.owner) {
     switch (context.auto.pageType) {
       case PAGETYPE.TWITTER.FOLLOWERS:
@@ -333,6 +341,7 @@ const updateAutoRecordingWhatDisplay = function(context) {
         break;
       case PAGETYPE.TWITTER.TWEETS:
         display = `${STR.ensurePrefix(context.auto.owner, '@')} tweets`;
+        priorTo = SETTINGS.RECORDING.getAutoRecordPriorTo(context) || '';
         break;
       default:
         break;
@@ -344,6 +353,7 @@ const updateAutoRecordingWhatDisplay = function(context) {
   }
 
   document.getElementById('btnAutoRecordingWhat').textContent = display;
+  document.getElementById('txtAutoRecordPriorTo').value = priorTo;
 }
 
 const showRecordingDiv = function(sectionId) {
