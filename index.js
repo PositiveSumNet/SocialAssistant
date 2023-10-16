@@ -1682,6 +1682,12 @@ const reflectBackupSettings = function() {
   reflectBackupSettingInUi(config, ns.POSTED_UNTIL, 'optExportPostsUntil');
 }
 
+Array.from(document.querySelectorAll('#exportFilterSection input')).forEach(function(input) {
+  input.addEventListener('change', (event) => {
+    saveBackupSettingsFromUi();
+  });
+});
+
 // saves and returns
 const saveBackupSettingsFromUi = function() {
   const config = {};
