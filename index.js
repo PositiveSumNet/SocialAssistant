@@ -1682,8 +1682,14 @@ const reflectBackupSettings = function() {
   reflectBackupSettingInUi(config, ns.POSTED_UNTIL, 'optExportPostsUntil');
 }
 
-Array.from(document.querySelectorAll('#exportFilterSection input')).forEach(function(input) {
+Array.from(document.querySelectorAll('#exportFilterSection input[type="checkbox"]')).forEach(function(input) {
   input.addEventListener('change', (event) => {
+    saveBackupSettingsFromUi();
+  });
+});
+
+Array.from(document.querySelectorAll('#exportFilterSection input[type="text"]')).forEach(function(input) {
+  input.addEventListener('blur', (event) => {
     saveBackupSettingsFromUi();
   });
 });
