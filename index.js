@@ -1497,7 +1497,23 @@ const saveBackupSettingsFromUi = function() {
   SETTINGS.SYNCFLOW.BACKUP.saveExportConfig(config);
 }
 
+const btnDismissGhMfaTip = document.getElementById('btnDismissGhMfaTip');
+btnDismissGhMfaTip.onclick = function(event) {
+  document.getElementById('ghMfaSection').classList.add('d-none');
+  SETTINGS.GITHUB.setDismissedMfaNote();
+  return false;
+};
+
 const renderSyncBackupStatus = function(status) {
+  const hideTip = SETTINGS.GITHUB.getDismissedMfaNote();
+  const tipElm = document.getElementById('ghMfaSection');
+  if (hideTip == true) {
+    tipElm.classList.add('d-none');
+  }
+  else {
+    tipElm.classList.remove('d-none');
+  }
+  
   status = status || SYNCFLOW.buildStatus(SYNCFLOW.DIRECTION.BACKUP);
   document.getElementById('ghBackupStatusMsg').textContent = status.msg;
   const checkElm = document.getElementById('ghBackupStatusCheck');

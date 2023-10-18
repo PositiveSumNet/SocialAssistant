@@ -153,6 +153,10 @@
         </div>
         <div id="backupUi" class="row pb-2" style="display:none;">
           <h3 class="pt-4">Backup Your Data</h3>
+          <div id="ghMfaSection" class="alert alert-primary alert-dismissible fade show d-none" role="alert" style="max-width: 50%;">
+            <a href="https://github.com/settings/two_factor_authentication/setup/intro" target="_blank">A friendly reminder to set up multi-factor authentication if you haven't already.</a>
+            <button id="btnDismissGhMfaTip" type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
           <div class="pb-1">
             <span>Status: </span>
             <i id="ghBackupStatusCheck" class="bi-check-circle-fill text-success d-none"></i> 
