@@ -1636,7 +1636,7 @@ const getBackupSettingFromUi = function(setting, elmId) {
       return null;
     }
     else {
-      return STR.dateFromMmDdYyyy(elm.value);
+      return STR.dateFromMmDdYyyy(elm.value, true);
     }
   }
 }
