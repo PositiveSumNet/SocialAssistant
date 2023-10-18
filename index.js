@@ -446,9 +446,6 @@ worker.onmessage = async function ({ data }) {
       _inUseTags = new Set(data.payload);
       adjustTopicFilterVizWhen();
       break;
-    case MSGTYPE.FROMDB.EXPORT.RETURN_EXPORTED_RESULTS:
-      handleExportedResults(data.payload);
-      break;
     case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
       onProcessedUploadBatch();
       break;
@@ -1297,9 +1294,7 @@ btnClearCache.addEventListener('click', async () => {
 /************************/
 document.getElementById('startLegacyImportBtn').onclick = function(event) {
   document.getElementById('uploadui').style.display = 'block';
-  document.getElementById('legacyExportUi').style.display = 'none';
   updateUploadDoneBtnText();
-  stopExport();
   document.getElementById('dbui').style.display = 'none';
   document.getElementById('mdonDownloadConnsUi').style.display = 'none';
 
@@ -1405,217 +1400,6 @@ const updateUploadDoneBtnText = function() {
   }
   else {
     btnElem.innerText = 'Close';
-  }
-}
-
-/************************/
-// Legacy Backup
-/************************/
-
-document.getElementById('showLegacyExportUiBtn').onclick = function(event) {
-  showExportUi();
-  return false;
-};
-
-document.getElementById('btnCancelLegacyExport').onclick = function(event) {
-  stopExport();
-  return false;
-};
-document.getElementById('btnConfirmLegacyExport').onclick = function(event) {
-  startLegacyExport();
-  return false;
-};
-
-const initiallySelectExportWhatAll = function() {
-  const exportWhatDetail = document.getElementById('exportWhatDetail');
-  const subOptions = Array.from(exportWhatDetail.querySelectorAll(`input[type=checkbox]`));
-  subOptions.forEach(function(elm) {
-    elm.checked = true;
-  });
-}
-
-const showExportUi = function() {
-  let site = SETTINGS.getCachedSite();
-  if (site == SITE.GITHUB) {
-    site = SITE.TWITTER;
-  }
-
-  document.getElementById('optExportWhomActiveSiteOnlyLabel').textContent = site;
-
-  document.getElementById('optExportWhomActiveAccountFollowingOnlyLabel').textContent = `Followed by ${SETTINGS.getCachedOwner()}`;
-  document.getElementById('optExportWhomActiveAccountFollowersOnlyLabel').textContent = `Followers of ${SETTINGS.getCachedOwner()}`;
-
-  document.getElementById('optExportWhomAllLegacy').checked = true;
-  document.getElementById('optExportWhenAllLegacy').checked = true;
-  initiallySelectExportWhatAll();
-
-  document.getElementById('legacyExportUi').style.display = 'flex';
-  document.getElementById('btnConfirmLegacyExport').style.display = 'inline-block';
-
-  document.getElementById('uploadui').style.display = 'none';
-  document.getElementById('dbui').style.display = 'none';
-  document.getElementById('mdonDownloadConnsUi').style.display = 'none';
-}
-
-const buildExportRequest = function() {
-  
-  let direction = undefined;
-  let site = undefined;
-  let owner = undefined;
-  if (document.getElementById('optExportWhomActiveAccountFollowingOnlyLegacy').checked) {
-    site = SETTINGS.getCachedSite();
-    direction = CONN_DIRECTION.FOLLOWING;
-    owner = SETTINGS.getCachedOwner();
-  }
-  else if (document.getElementById('optExportWhomActiveAccountFollowersOnlyLegacy').checked) {
-    site = SETTINGS.getCachedSite();
-    direction = CONN_DIRECTION.FOLLOWERS;
-    owner = SETTINGS.getCachedOwner();
-  }
-  else if (document.getElementById('optExportWhomActiveSiteOnlyLegacy').checked) {
-    site = SETTINGS.getCachedSite();
-  }
-  
-  let siteFilter = site ? CONN_EXPORT_HELPER.justThisSiteFilter(site) : undefined;
-
-  let hoursAgo = undefined;
-  if (document.getElementById('optExportWhenLastWeekLegacy').checked) {
-    hoursAgo = 24 * 7;
-  }
-  else if (document.getElementById('optExportWhenLastDayLegacy').checked) {
-    hoursAgo = 24;
-  }
-  else if (document.getElementById('optExportWhenLastHourLegacy').checked) {
-    hoursAgo = 1;
-  }
-
-  const hoursAgoFilter = hoursAgo ? CONN_EXPORT_HELPER.recentlyModifiedFilter(hoursAgo) : undefined;
-
-  let entities = [
-      // not in use yet
-      //APPSCHEMA.SocialConnection,
-      //APPSCHEMA.SocialSourceIdentifier,
-      // always exported
-      APPSCHEMA.SocialListMember
-    ];
-
-  if (document.getElementById('optExportWhatFollowersLegacy').checked) {
-    entities.push(APPSCHEMA.SocialConnHasFollower);
-  }
-  if (document.getElementById('optExportWhatFollowingLegacy').checked) {
-    entities.push(APPSCHEMA.SocialConnIsFollowing);
-  }
-  if (document.getElementById('optExportDisplayNamesLegacy').checked) {
-    entities.push(APPSCHEMA.SocialProfileDisplayName);
-  }
-  if (document.getElementById('optExportProfileDescriptionsLegacy').checked) {
-    entities.push(APPSCHEMA.SocialProfileDescription);
-  }
-  if (document.getElementById('optExportProfileLinksLegacy').checked) {
-    entities.push(APPSCHEMA.SocialProfileLinkMastodonAccount);
-    entities.push(APPSCHEMA.SocialProfileLinkExternalUrl);
-    entities.push(APPSCHEMA.SocialProfileLinkEmailAddress);
-  }
-  if (document.getElementById('optExportPhotosLegacy').checked) {
-    entities.push(APPSCHEMA.SocialProfileImgSourceUrl);
-    entities.push(APPSCHEMA.SocialProfileImgBinary);
-  }
-  if (document.getElementById('optFollowerCounts').checked) {
-    entities.push(APPSCHEMA.SocialFollowerCount);
-    entities.push(APPSCHEMA.SocialFollowingCount);
-  }
-
-  const filterSet = {};
-
-  if (siteFilter) {
-    // filter by graph
-    filterSet.siteFilter = siteFilter;
-  }
-  if (hoursAgoFilter) {
-    // filter by timestamp
-    filterSet.hoursAgoFilter = hoursAgoFilter;
-  }
-
-  // indicate relevant entities and the join/where needed to apply related filters
-  filterSet.entitiesFilter = []; 
-  
-  entities.forEach(function(e) {
-    filterSet.entitiesFilter.push(CONN_EXPORT_HELPER.entityFilter(e, owner, direction));
-  });
-  
-  return {
-    actionType: MSGTYPE.TODB.EXPORT_BACKUP,
-    exportTimeMs: Date.now(),
-    filterSet: filterSet
-  };
-}
-
-const startLegacyExport = function() {
-  
-  const msg = buildExportRequest();
-
-  _exportStopRequested = false;
-
-  // at top right
-  document.getElementById('showLegacyExportUiBtn').style.display = 'none';
-  
-  // within the form
-  document.getElementById('btnConfirmLegacyExport').style.display = 'none';
-
-  worker.postMessage(msg);
-}
-
-const stopExport = function() {
-  _exportStopRequested = true;
-  document.getElementById('showLegacyExportUiBtn').innerText = 'export';
-  document.getElementById('showLegacyExportUiBtn').style.display = 'inline-block';
-  document.getElementById('legacyExportUi').style.display = 'none';
-
-  const pageType = getPageType();
-  const site = PAGETYPE.getSite(pageType);
-  if (site != SITE.GITHUB) {
-    document.getElementById('dbui').style.display = 'flex';
-    document.getElementById('mdonDownloadConnsUi').style.display = 'block';
-  }
-}
-
-const handleExportedResults = function(payload) {
-  // for now, we download to json (later, we could push to user's github etc)
-  const result = payload.result;
-  const start = result.skip + 1;
-  const end = result.skip + result.rows.length;
-  const fileName = `${result.entity}-${result.exportTimeMs}-${start}-${end}.json`;
-  const json = JSON.stringify(result, null, 2);
-  
-  if (result.rows.length > 0) {
-    RENDER.saveTextFile(json, fileName);
-  }
-  
-  // kick off next page if appropriate
-  if (!payload.done) {
-    const msg = {
-      actionType: MSGTYPE.TODB.EXPORT_BACKUP,
-      nextEntity: payload.nextEntity,
-      nextSkip: payload.nextSkip,
-      nextTake: payload.nextTake,
-      filterSet: payload.filterSet
-    };
-
-    if (!_exportStopRequested) {
-      worker.postMessage(msg);
-    }
-  }
-  else {
-    _exportStopRequested = false;
-
-    document.getElementById('showLegacyExportUiBtn').innerText = 'Export Again';
-    document.getElementById('showLegacyExportUiBtn').style.display = 'inline-block';
-    document.getElementById('legacyExportUi').style.display = 'none';
-
-    if (site != SITE.GITHUB) {
-      document.getElementById('dbui').style.display = 'flex';
-      document.getElementById('mdonDownloadConnsUi').style.display = 'block';
-    }
   }
 }
 
@@ -2161,7 +1945,6 @@ btnSubmitGithubToken.onclick = async function(event) {
 };
 
 const updateForSite = function() {
-  stopExport();
   
   const site = SETTINGS.getCachedSite();
   initMainListUiElms();

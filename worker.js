@@ -261,9 +261,6 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.SET_LIST_MEMBER:
       DBORM.SAVING.setListMember(evt.data);
       break;
-    case MSGTYPE.TODB.EXPORT_BACKUP:
-      DBORM.EXPORT.exportBackup(evt.data, getAllEntities());
-      break;
     case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
       DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
       break;

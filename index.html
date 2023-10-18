@@ -242,95 +242,11 @@
             <a href="#" id="stopLegacyImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
           </div>
         </div>
-        <div id="legacyExportUi" class="row pb-2" style="display:none;">
-          <h3>Customize the (Legacy) Backup</h3>
-          <p class="text-secondary">This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.</p>
-          <div class="row">
-            <div class="col">
-              <p class="h5 mt-3">Which Networks</p>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomAllLegacy">
-                <label class="form-check-label" for="optExportWhomAllLegacy">All networks</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomActiveSiteOnlyLegacy">
-                <label class="form-check-label" id="optExportWhomActiveSiteOnlyLabel" for="optExportWhomActiveSiteOnlyLegacy">This account type only</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomActiveAccountFollowingOnlyLegacy">
-                <label class="form-check-label" id="optExportWhomActiveAccountFollowingOnlyLabel" for="optExportWhomActiveAccountFollowingOnlyLegacy">Followed by this account only</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhomLegacy" id="optExportWhomActiveAccountFollowersOnlyLegacy">
-                <label class="form-check-label" id="optExportWhomActiveAccountFollowersOnlyLabel" for="optExportWhomActiveAccountFollowersOnlyLegacy">Followers of this account only</label>
-              </div>
-            </div>
-            <div class="col">
-              <p class="h5 mt-3">If Recorded When</p>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenAllLegacy">
-                <label class="form-check-label" for="optExportWhenAllLegacy">All date ranges</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenLastWeekLegacy">
-                <label class="form-check-label" for="optExportWhenLastWeekLegacy">In the last week</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenLastDayLegacy">
-                <label class="form-check-label" for="optExportWhenLastDayLegacy">In the last day</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="optExportWhenLegacy" id="optExportWhenLastHourLegacy">
-                <label class="form-check-label" for="optExportWhenLastHourLegacy">In the last hour</label>
-              </div>
-            </div>
-            <div class="col">
-              <p class="h5 mt-3">Which Aspects</p>
-              <div class="ms-2" id="exportWhatDetail">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportWhatFollowersLegacy">
-                  <label class="form-check-label" for="optExportWhatFollowersLegacy">Followers</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportWhatFollowingLegacy">
-                  <label class="form-check-label" for="optExportWhatFollowingLegacy">Following</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportDisplayNamesLegacy">
-                  <label class="form-check-label" for="optExportDisplayNamesLegacy">Profile names</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportProfileDescriptionsLegacy">
-                  <label class="form-check-label" for="optExportProfileDescriptionsLegacy">Profile descriptions</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportProfileLinksLegacy">
-                  <label class="form-check-label" for="optExportProfileLinksLegacy">Profile links</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optExportPhotosLegacy">
-                  <label class="form-check-label" for="optExportPhotosLegacy" data-toggle='tooltip' title='These files are relatively large'>Profile photos (big files)</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="optFollowerCounts">
-                  <label class="form-check-label" for="optExportPhotosLegacy">Follower counts</label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="p-4">
-            <a href="#" id="btnConfirmLegacyExport" role="button" class="btn btn-primary">Start Backup</a>
-            <a href="#" id="btnCancelLegacyExport" role="button" class="btn btn-secondary ms-2">Cancel</a>
-          </div>
-        </div>
         <div id="syncFooter" class="mt-3" style="border-top: solid 1px #ced4da;">
           <p id="ghRateLimit" class="small mt-2"></p>
           <p class="small">
-            You can still access the legacy approach to 
-            <a href="#" id="showLegacyExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>export</a> 
-            and 
-            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import</a>
-            follow networks (but not posts).
+            If you exported files using the legacy version of this tool, you can 
+            <a href="#" id="startLegacyImportBtn" role="button" data-toggle='tooltip' title='import to restore'>import them here</a>.
           </p>
         </div>
       </div>
@@ -542,7 +458,6 @@
     <script src="lib/dbui/topiclib.js"></script>
     <script src='lib/dbui/renderlib.js'></script>
     <script src='lib/dbui/tagginglib.js'></script>
-    <script src='lib/dbui/connexportlib.js'></script>
     <script src='lib/apis/mastodonlib.js'></script>
     <script src='index.js'></script>
   </body>
