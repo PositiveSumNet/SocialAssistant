@@ -558,7 +558,7 @@ lstNavFinisher.addEventListener('change', async (event) => {
     let fullUrl;
     if (videoMode == true) {
       let resolution = cmbVideoRes.value;
-      fullUrl = STR.buildSquidlrUrl(urlKey, resolution);
+      fullUrl = STR.buildSquidlrUrl(urlKey, resolution, false);
     }
     else {
       fullUrl = STR.expandTweetUrl(urlKey, cmbNavThreadHow.value);

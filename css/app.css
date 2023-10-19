@@ -525,3 +525,19 @@ a.postAnotherTag {
 .text-muted input[type=text] {
   border: solid 1px #e9ecef;
 }
+
+.videoHeader {
+  display: none;
+}
+
+.embedsVideo .videoHeader {
+  display: block;
+}
+
+.videoHeader i.bi-play-btn, .videoHeader a.small i.bi-info-circle-fill {
+  display: inline;
+}
+
+.videoHeader i.bi-info-circle-fill, .videoHeader a.small i.bi-play-btn {
+  display: none;
+}

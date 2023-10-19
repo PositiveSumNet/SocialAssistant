@@ -921,6 +921,19 @@ const renderConnections = function(payload) {
   _lastRenderedRequest = JSON.stringify(payload.request);
 }
 
+const configureGetEmbeddedVideo = function(a) {
+  a.onclick = function(event) {
+    const postUrlKey = RENDER.POST.getPostUrlKey(a);
+    const videoRes = SETTINGS.RECORDING.VIDEO_EXTRACTION.getPreferredVideoRes();
+    const squidlrUrl = STR.buildSquidlrUrl(postUrlKey, videoRes, true);
+    window.open(squidlrUrl, '_blank');
+    a.querySelector('span').textContent = 'Video launched and downloaded in a separate tab. Next time, try "Extract Videos" from our popup menu and then use the Backups -> Upload Videos feature.';
+    a.classList.remove('fw-bold');
+    a.classList.add('small');
+    return false;
+  }
+}
+
 const configureFavoriting = function(a) {
   a.onclick = function(event) {
     const pageType = getPageType();
@@ -968,6 +981,8 @@ const onAddedRows = function(container) {
   Array.from(container.getElementsByClassName('btnViewThread')).forEach(elm => configureViewThread(elm));
   // simple favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
+  // video elements
+  Array.from(container.querySelectorAll('.embedsVideo .videoHeader a')).forEach(a => configureGetEmbeddedVideo(a));
 }
 
 // public variables for filter elements that we'll attach events to etc.
