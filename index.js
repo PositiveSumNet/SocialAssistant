@@ -1346,7 +1346,7 @@ _fileElem.addEventListener('change', (event) => {
 
 const handleUploadFiles = function(files) {
   files = [...files];
-  files.forEach(processUpload);
+  files.forEach(processVideoUpload);
 }
 
 function highlightDropArea(e) {
@@ -1365,25 +1365,26 @@ function handleDrop(e) {
 }
 
 // stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
-const processUpload = function(file) {
+// stackoverflow.com/questions/61012790/how-to-read-large-video-files-in-javascript-using-filereader
+const processVideoUpload = function(file) {
   const reader = new FileReader();
 
   // set the event for when reading completes
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     const uploadedCntElem = document.getElementById('uploadedCnt');
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
-    updateUploadDoneBtnText();
     
-    worker.postMessage({
-      actionType: MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT,
-      json: e.target.result
-    });
+    let buffer = e.target.result;
+    let videoBlob = new Blob([new Uint8Array(buffer)], { type: 'video/mp4' });
+    // let url = window.URL.createObjectURL(videoBlob);
 
     onProcessedUploadBatch();
   }
 
   // start reading
-  reader.readAsText(file);
+  // www.bacancytechnology.com/qanda/javascript/javascript-using-the-filereader-api
+  reader.fileName = file.name;
+  reader.readAsArrayBuffer(file);
 }
 
 const onProcessedUploadBatch = function() {
@@ -1663,7 +1664,9 @@ const onGithubConnectedOk = async function(rateLimit) {
 }
 
 const renderRateLimit = function(rateLimit) {
-  document.getElementById('ghRateLimit').textContent = GITHUB.writeRateLimitDisplay(rateLimit);
+  const rateLimitElm = document.getElementById('ghRateLimit');
+  rateLimitElm.textContent = GITHUB.writeRateLimitDisplay(rateLimit);
+  rateLimitElm.classList.add('border-light-top');
 }
 
 const clearGithubFailureMsg = function() {

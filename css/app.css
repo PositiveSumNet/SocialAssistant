@@ -539,3 +539,7 @@ a.postAnotherTag {
 .videoHeader i.bi-info-circle-fill, .videoHeader a.small i.bi-play-btn {
   display: none;
 }
+
+.border-light-top {
+  border-top: solid 1px #ced4da;
+}
