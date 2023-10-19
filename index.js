@@ -1304,23 +1304,10 @@ btnClearCache.addEventListener('click', async () => {
 });
 
 /************************/
-// Legacy Upload/Import 
+// Upload/Import (videos)
 // smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
 /************************/
-document.getElementById('startLegacyImportBtn').onclick = function(event) {
-  document.getElementById('uploadui').style.display = 'block';
-  updateUploadDoneBtnText();
-  document.getElementById('dbui').style.display = 'none';
-  document.getElementById('mdonDownloadConnsUi').style.display = 'none';
-
-  return false;
-};
-
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
-document.getElementById('stopLegacyImportBtn').onclick = function(event) {
-  location.reload();
-  return false;
-};  
 document.getElementById('uploadDone').onclick = function(event) {
   // a full page refresh is in order
   location.reload();
@@ -1402,20 +1389,6 @@ const processUpload = function(file) {
 const onProcessedUploadBatch = function() {
   const processedCntElem = document.getElementById('uploadProcessedCnt');
   processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
-  updateUploadDoneBtnText();
-}
-
-const updateUploadDoneBtnText = function() {
-  const uploadedCnt = parseInt(document.getElementById('uploadedCnt').innerText);
-  const processedCnt = parseInt(document.getElementById('uploadProcessedCnt').innerText);
-  const btnElem = document.getElementById('uploadDone');
-
-  if (uploadedCnt > 0 && processedCnt >= uploadedCnt) {
-    btnElem.innerText = 'Done!';
-  }
-  else {
-    btnElem.innerText = 'Close';
-  }
 }
 
 /************************/
