@@ -94,7 +94,19 @@
           </div>
           <div id="ghConfigureSection" style="display: none;">
             <div id="ghConfiguredUi" style="display: none;">
-              <h3 class="pt-4">Review <i class="bi-github"></i> GitHub connection</h3>
+              <h3 class="pt-4"><i class="bi-github"></i> GitHub connections</h3>
+              <ul class="nav nav-tabs" style="border-bottom:none;">
+                <li class="nav-item">
+                  <a id="ghConfigDataTab" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Configure the primary connection (used for data)'>
+                    <i class="bi-file-richtext"></i>
+                    Data</a>
+                </li>
+                <li class="nav-item">
+                  <a id="ghConfigVideoTab" class="nav-link" href="#" data-toggle='tooltip' title='Configure a connection for sync of videos'>
+                    <i class="bi-camera-video"></i>
+                    Videos</a>
+                </li>
+              </ul>
               <div class="h5 p-1">
                 <img id="ghUserAvatar" src="/images/noprofilepic.png" alt="User" style="width: 50px; height: 50px;">
                 &nbsp;
