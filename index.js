@@ -1373,18 +1373,24 @@ const processVideoUpload = function(file) {
   reader.onload = async function(e) {
     const uploadedCntElem = document.getElementById('uploadedCnt');
     uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
-    
+    // base64.guru/converter/encode/video
+    // outputs e.g.:
+    // data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAA...
     let buffer = e.target.result;
-    let videoBlob = new Blob([new Uint8Array(buffer)], { type: 'video/mp4' });
+    console.log(buffer);
+    // outputs e.g.: 'scafaria_status_1626566689864163329 (1).mp4'
+    console.log(reader.fileName);
+    // let videoBlob = new Blob([new Uint8Array(buffer)], { type: 'video/mp4' });
     // let url = window.URL.createObjectURL(videoBlob);
 
     onProcessedUploadBatch();
   }
 
   // start reading
-  // www.bacancytechnology.com/qanda/javascript/javascript-using-the-filereader-api
+  // stackoverflow.com/questions/36280818/how-to-convert-file-to-base64-in-javascript
   reader.fileName = file.name;
-  reader.readAsArrayBuffer(file);
+  // bacancytechnology.com/qanda/javascript/javascript-using-the-filereader-api
+  reader.readAsDataURL(file);
 }
 
 const onProcessedUploadBatch = function() {
