@@ -281,7 +281,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
   // post sort
   setTopicSortInUi();
 
-  setOptionVisibility();
+  QUERYFILTER_UI.setQueryOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
@@ -603,7 +603,7 @@ const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
   ensureAskedMdonServer();
   
-  setOptionVisibility();
+  QUERYFILTER_UI.setQueryOptionVisibility();
 
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
@@ -980,7 +980,7 @@ const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivot
 
 document.getElementById('cmbType').addEventListener('change', (event) => {
   resetPage();
-  setOptionVisibility();
+  QUERYFILTER_UI.setQueryOptionVisibility();
   executeSearch();
 });
 
@@ -1037,7 +1037,7 @@ optWithEmail.addEventListener('change', (event) => {
   executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
-  setOptionVisibility();
+  QUERYFILTER_UI.setQueryOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -1046,7 +1046,7 @@ chkMdonImFollowing.addEventListener('change', (event) => {
   executeSearch();
 });
 optClear.addEventListener('change', (event) => {
-  setOptionVisibility();
+  QUERYFILTER_UI.setQueryOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -1561,7 +1561,7 @@ const updateForSite = function() {
   const githubBtn = document.getElementById('githubLensBtn');
   const syncUi = document.getElementById('syncUi');
 
-  setOptionVisibility();
+  QUERYFILTER_UI.setQueryOptionVisibility();
 
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
@@ -1625,66 +1625,6 @@ const updateForSite = function() {
 
   resetPage();
   resetFilters();
-}
-
-const setOptionVisibility = function() {
-  setConnOptionVisibility();
-  setPostOptionVisibility();
-}
-
-const setPostOptionVisibility = function() {
-  const queryOptions = document.getElementById('postQueryOptions');
-  const cmbType = document.getElementById('cmbType');
-
-  if (cmbType.value != POSTS) {
-    queryOptions.style.display = 'none';
-    return;
-  }
-  
-  queryOptions.style.display = 'block';
-}
-
-const setConnOptionVisibility = function() {
-  const queryOptions = document.getElementById('connQueryOptions');
-  const cmbType = document.getElementById('cmbType');
-
-  if (cmbType.value == POSTS) {
-    queryOptions.style.display = 'none';
-    return;
-  }
-  
-  queryOptions.style.display = 'block';
-
-  // default to undefined (no filter applied) for the tri-state
-  const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
-  ES6.TRISTATE.setValue(chkMdonImFollowing, undefined);
-
-  const pageType = getPageType();
-  const site = PAGETYPE.getSite(pageType);
-  const mdonMode = getUiValue('optWithMdon');
-
-  const filterTwitterWithMdonLink = document.getElementById('filterTwitterWithMdonLink');
-  const filterMdonImFollowing = document.getElementById('filterMdonImFollowing');
-  const filterWithEmail = document.getElementById('filterWithEmail');
-  const btnFollowAllOnMastodon = document.getElementById('btnFollowAllOnMastodon');
-  const optPosts = document.getElementById('optPosts');
-
-  if (site === SITE.MASTODON || mdonMode === true) {
-    // cell (1,2) switches from the Mastodon radio button (which is already true) to the 'Where I'm following' filter
-    filterTwitterWithMdonLink.style.display = 'none';
-    filterMdonImFollowing.style.display = 'block';
-    // cell (1,3) switches from 'w/ Email' to the 'Follow on Mastodon!' button
-    filterWithEmail.style.display = 'none';
-    btnFollowAllOnMastodon.style.display = 'inline-block';
-    optPosts.style.display = 'none';
-  }
-  else {
-    filterTwitterWithMdonLink.style.display = 'block';
-    filterMdonImFollowing.style.display = 'none';
-    filterWithEmail.style.display = 'block';
-    btnFollowAllOnMastodon.style.display = 'none';
-    optPosts.style.display = 'inline';
-  }
 }
 
 /************************/
