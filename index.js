@@ -1499,7 +1499,7 @@ btnDismissGhMfaTip.onclick = function(event) {
   return false;
 };
 
-const renderSyncBackupStatus = function(status) {
+const renderSyncBackupStatus = async function(status) {
   const hideTip = SETTINGS.GITHUB.getDismissedMfaNote();
   const tipElm = document.getElementById('ghMfaSection');
   if (hideTip == true) {
@@ -1546,6 +1546,26 @@ const renderSyncBackupStatus = function(status) {
       btnGhBkpRestart.classList.remove('d-none');
     }
   }
+
+  // Videos section
+  const hasVideoConfig = SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS);
+  const needVideoConnElm = document.getElementById('needVideoConn');
+  const uploaduiElm = document.getElementById('uploadui');
+  if (hasVideoConfig == true) {
+    needVideoConnElm.classList.add('d-none');
+    uploaduiElm.classList.remove('d-none');
+  }
+  else {
+    needVideoConnElm.classList.remove('d-none');
+    uploaduiElm.classList.add('d-none');
+  }
+}
+
+const btnSwitchToConfigVideos = document.getElementById('btnSwitchToConfigVideos');
+btnSwitchToConfigVideos.onclick = async function(event) {
+  setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.VIDEOS);
+  await activateGhConfigureTab();
+  return false;
 }
 
 const btnGhBkpStart = document.getElementById('btnGhBkpStart');
@@ -1915,7 +1935,7 @@ const activateGhBackupTab = async function() {
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'block';
   restoreUi.style.display = 'none';
-  renderSyncBackupStatus();
+  await renderSyncBackupStatus();
 }
 
 const activateGhRestoreTab = async function() {
