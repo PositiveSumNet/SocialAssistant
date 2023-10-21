@@ -1548,17 +1548,8 @@ const renderSyncBackupStatus = async function(status) {
   }
 
   // Videos section
-  const hasVideoConfig = SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS);
-  const needVideoConnElm = document.getElementById('needVideoConn');
-  const uploaduiElm = document.getElementById('uploadui');
-  if (hasVideoConfig == true) {
-    needVideoConnElm.classList.add('d-none');
-    uploaduiElm.classList.remove('d-none');
-  }
-  else {
-    needVideoConnElm.classList.remove('d-none');
-    uploaduiElm.classList.add('d-none');
-  }
+  const hasVideoConfig = await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS);
+  unveilUploaderAsNeeded(hasVideoConfig);
 }
 
 const btnSwitchToConfigVideos = document.getElementById('btnSwitchToConfigVideos');
@@ -1859,6 +1850,24 @@ const reflectGithubTokenStatus = async function() {
       document.getElementById('ghConfiguredUi').style.display = 'none';
       guideUserForSecondGithubRepo(repoType);
     }
+  }
+
+  // unveil or hide the uploader
+  if (repoType == GITHUB.REPO_TYPE.VIDEOS) {
+    unveilUploaderAsNeeded(hasSelectedToken);
+  }
+}
+
+const unveilUploaderAsNeeded = function(hasVideoRepoConn) {
+  const needVideoConnElm = document.getElementById('needVideoConn');
+  const uploaduiElm = document.getElementById('uploadui');
+  if (hasVideoRepoConn) {
+    needVideoConnElm.classList.add('d-none');
+    uploaduiElm.classList.remove('d-none');
+  }
+  else {
+    needVideoConnElm.classList.remove('d-none');
+    uploaduiElm.classList.add('d-none');
   }
 }
 
