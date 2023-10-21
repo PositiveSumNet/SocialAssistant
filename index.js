@@ -1,7 +1,3 @@
-// hollow if not favorited
-const _starOffCls = 'bi-star';
-const _starOnCls = 'bi-star-fill'
-
 // avoid double-submit
 var _lastRenderedRequest = '';
 var _docLocSearch = '';
@@ -934,44 +930,6 @@ const configureGetEmbeddedVideo = function(a) {
   }
 }
 
-const configureFavoriting = function(a) {
-  a.onclick = function(event) {
-    const pageType = getPageType();
-    const handle = this.getAttribute('data-testid');
-    const atHandle = STR.ensurePrefix(handle, '@');
-    const iconElm = this.querySelector('i');
-    
-    const alreadyFavorited = iconElm.classList.contains(_starOnCls);
-    let removeFromFavorites;
-    if (alreadyFavorited) {
-      // toggle to not-favorite
-      iconElm.classList.remove(_starOnCls)
-      iconElm.classList.add(_starOffCls);
-      removeFromFavorites = true;
-    }
-    else {
-      // toggle to is-favorite
-      if (iconElm.classList.contains(_starOffCls)) {
-        iconElm.classList.remove(_starOffCls);
-      }
-      iconElm.classList.add(_starOnCls);
-      removeFromFavorites = false;
-    }
-    
-    // tell the db (see DBORM.setListMember)
-    const msg = {
-      actionType: MSGTYPE.TODB.SET_LIST_MEMBER, 
-      list: LIST_FAVORITES, 
-      member: atHandle, 
-      pageType: pageType,
-      removal: removeFromFavorites
-    };
-    
-    worker.postMessage(msg);
-    return false;
-  };
-}
-
 const onAddedRows = function(container) {
   const pageType = getPageType();
   // tag & rate
@@ -980,7 +938,7 @@ const onAddedRows = function(container) {
   // view thread
   Array.from(container.getElementsByClassName('btnViewThread')).forEach(elm => configureViewThread(elm));
   // simple favoriting
-  Array.from(container.getElementsByClassName("canstar")).forEach(a => configureFavoriting(a));
+  Array.from(container.getElementsByClassName("canstar")).forEach(a => FAVORITING_UI.configureFavoriting(a));
   // video elements
   Array.from(container.querySelectorAll('.embedsVideo .videoHeader a')).forEach(a => configureGetEmbeddedVideo(a));
 }
