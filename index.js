@@ -442,9 +442,6 @@ worker.onmessage = async function ({ data }) {
       _inUseTags = new Set(data.payload);
       adjustTopicFilterVizWhen();
       break;
-    case MSGTYPE.FROMDB.IMPORT.PROCESSED_SYNC_IMPORT_BATCH:
-      onProcessedUploadBatch();
-      break;
     case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
       onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
@@ -1261,10 +1258,6 @@ btnClearCache.addEventListener('click', async () => {
   return true;
 });
 
-/************************/
-// Upload/Import (videos)
-// smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
-/************************/
 // a full page refresh is in order (helps avoid disk log + redraws the full page)
 document.getElementById('uploadDone').onclick = function(event) {
   // a full page refresh is in order
@@ -1272,18 +1265,9 @@ document.getElementById('uploadDone').onclick = function(event) {
   return false;
 };  
 
-let _dropArea = document.getElementById("drop-area");
-let _fileElem = document.getElementById('fileElem');
-
-// Prevent default drag behaviors
-function preventDefaults(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-  _dropArea.addEventListener(eventName, preventDefaults, false)   
-  document.body.addEventListener(eventName, preventDefaults, false)
+  _dropArea.addEventListener(eventName, ES6.preventDragBehaviors, false)   
+  document.body.addEventListener(eventName, ES6.preventDragBehaviors, false)
 });
 
 // Highlight drop area when item is dragged over it
@@ -1469,10 +1453,6 @@ document.getElementById('ghRestoreTab').onclick = async function(event) {
   return false;
 }
 
-const clearGithubFailureMsg = function() {
-  GHCONFIG_UI.setGithubConnFailureMsg('');
-}
-
 GHCONFIG_UI.bindElements();
 
 const configureSyncUi = document.getElementById('configureSyncUi');
@@ -1565,33 +1545,6 @@ const setActiveSyncTabPageType = async function(pageType) {
   const cacheKey = SETTINGS.pageTypeCacheKey(SITE.GITHUB);
   localStorage.setItem(cacheKey, pageType);
 }
-
-const btnDismissGithubFaq = document.getElementById('btnDismissGithubFaq');
-btnDismissGithubFaq.onclick = function(event) {
-  GHCONFIG_UI.hideGithubFaq();
-  return false;
-};
-
-const btnSubmitGithubToken = document.getElementById('btnSubmitGithubToken');
-btnSubmitGithubToken.onclick = async function(event) {
-  const txtGithubToken = document.getElementById('txtGithubToken');
-  const tokenVal = txtGithubToken.value;
-  const repoType = GHCONFIG_UI.getGithubConfigRepoType();
-  const conflictMsg = await SETTINGS.GITHUB.getTokenAlreadyInUseForOtherRepoMsg(tokenVal, repoType);
-  if (STR.hasLen(conflictMsg)) {
-    GHCONFIG_UI.setGithubConnFailureMsg(conflictMsg);
-  }
-  else if (STR.hasLen(tokenVal)) {
-    GHCONFIG_UI.setGithubConnFailureMsg(null);
-    await SETTINGS.GITHUB.saveSyncToken(tokenVal, repoType);
-    await GHCONFIG_UI.testGithubConnection(repoType);
-  }
-  else {
-    // show warning
-    GHCONFIG_UI.setGithubConnFailureMsg('Paste a token in the textbox before continuing.');
-  }
-  return false;
-};
 
 const updateForSite = function() {
   
