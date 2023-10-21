@@ -329,7 +329,7 @@ const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
   urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
   urlParms.set(URL_PARM.SEARCH, getUiValue('txtSearch') || '');
   urlParms.set(URL_PARM.SIZE, SETTINGS.getPageSize() || 50);
-  urlParms.set(URL_PARM.PAGE, getPageNum() || 1);
+  urlParms.set(URL_PARM.PAGE, QUERYING_UI.PAGING.getPageNum() || 1);
   urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
   urlParms.set(URL_PARM.GUESS_TOPICS, getUiValue('optGuessTopics') || false);
   urlParms.set(URL_PARM.TOPIC, topic || getUiValue('cmbTopicFilter') || '');
@@ -391,7 +391,7 @@ worker.onmessage = async function ({ data }) {
       break;
     case MSGTYPE.FROMDB.RENDER.INUSE_TOPICS:
       _inUseTags = new Set(data.payload);
-      adjustTopicFilterVizWhen();
+      QUERYING_UI.FILTERS.TOPICS.adjustTopicFilterVizWhen();
       break;
     case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
       onGotSavedCount(data.count, data.pageType, data.metadata);
@@ -417,10 +417,6 @@ const onFetchedRawTopicContent = function(content) {
   });
 }
 
-const detailReflectsFilter = function() {
-  return getUiValue('optWithMdon') === true || getUiValue('optWithEmail')  === true || getUiValue('optWithUrl') === true;
-}
-
 const renderPost = function(post) {
   const pageType = getPageType();
   const site = PAGETYPE.getSite(pageType);
@@ -429,7 +425,7 @@ const renderPost = function(post) {
 
 const renderPerson = function(person, context) {
   const renderAnchorsRule = getPersonRenderAnchorsRule();
-  const filtered = detailReflectsFilter();
+  const filtered = QUERYING_UI.FILTERS.detailReflectsFilter();
   return RENDER.renderPerson(person, context, renderAnchorsRule, filtered);
 }
 
@@ -526,18 +522,8 @@ const getPageType = function() {
   }
 }
 
-const resetPage = function() {
-  document.getElementById('txtPageNum').value = 1;
-}
-
-const getPageNum = function() {
-  let pageNum = getUiValue('txtPageNum');
-  if (isNaN(pageNum)) { pageNum = 1 };
-  return pageNum;
-}
-
 const calcSkip = function() {
-  const pageNum = getPageNum();
+  const pageNum = QUERYING_UI.PAGING.getPageNum();
   const pageSize = SETTINGS.getPageSize();
   const skip = (pageNum - 1) * pageSize;
   return skip;
@@ -712,7 +698,7 @@ const requestTotalCount = function() {
     const counter = _counters.find(function(c) { return c.key === key; });
     if (counter && counter.value) {
       // we already have this count cached; apply it
-      displayTotalCount(counter.value);
+      QUERYING_UI.PAGING.displayTotalCount(counter.value);
     }
     // else wait for fetch to finish; either way, we're done
     return;
@@ -773,7 +759,7 @@ const renderNetworkSize = function(payload) {
   
   const count = payload.totalCount;
   counter.value = count;  // cached for later
-  displayTotalCount(count);
+  QUERYING_UI.PAGING.displayTotalCount(count);
 }
 
 const initMainListUiElms = function() {
@@ -797,20 +783,6 @@ const canRenderMastodonFollowOneButtons = function() {
   const site = SETTINGS.getCachedSite();
   const mdonMode = getUiValue('optWithMdon');
   return site === SITE.MASTODON || mdonMode === true;
-}
-
-const adjustTopicFilterVizWhen = function() {
-  const options = Array.from(cmbTopicFilter.querySelectorAll('option'));
-  options.forEach(function(option) {
-    let intVal = option.value;
-    // visibility
-    if (intVal < 0 || _inUseTags.has(_topicTags[intVal])) {
-      option.classList.remove('d-noneif');
-    }
-    else {
-      option.classList.add('d-noneif');
-    }
-  });
 }
 
 const renderPostStream = function(payload) {
@@ -1131,7 +1103,7 @@ document.getElementById('priorPage').onclick = function(event) {
 };
 
 const navToNextPage = function() {
-  const pageNum = getPageNum();
+  const pageNum = QUERYING_UI.PAGING.getPageNum();
   txtPageNum.value = pageNum + 1;
   executeSearch();
 }
@@ -1182,10 +1154,6 @@ listOwnerPivotPicker.onclick = function(event) {
   txtOwnerHandle.value = handleFromClickedOwner(event);
   onChooseOwner();
 };
-
-const displayTotalCount = function(count) {
-  document.getElementById('txtSearch').setAttribute('placeholder', `search (${count} total)...`);
-}
 
 const onChooseOwner = function() {
   initMainListUiElms();
