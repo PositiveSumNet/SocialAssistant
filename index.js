@@ -185,7 +185,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
   // ensure _topicTags are in place
   RENDER.POST.TAGGING.initTopicTags();
   // now render the combobox dropdown
-  renderTopicFilterChoices();
+  QUERYING_UI.FILTERS.renderTopicFilterChoices();
   
   const parms = URLPARSE.getQueryParms();
 
@@ -279,7 +279,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
   // THREAD
   setOneThreadState(threadUrlKey);
   // post sort
-  setTopicSortInUi();
+  QUERYING_UI.ORDERING.setTopicSortInUi();
 
   QUERYING_UI.FILTERS.setQueryOptionVisibility();
 
@@ -299,33 +299,6 @@ const initialRender = async function(leaveHistoryStackAlone) {
   }
 }
 
-const renderTopicFilterChoices = function() {
-  let choices = [];
-  choices.push(CMB_SPECIAL.TAG_FILTER_BY);
-  choices.push(..._topicTags);
-  
-  let html = '';
-  for (let i = 0; i < choices.length; i++) {
-    let tag = choices[i];
-    // the "-- clear selection --" option should always be visible
-    let cls = i == 0 || _inUseTags.has(tag) ? '' : ` class='d-noneif'`;
-    html = STR.appendLine(html, `<option value='${i - 1}'${cls}>${tag}</option>`);
-  }
-  html = DOMPurify.sanitize(html);
-  cmbTopicFilter.innerHTML = html;
-}
-
-const setTopicSortInUi = function() {
-  const byStars = SETTINGS.getSortByStars();
-  
-  if (byStars == true) {
-    optSortByStars.classList.add('toggledOn');
-  }
-  else {
-    optSortByStars.classList.remove('toggledOn');
-  }
-}
-
 const setTopicFilterChoiceInUi = function(topic) {
   let intVal = -1;
   const tags = _topicTags;
@@ -338,19 +311,7 @@ const setTopicFilterChoiceInUi = function(topic) {
   }
 
   cmbTopicFilter.value = intVal;
-  setTopicFilterModeInUi();
-}
-
-const setTopicFilterModeInUi = function() {
-  const container = document.getElementById('mainContainer');
-  const topic = QUERYING_UI.TOPICS.getTopicFilterChoiceFromUi();
-  
-  if (STR.hasLen(topic)) {
-    container.classList.add('oneTopic');
-  }
-  else {
-    container.classList.remove('oneTopic');
-  }
+  QUERYING_UI.FILTERS.TOPICS.setTopicFilterModeInUi();
 }
 
 const setOptToggleBtn = function(elm, toggledOn) {
@@ -533,7 +494,7 @@ const getUiValue = function(id) {
     case 'optSortByStars':
       return optSortByStars.classList.contains('toggledOn');
     case 'cmbTopicFilter':
-      return QUERYING_UI.TOPICS.getTopicFilterChoiceFromUi();
+      return QUERYING_UI.FILTERS.TOPICS.getTopicFilterChoiceFromUi();
     case 'threadUrlKey':
       return document.getElementById('mainContainer').getAttribute('data-testid') || '';
     default:
@@ -1071,7 +1032,7 @@ optSortByStars.onclick = function(event) {
 
 const cmbTopicFilter = document.getElementById('cmbTopicFilter');
 cmbTopicFilter.addEventListener('change', (event) => {
-  setTopicFilterModeInUi();
+  QUERYING_UI.FILTERS.TOPICS.setTopicFilterModeInUi();
   QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
