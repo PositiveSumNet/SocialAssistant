@@ -281,7 +281,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
   // post sort
   setTopicSortInUi();
 
-  QUERYFILTER_UI.setQueryOptionVisibility();
+  QUERYING_UI.setQueryOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
@@ -343,23 +343,13 @@ const setTopicFilterChoiceInUi = function(topic) {
 
 const setTopicFilterModeInUi = function() {
   const container = document.getElementById('mainContainer');
-  const topic = getTopicFilterChoiceFromUi();
+  const topic = QUERYING_UI.TOPICS.getTopicFilterChoiceFromUi();
   
   if (STR.hasLen(topic)) {
     container.classList.add('oneTopic');
   }
   else {
     container.classList.remove('oneTopic');
-  }
-}
-
-const getTopicFilterChoiceFromUi = function() {
-  const intValue = parseInt(cmbTopicFilter.value);
-  if (!isNaN(intValue) && intValue > -1 && _topicTags.length >= intValue + 1) {
-    return _topicTags[intValue];
-  }
-  else {
-    return null;
   }
 }
 
@@ -543,7 +533,7 @@ const getUiValue = function(id) {
     case 'optSortByStars':
       return optSortByStars.classList.contains('toggledOn');
     case 'cmbTopicFilter':
-      return getTopicFilterChoiceFromUi();
+      return QUERYING_UI.TOPICS.getTopicFilterChoiceFromUi();
     case 'threadUrlKey':
       return document.getElementById('mainContainer').getAttribute('data-testid') || '';
     default:
@@ -603,7 +593,7 @@ const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
   ensureAskedMdonServer();
   
-  QUERYFILTER_UI.setQueryOptionVisibility();
+  QUERYING_UI.setQueryOptionVisibility();
 
   // continue even if user cancelled the chance to input a mdon server
   resetPage();
@@ -980,7 +970,7 @@ const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivot
 
 document.getElementById('cmbType').addEventListener('change', (event) => {
   resetPage();
-  QUERYFILTER_UI.setQueryOptionVisibility();
+  QUERYING_UI.setQueryOptionVisibility();
   executeSearch();
 });
 
@@ -1037,7 +1027,7 @@ optWithEmail.addEventListener('change', (event) => {
   executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
-  QUERYFILTER_UI.setQueryOptionVisibility();
+  QUERYING_UI.setQueryOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -1046,7 +1036,7 @@ chkMdonImFollowing.addEventListener('change', (event) => {
   executeSearch();
 });
 optClear.addEventListener('change', (event) => {
-  QUERYFILTER_UI.setQueryOptionVisibility();
+  QUERYING_UI.setQueryOptionVisibility();
   resetPage();
   executeSearch();
 });
@@ -1561,7 +1551,7 @@ const updateForSite = function() {
   const githubBtn = document.getElementById('githubLensBtn');
   const syncUi = document.getElementById('syncUi');
 
-  QUERYFILTER_UI.setQueryOptionVisibility();
+  QUERYING_UI.setQueryOptionVisibility();
 
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
