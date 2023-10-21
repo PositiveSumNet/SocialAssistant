@@ -522,13 +522,6 @@ const getPageType = function() {
   }
 }
 
-const calcSkip = function() {
-  const pageNum = QUERYING_UI.PAGING.getPageNum();
-  const pageSize = SETTINGS.getPageSize();
-  const skip = (pageNum - 1) * pageSize;
-  return skip;
-}
-
 // site tab is twitter and clicked to filter to mastodon
 const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
@@ -601,7 +594,7 @@ const buildSearchRequestFromUi = function() {
   const site = PAGETYPE.getSite(pageType);
   const pageSize = SETTINGS.getPageSize();
   const searchText = getUiValue('txtSearch');
-  const skip = calcSkip();
+  const skip = QUERYING_UI.PAGING.calcSkip();
   const mutual = getUiValue('chkMutual');
   const favorited = getUiValue('chkFavorited');
   const withRetweets = getUiValue('optWithRetweets');
@@ -650,21 +643,6 @@ const buildSearchRequestFromUi = function() {
   };
 
   return msg;
-}
-
-const showSearchProgress = function(showProgressBar) {
-  const progressElm = document.getElementById('connListProgress');
-  const continuePaging = document.getElementById('continuePaging');
-  if (showProgressBar === true) {
-    progressElm.style.visibility = 'visible';
-    continuePaging.style.display = 'none';
-  }
-  else {
-    progressElm.style.visibility = 'hidden';
-    // see if there are any list elements
-    const listElmCount = Array.from(document.querySelectorAll('#paginated-list div')).length;
-    continuePaging.style.display = listElmCount > 0 ? 'block' : 'none';
-  }
 }
 
 const makeNetworkSizeCounterKey = function(owner, pageType) {
@@ -735,7 +713,7 @@ const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
     clearCachedCountForCurrentRequest();
   }
 
-  showSearchProgress(true);
+  QUERYING_UI.SEARCH.showSearchProgress(true);
   _docLocSearch = document.location.search; // aids our popstate behavior
   worker.postMessage(msg);
 }
@@ -798,7 +776,7 @@ const renderPostStream = function(payload) {
   }
 
   plist.innerHTML = html;
-  showSearchProgress(false);
+  QUERYING_UI.SEARCH.showSearchProgress(false);
   onAddedRows(plist);
 
   _lastRenderedRequest = JSON.stringify(payload.request);
@@ -824,7 +802,7 @@ const renderConnections = function(payload) {
     MASTODON.renderFollowOnMastodonButtons(plist);
   }
   
-  showSearchProgress(false);
+  QUERYING_UI.SEARCH.showSearchProgress(false);
   onAddedRows(plist);
   requestTotalCount();
   
