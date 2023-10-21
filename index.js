@@ -2060,7 +2060,11 @@ btnSubmitGithubToken.onclick = async function(event) {
   const txtGithubToken = document.getElementById('txtGithubToken');
   const tokenVal = txtGithubToken.value;
   const repoType = getGithubConfigRepoType();
-  if (STR.hasLen(tokenVal)) {
+  const conflictMsg = await SETTINGS.GITHUB.getTokenAlreadyInUseForOtherRepoMsg(tokenVal, repoType);
+  if (STR.hasLen(conflictMsg)) {
+    setGithubConnFailureMsg(conflictMsg);
+  }
+  else if (STR.hasLen(tokenVal)) {
     setGithubConnFailureMsg(null);
     await SETTINGS.GITHUB.saveSyncToken(tokenVal, repoType);
     await testGithubConnection(repoType);
