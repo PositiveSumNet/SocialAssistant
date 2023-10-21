@@ -281,7 +281,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
   // post sort
   setTopicSortInUi();
 
-  QUERYING_UI.setQueryOptionVisibility();
+  QUERYING_UI.FILTERS.setQueryOptionVisibility();
 
   txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
   
@@ -503,7 +503,7 @@ const renderSuggestedOwner = function(payload) {
   if (!value || value.length === 0) {
     document.getElementById('txtOwnerHandle').value = owner.Handle;
     // we're doing a page init and so far it's empty, so let's
-    resetPage();
+    QUERYING_UI.PAGING.resetPage();
     executeSearch();
   }
 }
@@ -569,12 +569,6 @@ const resetPage = function() {
   document.getElementById('txtPageNum').value = 1;
 }
 
-const resetFilters = function() {
-  chkMutual.checked = false;
-  chkFavorited.checked = false;
-  optClear.checked = true;
-}
-
 const getPageNum = function() {
   let pageNum = getUiValue('txtPageNum');
   if (isNaN(pageNum)) { pageNum = 1 };
@@ -593,10 +587,10 @@ const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
   ensureAskedMdonServer();
   
-  QUERYING_UI.setQueryOptionVisibility();
+  QUERYING_UI.FILTERS.setQueryOptionVisibility();
 
   // continue even if user cancelled the chance to input a mdon server
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();  
 }
 
@@ -969,15 +963,15 @@ const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
 const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
 
 document.getElementById('cmbType').addEventListener('change', (event) => {
-  resetPage();
-  QUERYING_UI.setQueryOptionVisibility();
+  QUERYING_UI.PAGING.resetPage();
+  QUERYING_UI.FILTERS.setQueryOptionVisibility();
   executeSearch();
 });
 
 const btnClearThreadFilter = document.getElementById('btnClearThreadFilter');
 btnClearThreadFilter.onclick = function(event) {
   setOneThreadState(null);
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
   return false;
 }
@@ -986,7 +980,7 @@ const configureViewThread = function(btnViewThreadElm) {
   btnViewThreadElm.onclick = function(event) {
     const threadUrlKey = btnViewThreadElm.getAttribute('data-testid');
     setOneThreadState(threadUrlKey);
-    resetPage();
+    QUERYING_UI.PAGING.resetPage();
     executeSearch();
     return false;
   }
@@ -1012,38 +1006,38 @@ const setOneThreadState = function(threadUrlKey) {
 }
 
 chkMutual.addEventListener('change', (event) => {
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 chkFavorited.addEventListener('change', (event) => {
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 optWithMdon.addEventListener('change', (event) => {
   onClickedMdonOption();
 });
 optWithEmail.addEventListener('change', (event) => {
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
-  QUERYING_UI.setQueryOptionVisibility();
-  resetPage();
+  QUERYING_UI.FILTERS.setQueryOptionVisibility();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 chkMdonImFollowing.addEventListener('change', (event) => {
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 optClear.addEventListener('change', (event) => {
-  QUERYING_UI.setQueryOptionVisibility();
-  resetPage();
+  QUERYING_UI.FILTERS.setQueryOptionVisibility();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 
 optWithRetweets.onclick = function(event) {
   optWithRetweets.classList.toggle('toggledOn');
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
   return false;
 };
@@ -1061,7 +1055,7 @@ const setTopicFilterVisibility = function() {
 optGuessTopics.onclick = function(event) {
   optGuessTopics.classList.toggle('toggledOn');
   setTopicFilterVisibility();
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
   return false;
 };
@@ -1070,7 +1064,7 @@ optSortByStars.onclick = function(event) {
   optSortByStars.classList.toggle('toggledOn');
   const shouldSortByStars = getUiValue('optSortByStars');
   SETTINGS.setSortByStars(shouldSortByStars);
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
   return false;
 };
@@ -1078,13 +1072,13 @@ optSortByStars.onclick = function(event) {
 const cmbTopicFilter = document.getElementById('cmbTopicFilter');
 cmbTopicFilter.addEventListener('change', (event) => {
   setTopicFilterModeInUi();
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 });
 
 // searching
 const handleTypeSearch = ES6.debounce((event) => {
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 }, 250);
 // ... uses debounce
@@ -1204,7 +1198,7 @@ document.getElementById('pageGear').onclick = function(event) {
     }
     else {
       localStorage.setItem('pageSize', intVal);
-      resetPage();
+      QUERYING_UI.PAGING.resetPage();
       executeSearch();
     }
   }
@@ -1235,7 +1229,7 @@ const displayTotalCount = function(count) {
 const onChooseOwner = function() {
   initMainListUiElms();
   listOwnerPivotPicker.replaceChildren();
-  resetPage();
+  QUERYING_UI.PAGING.resetPage();
   executeSearch();
 }
 
@@ -1551,7 +1545,7 @@ const updateForSite = function() {
   const githubBtn = document.getElementById('githubLensBtn');
   const syncUi = document.getElementById('syncUi');
 
-  QUERYING_UI.setQueryOptionVisibility();
+  QUERYING_UI.FILTERS.setQueryOptionVisibility();
 
   if (site == SITE.TWITTER) {
     twitterBtn.classList.add('active');
@@ -1613,11 +1607,11 @@ const updateForSite = function() {
     return;
   }
 
-  resetPage();
-  resetFilters();
+  QUERYING_UI.PAGING.resetPage();
+  QUERYING_UI.FILTERS.resetFilters();
 }
 
 /************************/
 // Mastodon events
 /************************/
-MDON_UI.bindElements();s
+MDON_UI.bindElements();
