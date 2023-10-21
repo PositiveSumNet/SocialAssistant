@@ -1360,95 +1360,17 @@ const onProcessedUploadBatch = function() {
 // Github Backup
 /************************/
 
-const getBackupSettingFromUi = function(setting, elmId) {
-  const elm = document.getElementById(elmId);
-  if (elm.type == 'checkbox') {
-    return elm.checked;
-  }
-  else if (setting == SETTINGS.SYNCFLOW.CONFIG.AUTHOR_FILTER) {
-    return elm.value;
-  }
-  else if (setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_FROM || setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_UNTIL) {
-    if (!STR.hasLen(elm.value)) {
-      return null;
-    }
-    else {
-      return STR.dateFromMmDdYyyy(elm.value, true);
-    }
-  }
-}
-
-const reflectBackupSettingInUi = function(config, setting, elmId) {
-  const elm = document.getElementById(elmId);
-  if (elm.type == 'checkbox') {
-    elm.checked = STR.isTruthy(config[setting]);
-  }
-  else if (setting == SETTINGS.SYNCFLOW.CONFIG.AUTHOR_FILTER) {
-    elm.value = STR.hasLen(config[setting]) ? config[setting] : '';
-  }
-  else if (setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_FROM || setting == SETTINGS.SYNCFLOW.CONFIG.POSTED_UNTIL) {
-    if (!STR.hasLen(config[setting])) {
-      elm.value = '';
-    }
-    else {
-      const dt = new Date(config[setting]);
-      if (isNaN(dt)) {
-        elm.value = '';
-      }
-      else {
-        elm.value = `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear()}`;
-      }
-    }
-  }
-}
-
-const reflectBackupSettings = function() {
-  const config = SETTINGS.SYNCFLOW.BACKUP.getExportConfig();
-  const ns = SETTINGS.SYNCFLOW.CONFIG;
-  reflectBackupSettingInUi(config, ns.WITH_FAVORITES, 'optExportWithFavorites');
-  reflectBackupSettingInUi(config, ns.WITH_PROFILES, 'optExportWithProfiles');
-  reflectBackupSettingInUi(config, ns.WITH_AVATARS, 'optExportWithAvatars');
-  reflectBackupSettingInUi(config, ns.WITH_NETWORKS, 'optExportWithNetworks');
-  reflectBackupSettingInUi(config, ns.WITH_TOPICS, 'optExportWithTopics');
-  reflectBackupSettingInUi(config, ns.WITH_POSTS, 'optExportWithPosts');
-  reflectBackupSettingInUi(config, ns.WITH_POST_IMAGES, 'optExportWithPostImages');
-  reflectBackupSettingInUi(config, ns.DO_TWITTER, 'optExportTwitter');
-  reflectBackupSettingInUi(config, ns.DO_MASTODON, 'optExportMastodon');
-  reflectBackupSettingInUi(config, ns.AUTHOR_FILTER, 'optExportForAuthor');
-  reflectBackupSettingInUi(config, ns.POSTED_FROM, 'optExportPostsFrom');
-  reflectBackupSettingInUi(config, ns.POSTED_UNTIL, 'optExportPostsUntil');
-}
-
 Array.from(document.querySelectorAll('#exportFilterSection input[type="checkbox"]')).forEach(function(input) {
   input.addEventListener('change', (event) => {
-    saveBackupSettingsFromUi();
+    GHBACKUP_UI.saveBackupSettingsFromUi();
   });
 });
 
 Array.from(document.querySelectorAll('#exportFilterSection input[type="text"]')).forEach(function(input) {
   input.addEventListener('blur', (event) => {
-    saveBackupSettingsFromUi();
+    GHBACKUP_UI.saveBackupSettingsFromUi();
   });
 });
-
-// saves and returns
-const saveBackupSettingsFromUi = function() {
-  const config = {};
-  const ns = SETTINGS.SYNCFLOW.CONFIG;
-  config[ns.WITH_FAVORITES] = getBackupSettingFromUi(ns.WITH_FAVORITES, 'optExportWithFavorites');
-  config[ns.WITH_PROFILES] = getBackupSettingFromUi(ns.WITH_PROFILES, 'optExportWithProfiles');
-  config[ns.WITH_AVATARS] = getBackupSettingFromUi(ns.WITH_AVATARS, 'optExportWithAvatars');
-  config[ns.WITH_NETWORKS] = getBackupSettingFromUi(ns.WITH_NETWORKS, 'optExportWithNetworks');
-  config[ns.WITH_TOPICS] = getBackupSettingFromUi(ns.WITH_TOPICS, 'optExportWithTopics');
-  config[ns.WITH_POSTS] = getBackupSettingFromUi(ns.WITH_POSTS, 'optExportWithPosts');
-  config[ns.WITH_POST_IMAGES] = getBackupSettingFromUi(ns.WITH_POST_IMAGES, 'optExportWithPostImages');
-  config[ns.DO_TWITTER] = getBackupSettingFromUi(ns.DO_TWITTER, 'optExportTwitter');
-  config[ns.DO_MASTODON] = getBackupSettingFromUi(ns.DO_MASTODON, 'optExportMastodon');
-  config[ns.AUTHOR_FILTER] = getBackupSettingFromUi(ns.AUTHOR_FILTER, 'optExportForAuthor') || '';
-  config[ns.POSTED_FROM] = getBackupSettingFromUi(ns.POSTED_FROM, 'optExportPostsFrom') || '';
-  config[ns.POSTED_UNTIL] = getBackupSettingFromUi(ns.POSTED_UNTIL, 'optExportPostsUntil') || '';
-  SETTINGS.SYNCFLOW.BACKUP.saveExportConfig(config);
-}
 
 const btnDismissGhMfaTip = document.getElementById('btnDismissGhMfaTip');
 btnDismissGhMfaTip.onclick = function(event) {
@@ -1456,59 +1378,6 @@ btnDismissGhMfaTip.onclick = function(event) {
   SETTINGS.GITHUB.setDismissedMfaNote();
   return false;
 };
-
-const renderSyncBackupStatus = async function(status) {
-  const hideTip = SETTINGS.GITHUB.getDismissedMfaNote();
-  const tipElm = document.getElementById('ghMfaSection');
-  if (hideTip == true) {
-    tipElm.classList.add('d-none');
-  }
-  else {
-    tipElm.classList.remove('d-none');
-  }
-  
-  status = status || SYNCFLOW.buildStatus(SYNCFLOW.DIRECTION.BACKUP);
-  document.getElementById('ghBackupStatusMsg').textContent = status.msg;
-  const checkElm = document.getElementById('ghBackupStatusCheck');
-  const exclamElm = document.getElementById('ghBackupStatusFail');
-  if (status.ok === true) {
-    checkElm.classList.remove('d-none');
-    exclamElm.classList.add('d-none');
-  }
-  else if (status.ok === false) {
-    checkElm.classList.add('d-none');
-    exclamElm.classList.remove('d-none');
-  }
-  else {
-    checkElm.classList.add('d-none');
-    exclamElm.classList.add('d-none');
-  }
-
-  // special handling of _backupStartedThisSession is in case running was calculated as true based on last step being very recent
-  // but guarding against the case where the user hit F5 (and so it isn't actually running in this session)
-  if (status.running === true && _backupStartedThisSession == true) {
-    btnGhBkpPause.classList.remove('d-none');
-    btnGhBkpStart.classList.add('d-none');
-    btnGhBkpRestart.classList.add('d-none');
-  }
-  else {
-    reflectBackupSettings();
-    btnGhBkpPause.classList.add('d-none');
-    btnGhBkpStart.classList.remove('d-none');
-
-    if (status.ok === true || status.msg == SYNCFLOW.START_MSG) {
-      // we're at the beginning, so start and restart mean the same thing
-      btnGhBkpRestart.classList.add('d-none');
-    }
-    else {
-      btnGhBkpRestart.classList.remove('d-none');
-    }
-  }
-
-  // Videos section
-  const hasVideoConfig = await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS);
-  unveilUploaderAsNeeded(hasVideoConfig);
-}
 
 const btnSwitchToConfigVideos = document.getElementById('btnSwitchToConfigVideos');
 btnSwitchToConfigVideos.onclick = async function(event) {
@@ -1519,7 +1388,7 @@ btnSwitchToConfigVideos.onclick = async function(event) {
 
 const btnGhBkpStart = document.getElementById('btnGhBkpStart');
 btnGhBkpStart.onclick = function(event) {
-  saveBackupSettingsFromUi();
+  GHBACKUP_UI.saveBackupSettingsFromUi();
   SYNCFLOW.resumeSync(SYNCFLOW.DIRECTION.BACKUP);
   btnGhBkpPause.classList.remove('d-none');
   btnGhBkpStart.classList.add('d-none');
@@ -1538,7 +1407,7 @@ btnGhBkpPause.onclick = function(event) {
 
 const btnGhBkpRestart = document.getElementById('btnGhBkpRestart');
 btnGhBkpRestart.onclick = async function(event) {
-  saveBackupSettingsFromUi();
+  GHBACKUP_UI.saveBackupSettingsFromUi();
   SYNCFLOW.startOverSync(SYNCFLOW.DIRECTION.BACKUP);
   btnGhBkpPause.classList.remove('d-none');
   btnGhBkpStart.classList.add('d-none');
@@ -1812,20 +1681,7 @@ const reflectGithubTokenStatus = async function() {
 
   // unveil or hide the uploader
   if (repoType == GITHUB.REPO_TYPE.VIDEOS) {
-    unveilUploaderAsNeeded(hasSelectedToken);
-  }
-}
-
-const unveilUploaderAsNeeded = function(hasVideoRepoConn) {
-  const needVideoConnElm = document.getElementById('needVideoConn');
-  const uploaduiElm = document.getElementById('uploadui');
-  if (hasVideoRepoConn) {
-    needVideoConnElm.classList.add('d-none');
-    uploaduiElm.classList.remove('d-none');
-  }
-  else {
-    needVideoConnElm.classList.remove('d-none');
-    uploaduiElm.classList.add('d-none');
+    GHBACKUP_UI.unveilUploaderAsNeeded(hasSelectedToken);
   }
 }
 
@@ -1902,7 +1758,7 @@ const activateGhBackupTab = async function() {
   configureSyncUi.style.display = 'none';
   backupUi.style.display = 'block';
   restoreUi.style.display = 'none';
-  await renderSyncBackupStatus();
+  await GHBACKUP_UI.renderSyncBackupStatus();
 }
 
 const activateGhRestoreTab = async function() {
