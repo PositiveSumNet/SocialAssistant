@@ -1647,6 +1647,31 @@ const unveilGithubUi = async function(pageType) {
   }
 }
 
+document.getElementById('ghConfigDataTab').onclick = async function(event) {
+  setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.DATA);
+  await reflectGithubTokenStatus();
+  return false;
+}
+document.getElementById('ghConfigVideosTab').onclick = async function(event) {
+  setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.VIDEOS);
+  await reflectGithubTokenStatus();
+  return false;
+}
+
+document.getElementById('btnCancelGithubToken').onclick = async function(event) {
+  // the goal is to switch back to the tab of the token type that we do have
+  const hasDataToken = await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.DATA);
+  const hasVideoToken = await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS);
+  if (hasDataToken == true) {
+    setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.DATA);
+  }
+  else if (hasVideoToken == true) {
+    setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.VIDEOS);
+  }
+  await reflectGithubTokenStatus();
+  return false;
+}
+
 document.getElementById('ghConfigureTab').onclick = async function(event) {
   await activateGhConfigureTab();
   return false;
@@ -1660,8 +1685,8 @@ document.getElementById('ghRestoreTab').onclick = async function(event) {
   return false;
 }
 
-const testGithubConnection = async function() {
-  await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubFailure);
+const testGithubConnection = async function(repoType) {
+  await GITHUB.testGithubConnection(onGithubConnectedOk, onGithubFailure, repoType);
 }
 
 const onGithubConnectedOk = async function(rateLimit) {
@@ -1671,7 +1696,12 @@ const onGithubConnectedOk = async function(rateLimit) {
 
 const renderRateLimit = function(rateLimit) {
   const rateLimitElm = document.getElementById('ghRateLimit');
-  rateLimitElm.textContent = GITHUB.writeRateLimitDisplay(rateLimit);
+  let display = GITHUB.writeRateLimitDisplay(rateLimit);
+  if (STR.hasLen(rateLimit.repoType)) {
+    const friendlyType = GITHUB.REPO_TYPE.toFriendly(rateLimit.repoType);
+    display = `${friendlyType} token: ${display}`;
+  }
+  rateLimitElm.textContent = display;
   rateLimitElm.classList.add('border-light-top');
 }
 
@@ -1737,20 +1767,21 @@ const reflectGithubSyncRepoPrivacy = function(isPublic) {
 }
 
 const reflectGithubTokenStatus = async function() {
-  const hasToken = await SETTINGS.GITHUB.hasSyncToken();
+  const repoType = getGithubConfigRepoType();
+  const hasSelectedToken = await SETTINGS.GITHUB.hasSyncToken(repoType);
   const ghBackupTab = document.getElementById('ghBackupTab');
   const ghRestoreTab = document.getElementById('ghRestoreTab');
 
-  if (hasToken == true) {
+  if (hasSelectedToken == true) {
     hideGithubFaq();
     document.getElementById('ghConfigurationUi').style.display = 'none';
     document.getElementById('ghConfiguredUi').style.display = 'block';
     // show status and offer Test Connection or Disconnect
-    const userName = await SETTINGS.GITHUB.getUserName();
-    const avatarUrl = await SETTINGS.GITHUB.getAvatarUrl();
-    const repoName = await SETTINGS.GITHUB.getSyncRepoName();
-    const lastOk = await SETTINGS.GITHUB.getSyncConnLastOk();
-    const isPublic = await SETTINGS.GITHUB.getSyncRepoIsPublic();
+    const userName = await SETTINGS.GITHUB.getUserName(repoType);
+    const avatarUrl = await SETTINGS.GITHUB.getAvatarUrl(repoType);
+    const repoName = await SETTINGS.GITHUB.getSyncRepoName(repoType);
+    const lastOk = await SETTINGS.GITHUB.getSyncConnLastOk(repoType);
+    const isPublic = await SETTINGS.GITHUB.getSyncRepoIsPublic(repoType);
     
     const userNameElm = document.getElementById('ghUsername');
     userNameElm.textContent = userName || '--not connected--';
@@ -1783,36 +1814,86 @@ const reflectGithubTokenStatus = async function() {
     }
 
     reflectGithubSyncRepoPrivacy(isPublic);
+    // hide the banner
+    document.getElementById('ghConfigVideoBanner').classList.add('d-none');
+    // show the default headings
+    document.getElementById('ghConfigStartHeadline').classList.remove('d-none');
+    document.getElementById('ghConfigOneLiner').classList.remove('d-none');
   }
   else {
-    // show faq again
-    hideGithubFaq(true);
-    document.getElementById('ghPublicMsg').classList.add('d-none');
-    ghBackupTab.classList.add('d-none');
-    ghRestoreTab.classList.add('d-none');
+    const hasAnyToken = (await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.DATA)) || (await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS));
+    // show github faq again if there is no token at all
+    if (hasAnyToken == false) {
+      hideGithubFaq(true);
+      ghBackupTab.classList.add('d-none');
+      ghRestoreTab.classList.add('d-none');
+      document.getElementById('ghConfigurationUi').style.display = 'block';
+      document.getElementById('ghConfiguredUi').style.display = 'none';
+      document.getElementById('txtGithubToken').value = '';
+    }
+    else {
+      // no need to explain the virtues of a GH account etc if we know they have one
+      // typically, this case is where they have the data token and now they clicked videos, which they don't yet have
+      // go back to showing the configuration form
+      document.getElementById('ghConfigurationUi').style.display = 'block';
+      document.getElementById('ghConfiguredUi').style.display = 'none';
+      guideUserForSecondGithubRepo(repoType);
+    }
   }
+}
+
+const guideUserForSecondGithubRepo = function(repoType) {
+  // show the banner
+  const bannerElm = document.getElementById('ghConfigVideoBanner');
+  bannerElm.classList.remove('d-none');
+
+  // don't show the usual headings
+  document.getElementById('ghConfigStartHeadline').classList.add('d-none');
+  document.getElementById('ghConfigOneLiner').classList.add('d-none');
+  // clear the token textbox
+  document.getElementById('txtGithubToken').value = '';
+
+  const ghCreateRepoBtn = document.getElementById('ghCreateRepoBtn');
+  const defaultRepoName = SETTINGS.GITHUB.getDefaultRepoName(repoType);
+  const repoUrl = `https://github.com/new?name=${defaultRepoName}&visibility=private`;
+
+  ghCreateRepoBtn.querySelector('a').href = repoUrl;
+  ghCreateRepoBtn.querySelector('.repoName').textContent = defaultRepoName;
+
+  const friendlyType = GITHUB.REPO_TYPE.toFriendly(repoType);
+  bannerElm.querySelector('.repoType').textContent = friendlyType;
+  bannerElm.querySelector('.repoName').textContent = defaultRepoName;
+
+  const helpImgElm = document.getElementById('ghTokenHelpImg');
+  const imgSrc = (repoType == GITHUB.REPO_TYPE.VIDEOS) ? '/images/ghpathelp_videos.png' : '/images/ghpathelp.png';
+  helpImgElm.src = imgSrc;
+
+  const figure1Tip = document.querySelector('#makeTokenTip .repoName');
+  figure1Tip.textContent = defaultRepoName;
 }
 
 const btnRetestGithubConn = document.getElementById('btnRetestGithubConn');
 btnRetestGithubConn.onclick = async function(event) {
+  const repoType = getGithubConfigRepoType();
   setGithubConnFailureMsg('');
   const repoName = document.getElementById('txtGithubRepoName').value;
-  await SETTINGS.GITHUB.saveSyncRepoName(repoName);
-  await testGithubConnection();
+  await SETTINGS.GITHUB.saveSyncRepoName(repoName, repoType);
+  await testGithubConnection(repoType);
 
   return false;
 }
 
 const btnResetGithubConn = document.getElementById('btnResetGithubConn');
 btnResetGithubConn.onclick = async function(event) {
-  if (confirm('Clear the GitHub configuration stored by this app?') == true) {
+  const repoType = getGithubConfigRepoType();
+  if (confirm(`Clear the GitHub ${repoType} configuration stored by this app?`) == true) {
     setGithubConnFailureMsg('');
-    await SETTINGS.GITHUB.removeSyncToken();
-    await SETTINGS.GITHUB.removeSyncUserName();
-    await SETTINGS.GITHUB.removeSyncRepoIsPublic();
-    await SETTINGS.GITHUB.removeAvatarUrl();
-    await SETTINGS.GITHUB.removeSyncLastOk();
-    await SETTINGS.GITHUB.removeSyncRepoName();
+    await SETTINGS.GITHUB.removeSyncToken(repoType);
+    await SETTINGS.GITHUB.removeSyncUserName(repoType);
+    await SETTINGS.GITHUB.removeSyncRepoIsPublic(repoType);
+    await SETTINGS.GITHUB.removeAvatarUrl(repoType);
+    await SETTINGS.GITHUB.removeSyncLastOk(repoType);
+    await SETTINGS.GITHUB.removeSyncRepoName(repoType);
     await reflectGithubTokenStatus();
   }
   
@@ -1853,6 +1934,39 @@ const getActiveSyncTabPageType = function() {
   }
   else {
     return PAGETYPE.GITHUB.CONFIGURE;
+  }
+}
+
+const getGithubConfigRepoType = function() {
+  const videosTab = document.getElementById('ghConfigVideosTab');
+  if (videosTab.classList.contains('active')) {
+    return GITHUB.REPO_TYPE.VIDEOS;
+  }
+  else {
+    return GITHUB.REPO_TYPE.DATA;
+  }
+}
+
+const setGithubConfigRepoTypeTab = function(repoType) {
+  repoType = repoType || GITHUB.REPO_TYPE.DATA;
+  
+  const dataTab = document.getElementById('ghConfigDataTab');
+  const videosTab = document.getElementById('ghConfigVideosTab');
+
+  if (repoType == GITHUB.REPO_TYPE.DATA) {
+    dataTab.classList.add('active');
+    videosTab.classList.remove('active');
+
+    dataTab.setAttribute('aria-current', 'page');
+  }
+  else if (repoType == GITHUB.REPO_TYPE.VIDEOS) {
+    dataTab.classList.remove('active');
+    videosTab.classList.add('active');
+
+    videosTab.setAttribute('aria-current', 'page');
+  }
+  else {
+    console.log('unexpected repoType');
   }
 }
 
@@ -1945,10 +2059,11 @@ const btnSubmitGithubToken = document.getElementById('btnSubmitGithubToken');
 btnSubmitGithubToken.onclick = async function(event) {
   const txtGithubToken = document.getElementById('txtGithubToken');
   const tokenVal = txtGithubToken.value;
+  const repoType = getGithubConfigRepoType();
   if (STR.hasLen(tokenVal)) {
     setGithubConnFailureMsg(null);
-    await SETTINGS.GITHUB.saveSyncToken(tokenVal);
-    await testGithubConnection();
+    await SETTINGS.GITHUB.saveSyncToken(tokenVal, repoType);
+    await testGithubConnection(repoType);
   }
   else {
     // show warning

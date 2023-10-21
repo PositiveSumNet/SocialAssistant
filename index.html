@@ -94,7 +94,7 @@
           </div>
           <div id="ghConfigureSection" style="display: none;">
             <div id="ghConfiguredUi" style="display: none;">
-              <h3 class="pt-4"><i class="bi-github"></i> GitHub connections</h3>
+              <h3 class="pt-4"><i class="bi-github"></i> GitHub connectivity</h3>
               <ul class="nav nav-tabs" style="border-bottom:none;">
                 <li class="nav-item">
                   <a id="ghConfigDataTab" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Configure the primary connection (used for data)'>
@@ -102,7 +102,7 @@
                     Data</a>
                 </li>
                 <li class="nav-item">
-                  <a id="ghConfigVideoTab" class="nav-link" href="#" data-toggle='tooltip' title='Configure a connection for sync of videos'>
+                  <a id="ghConfigVideosTab" class="nav-link" href="#" data-toggle='tooltip' title='Configure a connection for sync of videos'>
                     <i class="bi-camera-video"></i>
                     Videos</a>
                 </li>
@@ -135,30 +135,36 @@
               </div>
             </div>
             <div id="ghConfigurationUi">
-              <h3 class="pt-4">Connect this app to <a href="https://github.com" target="_blank"><i class="bi-github"></i> your GitHub account</a></h3>
-              <p>
+              <h3 id="ghConfigStartHeadline" class="pt-4">Connect this app to <a href="https://github.com" target="_blank"><i class="bi-github"></i> your GitHub account</a></h3>
+              <p id="ghConfigOneLiner">
                 Follow the steps below to connect this app with a sync repository that you own and control. 
               </p>
+              <div id="ghConfigVideoBanner" class="alert alert-primary d-none" role="alert">
+                <i class="bi-camera-video"></i> 
+                Configure a second repository to hold <b class="repoType">Videos</b>. 
+                Give it a name like <code class="repoName">MyWhosumVideos</code> and create a separate token for it.
+              </div>
               <ol>
                 <li>Ensure that you've finished account setup by <a href="https://docs.github.com/en/get-started/signing-up-for-github/verifying-your-email-address" target="_blank">verifying your email address</a>.</li>
-                <li><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository named <code>MyWhosum</code>.</li>
+                <li id="ghCreateRepoBtn"><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository. Give it a name like <code class="repoName">MyWhosum</code> (the actual name is up to you).</li>
                 <li>Remember to scroll down on that page and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
                 <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
                 <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
-                <li>Treat your token with care, as you would a password.</li>
+                <li>Treat your token with care, as you would a password... except you don't need to remember it. Just create an additional token at any time (e.g. if you switch devices).</li>
               </ol>
               <div id="submitGhTokenSection">
                 <label for="txtGithubToken" class="text-muted">Paste code</label>
                 <input type="password" name="txtGithubToken" id="txtGithubToken" placeholder="github_pat_123456" style="width: 300px; border-right: 1px solid #ced4da; text-align: left;">
                 <a href="#" id="btnSubmitGithubToken" role="button" class="btn btn-primary">Connect!</a>
+                <a href="#" id="btnCancelGithubToken" role="button" class="btn btn-outline-secondary">Cancel</a>
               </div>
               <br>
               <div class="mt-4 p-2" style="border-top: solid 3px #ced4da; background-color: #ececec;">
                 <h3 class="inkfree">Figure 1</h3>
-                <p>
-                  How to create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> with permission of <code>Contents: Read and write</code> for the <code>MyWhosum</code> repository only:
+                <p id="makeTokenTip">
+                  How to create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> with permission of <code>Contents: Read and write</code> for the <code class="repoName">MyWhosum</code> repository only:
                 </p>
-                <img src="/images/ghpathelp.png" alt="Token generation screenshot" class="center">
+                <img id="ghTokenHelpImg" src="/images/ghpathelp.png" alt="Token generation screenshot" class="center">
               </div>
             </div>
           </div>
