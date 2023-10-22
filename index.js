@@ -95,12 +95,6 @@ const onGotSavedCount = function(count, pageType, metadata) {
   }
 }
 
-const ensureInUseTopicsFilter = function() {
-  _worker.postMessage({
-    actionType: MSGTYPE.TODB.GET_INUSE_TOPICS
-  });
-}
-
 const ensureCopiedToDb = async function() {
   const kvps = await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
   
@@ -263,7 +257,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
         _docLocSearch = document.location.search; // aids our popstate behavior
         break;
       default:
-        executeSearch(owner, leaveHistoryStackAlone, topic);
+        QUERYWORK_UI.executeSearch(owner, leaveHistoryStackAlone, topic);
         break;
     }
   }
@@ -290,8 +284,8 @@ _worker.onmessage = async function ({ data }) {
       LOG_UI.logDbScriptVersion(data.payload);
       break;
     case MSGTYPE.FROMDB.WORKER_READY:
-      TOPICS.ensureRemoteTopicSettings(onFetchedRawTopicContent);
-      ensureInUseTopicsFilter();
+      TOPICS.ensureRemoteTopicSettings(QUERYWORK_UI.onFetchedRawTopicContent);
+      QUERYWORK_UI.ensureInUseTopicsFilter();
       await ensureCopiedToDb();
       break;
     case MSGTYPE.FROMDB.COPIED_TODB:
@@ -326,22 +320,10 @@ _worker.onmessage = async function ({ data }) {
       await SYNCFLOW.onFetchedForBackup(data.pushable);
       break;
     default:
-      logHtml('error', 'Unhandled message:', data.type);
+      LOG_UI.logHtml('error', 'Unhandled message:', data.type);
       break;
   }
 };
-
-const onFetchedRawTopicContent = function(content) {
-  const topics = TOPICS.parseTopics(content);
-  TOPICS.cacheTopicsToLocal(topics);
-  const sets = TOPICS.buildSets(topics);
-  _worker.postMessage({
-    actionType: MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE,
-    savableSet: sets.savableSet,
-    deletableSet: sets.deletableSet,
-    onSuccessType: SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS
-  });
-}
 
 const renderPost = function(post) {
   const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
@@ -387,7 +369,7 @@ const renderSuggestedOwner = function(payload) {
     document.getElementById('txtOwnerHandle').value = owner.Handle;
     // we're doing a page init and so far it's empty, so let's
     QUERYING_UI.PAGING.resetPage();
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
   }
 }
 
@@ -433,7 +415,7 @@ const onClickedMdonOption = function() {
 
   // continue even if user cancelled the chance to input a mdon server
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();  
+  QUERYWORK_UI.executeSearch();  
 }
 
 const ensureAskedMdonServer = function() {
@@ -455,61 +437,6 @@ const confirmMdonServer = function() {
   // even if they cancelled, we'll avoid showing again (they can click the gear if desired)
   localStorage.setItem(SETTINGS.ASKED.MDON_SERVER, true);
   return input;
-}
-
-const requestTotalCount = function() {
-  const owner = QUERYING_UI.OWNER.getOwnerFromUi();
-  if (!owner) {
-    return;
-  }
-  
-  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-  
-  const key = QUERYING_UI.COUNT.makeNetworkSizeCounterKey(owner, pageType);
-  if (_counterSet.has(key)) {
-    const counter = _counters.find(function(c) { return c.key === key; });
-    if (counter && counter.value) {
-      // we already have this count cached; apply it
-      QUERYING_UI.PAGING.displayTotalCount(counter.value);
-    }
-    // else wait for fetch to finish; either way, we're done
-    return;
-  }
-  
-  const atOwner = STR.ensurePrefix(owner, '@'); // DB includes @ prefix
-  const msg = {actionType: MSGTYPE.TODB.GET_NETWORK_SIZE, networkOwner: atOwner, pageType: pageType};
-  
-  _worker.postMessage(msg);
-  // record knowledge that this count has been requested
-  _counterSet.add(key);
-  _counters.push({key: key});   // value not set yet; will be when called back
-}
-
-// topic dropdown isn't populated yet on initial render, which is why that can get passed in
-const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
-  QUERYING_UI.QUERY_STRING.conformAddressBarUrlQueryParmsToUi(leaveHistoryStackAlone, topic);
-  
-  const msg = QUERYING_UI.REQUEST_BUILDER.buildSearchRequestFromUi();
-  if (STR.hasLen(topic)) {
-    msg.topic = topic;
-  }
-
-  const requestJson = JSON.stringify(msg);
-  SETTINGS.cachePageState(msg);
-
-  if (!forceRefresh && _lastRenderedRequest === requestJson) {
-    // we already have this rendered; avoid double-submission
-    return;
-  }
-  
-  if (forceRefresh) {
-    // ensure that the follow count is re-requested
-    QUERYING_UI.COUNT.clearCachedCountForCurrentRequest();
-  }
-
-  QUERYING_UI.SEARCH.showSearchProgress(true);
-  _docLocSearch = document.location.search; // aids our popstate behavior
-  _worker.postMessage(msg);
 }
 
 const canRenderMastodonFollowOneButtons = function() {
@@ -559,7 +486,7 @@ const renderConnections = function(payload) {
   
   QUERYING_UI.SEARCH.showSearchProgress(false);
   onAddedRows(plist);
-  requestTotalCount();
+  QUERYWORK_UI.requestTotalCount();
   
   _lastRenderedRequest = JSON.stringify(payload.request);
 }
@@ -632,14 +559,14 @@ const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivot
 document.getElementById('cmbType').addEventListener('change', (event) => {
   QUERYING_UI.PAGING.resetPage();
   QUERYING_UI.FILTERS.setQueryOptionVisibility();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 
 const btnClearThreadFilter = document.getElementById('btnClearThreadFilter');
 btnClearThreadFilter.onclick = function(event) {
   setOneThreadState(null);
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
+  QUERYWORK_UI.executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
   return false;
 }
 
@@ -648,7 +575,7 @@ const configureViewThread = function(btnViewThreadElm) {
     const threadUrlKey = btnViewThreadElm.getAttribute('data-testid');
     setOneThreadState(threadUrlKey);
     QUERYING_UI.PAGING.resetPage();
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
     return false;
   }
 };
@@ -674,38 +601,38 @@ const setOneThreadState = function(threadUrlKey) {
 
 chkMutual.addEventListener('change', (event) => {
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 chkFavorited.addEventListener('change', (event) => {
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 optWithMdon.addEventListener('change', (event) => {
   onClickedMdonOption();
 });
 optWithEmail.addEventListener('change', (event) => {
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 optWithUrl.addEventListener('change', (event) => {
   QUERYING_UI.FILTERS.setQueryOptionVisibility();
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 chkMdonImFollowing.addEventListener('change', (event) => {
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 optClear.addEventListener('change', (event) => {
   QUERYING_UI.FILTERS.setQueryOptionVisibility();
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 
 optWithRetweets.onclick = function(event) {
   optWithRetweets.classList.toggle('toggledOn');
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
   return false;
 };
 
@@ -713,7 +640,7 @@ optGuessTopics.onclick = function(event) {
   optGuessTopics.classList.toggle('toggledOn');
   QUERYING_UI.FILTERS.TOPICS.setTopicFilterVisibility();
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
   return false;
 };
 
@@ -722,7 +649,7 @@ optSortByStars.onclick = function(event) {
   const shouldSortByStars = getUiValue('optSortByStars');
   SETTINGS.setSortByStars(shouldSortByStars);
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
   return false;
 };
 
@@ -730,13 +657,13 @@ const cmbTopicFilter = document.getElementById('cmbTopicFilter');
 cmbTopicFilter.addEventListener('change', (event) => {
   QUERYING_UI.FILTERS.TOPICS.setTopicFilterModeInUi();
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 });
 
 // searching
 const handleTypeSearch = ES6.debounce((event) => {
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 }, 250);
 // ... uses debounce
 followSearch.addEventListener('input', handleTypeSearch);
@@ -745,7 +672,7 @@ followSearch.addEventListener('input', handleTypeSearch);
 txtPageNum.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     event.preventDefault();
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
   }
 });
 
@@ -769,7 +696,7 @@ const suggestAccountOwner = function(userInput) {
       if (!userInput || userInput.length === 0) {
         // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
         listOwnerPivotPicker.replaceChildren();
-        executeSearch();
+        QUERYWORK_UI.executeSearch();
         return;
       }
       break;
@@ -821,7 +748,7 @@ document.getElementById('priorPage').onclick = function(event) {
   const pageNum = getUiValue('txtPageNum');
   if (pageNum > 1) {
     txtPageNum.value = pageNum - 1;
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
   }
   return false;
 };
@@ -829,7 +756,7 @@ document.getElementById('priorPage').onclick = function(event) {
 const navToNextPage = function() {
   const pageNum = QUERYING_UI.PAGING.getPageNum();
   txtPageNum.value = pageNum + 1;
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 }
 
 document.getElementById('nextPage').onclick = function(event) {
@@ -856,7 +783,7 @@ document.getElementById('pageGear').onclick = function(event) {
     else {
       localStorage.setItem('pageSize', intVal);
       QUERYING_UI.PAGING.resetPage();
-      executeSearch();
+      QUERYWORK_UI.executeSearch();
     }
   }
   return false;
@@ -868,7 +795,7 @@ document.getElementById('mdonGear').onclick = function(event) {
   if (mdonServer != null) {
     // re-render
     optWithMdon.checked = true;
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
   }
   return false;
 };
@@ -883,7 +810,7 @@ const onChooseOwner = function() {
   QUERYING_UI.initMainListUiElms();
   listOwnerPivotPicker.replaceChildren();
   QUERYING_UI.PAGING.resetPage();
-  executeSearch();
+  QUERYWORK_UI.executeSearch();
 }
 
 const btnClearCache = document.getElementById('btnClearCache');
@@ -918,7 +845,7 @@ document.getElementById('twitterLensBtn').onclick = function(event) {
   if (site != SITE.TWITTER) {
     SETTINGS.cacheSite(SITE.TWITTER);
     QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
   }
 
   return false;
@@ -940,7 +867,7 @@ const activateMastodonTab = function() {
   if (site != SITE.MASTODON) {
     SETTINGS.cacheSite(SITE.MASTODON);
     QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
-    executeSearch();
+    QUERYWORK_UI.executeSearch();
   }
 }
 
