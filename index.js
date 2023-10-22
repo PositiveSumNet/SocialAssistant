@@ -96,7 +96,7 @@ const onGotSavedCount = function(count, pageType, metadata) {
 }
 
 const ensureInUseTopicsFilter = function() {
-  worker.postMessage({
+  _worker.postMessage({
     actionType: MSGTYPE.TODB.GET_INUSE_TOPICS
   });
 }
@@ -135,7 +135,7 @@ const ensureCopiedToDb = async function() {
   }
   
   if (batches.length > 0) {
-    worker.postMessage( { batches: batches, actionType: MSGTYPE.TODB.XFER_CACHE_TODB } );
+    _worker.postMessage( { batches: batches, actionType: MSGTYPE.TODB.XFER_CACHE_TODB } );
   }
   else {
     // if we got to here, we've fully copied into the db
@@ -215,14 +215,14 @@ const initialRender = async function(leaveHistoryStackAlone) {
     
     if (!owner || owner.length === 0) {
       // we'll initialize to empty string, but 
-      // we'll tell the worker to call us back with the most sensible initial value
+      // we'll tell the _worker to call us back with the most sensible initial value
       const msg = { 
         actionType: MSGTYPE.TODB.SUGGEST_OWNER, 
         pageType: pageType
       };
       
       waitForOwnerCallback = true;
-      worker.postMessage(msg);
+      _worker.postMessage(msg);
     }
   }
 
@@ -276,9 +276,8 @@ window.addEventListener("popstate", async function(event) {
   }
 });
 
-const worker = new Worker('worker.js?sqlite3.dir=jswasm');
-// receive messages from worker
-worker.onmessage = async function ({ data }) {
+// receive messages from _worker
+_worker.onmessage = async function ({ data }) {
   switch (data.type) {
     case MSGTYPE.FROMDB.LOG.LEGACY:
       // legacy + error logging
@@ -336,7 +335,7 @@ const onFetchedRawTopicContent = function(content) {
   const topics = TOPICS.parseTopics(content);
   TOPICS.cacheTopicsToLocal(topics);
   const sets = TOPICS.buildSets(topics);
-  worker.postMessage({
+  _worker.postMessage({
     actionType: MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE,
     savableSet: sets.savableSet,
     deletableSet: sets.deletableSet,
@@ -480,7 +479,7 @@ const requestTotalCount = function() {
   const atOwner = STR.ensurePrefix(owner, '@'); // DB includes @ prefix
   const msg = {actionType: MSGTYPE.TODB.GET_NETWORK_SIZE, networkOwner: atOwner, pageType: pageType};
   
-  worker.postMessage(msg);
+  _worker.postMessage(msg);
   // record knowledge that this count has been requested
   _counterSet.add(key);
   _counters.push({key: key});   // value not set yet; will be when called back
@@ -510,7 +509,7 @@ const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
 
   QUERYING_UI.SEARCH.showSearchProgress(true);
   _docLocSearch = document.location.search; // aids our popstate behavior
-  worker.postMessage(msg);
+  _worker.postMessage(msg);
 }
 
 const canRenderMastodonFollowOneButtons = function() {
@@ -778,7 +777,7 @@ const suggestAccountOwner = function(userInput) {
       break;
   }
 
-  worker.postMessage({
+  _worker.postMessage({
     actionType: MSGTYPE.TODB.INPUT_OWNER,
     pageType: pageType,
     searchText: userInput,
