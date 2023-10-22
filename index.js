@@ -54,34 +54,6 @@ const getPersonRenderAnchorsRule = function() {
   }
 }
 
-// when sqlite pushes unhandled exception log messages, they log (ugly) as rendered divs
-const logHtml = function (cssClass, ...args) {
-  let elm = document.getElementById('logMsgSection')
-  
-  if (!elm) { 
-    elm = document.createElement('div') 
-    elm.append(document.createTextNode(args.join(' ')));
-    document.body.append(elm);
-  }
-  else {
-    elm.classList.remove('d-none');
-    elm.textContent = args.join('\n');
-  }
-  
-  if (cssClass) elm.classList.add(cssClass);
-};
-
-// specific logging
-const logSqliteVersion = function(versionInfo) {
-  document.getElementById('sqliteVersionLib').textContent = versionInfo.libVersion;
-  document.getElementById('sqliteOpfsOk').textContent = versionInfo.opfsOk.toString();
-  //document.getElementById('sqliteSourceId').textContent = versionInfo.sourceId;
-}
-
-const logDbScriptVersion = function(versionInfo) {
-  document.getElementById('dbScriptNumber').textContent = versionInfo.version.toString();
-}
-
 // returns back a copy of the saved data
 const onCompletedSaveAndDelete = function(payload) {
   switch (payload.onSuccessType) {
@@ -314,13 +286,13 @@ worker.onmessage = async function ({ data }) {
   switch (data.type) {
     case MSGTYPE.FROMDB.LOG.LEGACY:
       // legacy + error logging
-      logHtml(data.payload.cssClass, ...data.payload.args);
+      LOG_UI.logHtml(data.payload.cssClass, ...data.payload.args);
       break;
     case MSGTYPE.FROMDB.LOG.SQLITE_VERSION:
-      logSqliteVersion(data.payload);
+      LOG_UI.logSqliteVersion(data.payload);
       break;
     case MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION:
-      logDbScriptVersion(data.payload);
+      LOG_UI.logDbScriptVersion(data.payload);
       break;
     case MSGTYPE.FROMDB.WORKER_READY:
       TOPICS.ensureRemoteTopicSettings(onFetchedRawTopicContent);
