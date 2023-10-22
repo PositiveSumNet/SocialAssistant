@@ -345,7 +345,7 @@ const renderMatchedOwners = function(payload) {
     // exact match; pick it! (after an extra check that the user isn't 
     // trying to delete, in which case auto-complete would be annoying)
     txtOwnerHandle.value = STR.stripPrefix(owners[0].Handle, '@');
-    onChooseOwner();
+    QUERYWORK_UI.onChooseOwner();
   }
   else {
     for (i = 0; i < owners.length; i++) {
@@ -422,21 +422,8 @@ const ensureAskedMdonServer = function() {
   const asked = SETTINGS.getAskedMdonServer();
   
   if (!asked) {
-    confirmMdonServer();
+    SETTINGS_UI.confirmMdonServer();
   }
-}
-
-const confirmMdonServer = function() {
-  const mdonServer = SETTINGS.getMdonServer() || '';
-  const input = prompt("First, please input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
-  
-  if (input != null) {
-    localStorage.setItem(SETTINGS.MDON_SERVER, input);
-  }
-  
-  // even if they cancelled, we'll avoid showing again (they can click the gear if desired)
-  localStorage.setItem(SETTINGS.ASKED.MDON_SERVER, true);
-  return input;
 }
 
 const canRenderMastodonFollowOneButtons = function() {
@@ -688,30 +675,6 @@ const handleFromClickedOwner = function(event) {
   return handleText;
 }
 
-const suggestAccountOwner = function(userInput) {
-  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-  switch (pageType) {
-    case PAGETYPE.TWITTER.TWEETS:
-    case PAGETYPE.MASTODON.TOOTS:
-      if (!userInput || userInput.length === 0) {
-        // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
-        listOwnerPivotPicker.replaceChildren();
-        QUERYWORK_UI.executeSearch();
-        return;
-      }
-      break;
-    default:
-      break;
-  }
-
-  _worker.postMessage({
-    actionType: MSGTYPE.TODB.INPUT_OWNER,
-    pageType: pageType,
-    searchText: userInput,
-    limit: 5
-  });
-}
-
 // typeahead for account owner
 // w3collective.com/autocomplete-search-javascript/
 const ownerSearch = ES6.debounce((event) => {
@@ -721,7 +684,7 @@ const ownerSearch = ES6.debounce((event) => {
     listOwnerPivotPicker.replaceChildren();
   }
   
-  suggestAccountOwner(userInput);
+  QUERYWORK_UI.suggestAccountOwner(userInput);
 }, 250);
 txtOwnerHandle.addEventListener('input', ownerSearch);
 
@@ -729,152 +692,13 @@ txtOwnerHandle.addEventListener('input', ownerSearch);
 txtOwnerHandle.onfocus = function () {
   const userInput = this.value;
   if (!userInput || userInput.length === 0) {
-    suggestAccountOwner(userInput);
+    QUERYWORK_UI.suggestAccountOwner(userInput);
   }
 };
 
-txtOwnerHandle.addEventListener('keydown', function(event) {
-  if (event.key === "Backspace" || event.key === "Delete") {
-    _deletingOwner = true;
-    _lastRenderedRequest = '';
-  }
-  else {
-    _deletingOwner = false;
-  }
-});
-
-// click for prior page
-document.getElementById('priorPage').onclick = function(event) {
-  const pageNum = getUiValue('txtPageNum');
-  if (pageNum > 1) {
-    txtPageNum.value = pageNum - 1;
-    QUERYWORK_UI.executeSearch();
-  }
-  return false;
-};
-
-const navToNextPage = function() {
-  const pageNum = QUERYING_UI.PAGING.getPageNum();
-  txtPageNum.value = pageNum + 1;
-  QUERYWORK_UI.executeSearch();
-}
-
-document.getElementById('nextPage').onclick = function(event) {
-  navToNextPage();
-  return false;
-};
-document.getElementById('continuePaging').onclick = function(event) {
-  navToNextPage();
-  return false;
-};
-
-document.getElementById('pageGear').onclick = function(event) {
-  const pageSize = SETTINGS.getPageSize();
-  const input = prompt("Choose page size", pageSize.toString());
-  
-  if (input != null) {
-    const intVal = parseInt(input);
-    if (isNaN(intVal)) {
-      alert("Invalid input; page size unchanged");
-    }
-    else if (intVal > 100) {
-      alert("Max suggested page size is 100; leaving unchanged");
-    }
-    else {
-      localStorage.setItem('pageSize', intVal);
-      QUERYING_UI.PAGING.resetPage();
-      QUERYWORK_UI.executeSearch();
-    }
-  }
-  return false;
-};
-
-document.getElementById('mdonGear').onclick = function(event) {
-  const mdonServer = confirmMdonServer();
-  
-  if (mdonServer != null) {
-    // re-render
-    optWithMdon.checked = true;
-    QUERYWORK_UI.executeSearch();
-  }
-  return false;
-};
-
-// choose owner from typeahead results
-listOwnerPivotPicker.onclick = function(event) {
-  txtOwnerHandle.value = handleFromClickedOwner(event);
-  onChooseOwner();
-};
-
-const onChooseOwner = function() {
-  QUERYING_UI.initMainListUiElms();
-  listOwnerPivotPicker.replaceChildren();
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-}
-
-const btnClearCache = document.getElementById('btnClearCache');
-btnClearCache.addEventListener('click', async () => {
-  if (confirm('If unknown problems persist even after relaunching the browser, you may wish to clear the cache. \nContinue?')) {
-    await chrome.storage.local.clear();
-    localStorage.clear();
-  }
-  return true;
-});
-
-/************************/
-// Github Backup
-/************************/
+QUERYWORK_UI.bindElements();
+SETTINGS_UI.bindElements();
 GHBACKUP_UI.bindElements();
-
-/************************/
-// Github Restore
-/************************/
-
-const renderSyncRestoreStatus = function() {
-  // ghBackupStatusStatus
-}
-
-/************************/
-// Multi-tab
-/************************/
-
-document.getElementById('twitterLensBtn').onclick = function(event) {
-  const site = SETTINGS.getCachedSite();
-
-  if (site != SITE.TWITTER) {
-    SETTINGS.cacheSite(SITE.TWITTER);
-    QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
-    QUERYWORK_UI.executeSearch();
-  }
-
-  return false;
-};
-
-document.getElementById('mastodonLensBtn').onclick = function(event) {
-  activateMastodonTab();
-  return false;
-};
-
-document.getElementById('githubLensBtn').onclick = async function(event) {
-  await TABS_UI.SYNC.activateGithubTab();
-  return false;
-};
-
-const activateMastodonTab = function() {
-  const site = SETTINGS.getCachedSite();
-
-  if (site != SITE.MASTODON) {
-    SETTINGS.cacheSite(SITE.MASTODON);
-    QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
-    QUERYWORK_UI.executeSearch();
-  }
-}
-
 TABS_UI.bindElements();
 GHCONFIG_UI.bindElements();
-
-/************************/
-// Mastodon events
-/************************/
 MDON_UI.bindElements();
