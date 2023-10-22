@@ -270,12 +270,14 @@ const initialRender = async function(leaveHistoryStackAlone) {
 
   // post toggles
   // WITH_RETWEETS
-  setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != 'false'); // default to true
+  const optWithRetweets = document.getElementById('optWithRetweets');
+  QUERYING_UI.FILTERS.setOptToggleBtn(optWithRetweets, parms[URL_PARM.WITH_RETWEETS] != 'false'); // default to true
 
   // TOPIC
-  setOptToggleBtn(optGuessTopics, parms[URL_PARM.GUESS_TOPICS] == 'true'); // default to false
-  setTopicFilterVisibility();
-  setTopicFilterChoiceInUi(topic);
+  const optGuessTopics = document.getElementById('optGuessTopics');
+  QUERYING_UI.FILTERS.setOptToggleBtn(optGuessTopics, parms[URL_PARM.GUESS_TOPICS] == 'true'); // default to false
+  QUERYING_UI.FILTERS.TOPICS.setTopicFilterVisibility();
+  QUERYING_UI.FILTERS.TOPICS.setTopicFilterChoiceInUi(topic);
   // THREAD
   setOneThreadState(threadUrlKey);
   // post sort
@@ -296,30 +298,6 @@ const initialRender = async function(leaveHistoryStackAlone) {
         executeSearch(owner, leaveHistoryStackAlone, topic);
         break;
     }
-  }
-}
-
-const setTopicFilterChoiceInUi = function(topic) {
-  let intVal = -1;
-  const tags = _topicTags;
-  for (let i = 0; i < tags.length; i++) {
-    let tag = tags[i];
-    if (topic == tag) {
-      intVal = i;
-      break;
-    }
-  }
-
-  cmbTopicFilter.value = intVal;
-  QUERYING_UI.FILTERS.TOPICS.setTopicFilterModeInUi();
-}
-
-const setOptToggleBtn = function(elm, toggledOn) {
-  if (toggledOn == true || toggledOn == 'true') {
-    elm.classList.add('toggledOn');
-  }
-  else {
-    elm.classList.remove('toggledOn');
   }
 }
 
@@ -878,19 +856,9 @@ optWithRetweets.onclick = function(event) {
   return false;
 };
 
-const setTopicFilterVisibility = function() {
-  const guessTopics = getUiValue('optGuessTopics');
-  if (guessTopics == true) {
-    cmbTopicFilter.classList.remove('d-nonefor');
-  }
-  else {
-    cmbTopicFilter.classList.add('d-nonefor');
-  }
-}
-
 optGuessTopics.onclick = function(event) {
   optGuessTopics.classList.toggle('toggledOn');
-  setTopicFilterVisibility();
+  QUERYING_UI.FILTERS.TOPICS.setTopicFilterVisibility();
   QUERYING_UI.PAGING.resetPage();
   executeSearch();
   return false;
