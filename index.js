@@ -207,7 +207,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
     site = SETTINGS.getCachedSite();
   }
 
-  updateForSite();
+  QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
 
   // pageType/direction
   let autoResolveOwner = true;
@@ -291,7 +291,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
     
     switch (site) {
       case SITE.GITHUB:
-        await activateGithubTab(pageType);
+        await TABS_UI.SYNC.activateGithubTab(pageType);
         _docLocSearch = document.location.search; // aids our popstate behavior
         break;
       default:
@@ -1047,7 +1047,7 @@ document.getElementById('twitterLensBtn').onclick = function(event) {
 
   if (site != SITE.TWITTER) {
     SETTINGS.cacheSite(SITE.TWITTER);
-    updateForSite();
+    QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
     executeSearch();
   }
 
@@ -1060,7 +1060,7 @@ document.getElementById('mastodonLensBtn').onclick = function(event) {
 };
 
 document.getElementById('githubLensBtn').onclick = async function(event) {
-  await activateGithubTab();
+  await TABS_UI.SYNC.activateGithubTab();
   return false;
 };
 
@@ -1069,105 +1069,13 @@ const activateMastodonTab = function() {
 
   if (site != SITE.MASTODON) {
     SETTINGS.cacheSite(SITE.MASTODON);
-    updateForSite();
+    QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
     executeSearch();
   }
 }
 
-const activateGithubTab = async function(pageType) {
-  pageType = pageType || SETTINGS.getCachedPageType(SITE.GITHUB);
-  const site = SETTINGS.getCachedSite();
-  if (site != SITE.GITHUB) {
-    SETTINGS.cacheSite(SITE.GITHUB);
-    updateForSite();
-  }
-
-  await TABS_UI.SYNC.unveilGithubUi(pageType);
-}
-
 TABS_UI.bindElements();
 GHCONFIG_UI.bindElements();
-
-const updateForSite = function() {
-  
-  const site = SETTINGS.getCachedSite();
-  QUERYING_UI.initMainListUiElms();
-  _lastRenderedRequest = '';
-  
-  const owner = SETTINGS.getCachedOwner(site);
-  txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
-  
-  const twitterBtn = document.getElementById('twitterLensBtn');
-  const mastodonBtn = document.getElementById('mastodonLensBtn');
-  const mastodonApiUi = document.getElementById('mdonApiUi');
-  const githubBtn = document.getElementById('githubLensBtn');
-  const syncUi = document.getElementById('syncUi');
-
-  QUERYING_UI.FILTERS.setQueryOptionVisibility();
-
-  if (site == SITE.TWITTER) {
-    twitterBtn.classList.add('active');
-    
-    if (mastodonBtn.classList.contains('active')) {
-      mastodonBtn.classList.remove('active');
-    }
-    if (githubBtn.classList.contains('active')) {
-      githubBtn.classList.remove('active');
-    }
-    
-    twitterBtn.setAttribute('aria-current', 'page');
-    mastodonBtn.removeAttribute('aria-current');
-    mastodonApiUi.style.display = 'none';
-    githubBtn.removeAttribute('aria-current');
-    syncUi.style.display = 'none';
-
-    // render list
-    document.getElementById('dbui').style.display = 'flex';
-  }
-  else if (site == SITE.MASTODON) {
-    
-    if (twitterBtn.classList.contains('active')) {
-      twitterBtn.classList.remove('active');
-    }
-    if (githubBtn.classList.contains('active')) {
-      githubBtn.classList.remove('active');
-    }
-
-    mastodonBtn.classList.add('active');
-    twitterBtn.removeAttribute('aria-current');
-    mastodonBtn.setAttribute('aria-current', 'page');
-    githubBtn.removeAttribute('aria-current');
-    syncUi.style.display = 'none';
-    
-    MASTODON.render();
-    mastodonApiUi.style.display = 'block';
-  }
-  else if (site == SITE.GITHUB) {
-    githubBtn.classList.add('active');
-    
-    if (twitterBtn.classList.contains('active')) {
-      twitterBtn.classList.remove('active');
-    }
-    if (mastodonBtn.classList.contains('active')) {
-      mastodonBtn.classList.remove('active');
-    }
-    
-    githubBtn.setAttribute('aria-current', 'page');
-    twitterBtn.removeAttribute('aria-current');
-    mastodonBtn.removeAttribute('aria-current');
-    mastodonApiUi.style.display = 'none';
-
-    document.getElementById('dbui').style.display = 'none';
-
-    syncUi.style.display = 'flex';
-  }
-  else {
-    return;
-  }
-
-  QUERYING_UI.PAGING.resetPage();
-  QUERYING_UI.FILTERS.resetFilters();
-}
 
 /************************/
 // Mastodon events
