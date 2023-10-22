@@ -40,13 +40,13 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(re
 
 // guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
 const getPersonRenderAnchorsRule = function() {
-  if (getUiValue('optWithMdon') === true) {
+  if (document.getElementById('optWithMdon').checked === true) {
     return RENDER_CONTEXT.ANCHORS.MDON_ONLY;
   }
-  else if (getUiValue('optWithEmail') === true) {
+  else if (document.getElementById('optWithEmail').checked === true) {
     return RENDER_CONTEXT.ANCHORS.EMAIL_ONLY;
   }
-  else if (getUiValue('optWithUrl') === true) {
+  else if (document.getElementById('optWithUrl').checked === true) {
     return RENDER_CONTEXT.ANCHORS.EXTURL_ONLY;
   }
   else {
@@ -226,7 +226,7 @@ const initialRender = async function(leaveHistoryStackAlone) {
   QUERYING_UI.FILTERS.TOPICS.setTopicFilterVisibility();
   QUERYING_UI.FILTERS.TOPICS.setTopicFilterChoiceInUi(topic);
   // THREAD
-  setOneThreadState(threadUrlKey);
+  QUERYING_UI.THREAD.setOneThreadState(threadUrlKey);
   // post sort
   QUERYING_UI.ORDERING.setTopicSortInUi();
 
@@ -348,7 +348,7 @@ const renderSuggestedOwner = function(payload) {
     return;
   }
   
-  const value = getUiValue('txtOwnerHandle');
+  const value = document.getElementById('txtOwnerHandle').value;
   
   if (!value || value.length === 0) {
     document.getElementById('txtOwnerHandle').value = owner.Handle;
@@ -356,45 +356,6 @@ const renderSuggestedOwner = function(payload) {
     QUERYING_UI.PAGING.resetPage();
     QUERYWORK_UI.executeSearch();
   }
-}
-
-const getUiValue = function(id) {
-  switch (id) {
-    case 'txtOwnerHandle':
-      return txtOwnerHandle.value;
-    case 'txtSearch':
-      return txtSearch.value;
-    case 'txtPageNum':
-      return parseInt(txtPageNum.value);
-    case 'chkMutual':
-      return chkMutual.checked;
-    case 'chkFavorited':
-      return chkFavorited.checked;
-    case 'optWithMdon':
-      return optWithMdon.checked;
-    case 'optWithEmail':
-      return optWithEmail.checked;
-    case 'optWithUrl':
-      return optWithUrl.checked;
-    case 'optWithRetweets':
-      return optWithRetweets.classList.contains('toggledOn');
-    case 'optGuessTopics':
-      return optGuessTopics.classList.contains('toggledOn');
-    case 'optSortByStars':
-      return optSortByStars.classList.contains('toggledOn');
-    case 'cmbTopicFilter':
-      return QUERYING_UI.FILTERS.TOPICS.getTopicFilterChoiceFromUi();
-    case 'threadUrlKey':
-      return document.getElementById('mainContainer').getAttribute('data-testid') || '';
-    default:
-      return undefined;
-  }
-}
-
-const canRenderMastodonFollowOneButtons = function() {
-  const site = SETTINGS.getCachedSite();
-  const mdonMode = getUiValue('optWithMdon');
-  return site === SITE.MASTODON || mdonMode === true;
 }
 
 const renderPostStream = function(payload) {
@@ -432,7 +393,7 @@ const renderConnections = function(payload) {
   plist.innerHTML = html;
 
   IMAGE.resolveDeferredLoadImages(plist);
-  if (canRenderMastodonFollowOneButtons() === true) {
+  if (SETTINGS_UI.canRenderMastodonFollowOneButtons() === true) {
     MASTODON.renderFollowOnMastodonButtons(plist);
   }
   
@@ -462,7 +423,7 @@ const onAddedRows = function(container) {
   Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm, pageType));
   Array.from(container.getElementsByClassName('postAnotherTag')).forEach(elm => RENDER.POST.TAGGING.configureAddAnotherTag(elm, pageType));
   // view thread
-  Array.from(container.getElementsByClassName('btnViewThread')).forEach(elm => configureViewThread(elm));
+  Array.from(container.getElementsByClassName('btnViewThread')).forEach(elm => QUERYING_UI.THREAD.configureViewThread(elm));
   // simple favoriting
   Array.from(container.getElementsByClassName("canstar")).forEach(a => FAVORITING_UI.configureFavoriting(a));
   // video elements
@@ -501,49 +462,6 @@ const optClear = document.getElementById('optClear');
 
 // post option buttons
 const optWithRetweets = document.getElementById('optWithRetweets');
-const optGuessTopics = document.getElementById('optGuessTopics');
-const optSortByStars = document.getElementById('optSortByStars');
-
-// mastodon account typeahead hitting api
-const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
-const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
-
-const btnClearThreadFilter = document.getElementById('btnClearThreadFilter');
-btnClearThreadFilter.onclick = function(event) {
-  setOneThreadState(null);
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
-  return false;
-}
-
-const configureViewThread = function(btnViewThreadElm) {
-  btnViewThreadElm.onclick = function(event) {
-    const threadUrlKey = btnViewThreadElm.getAttribute('data-testid');
-    setOneThreadState(threadUrlKey);
-    QUERYING_UI.PAGING.resetPage();
-    QUERYWORK_UI.executeSearch();
-    return false;
-  }
-};
-
-const setOneThreadState = function(threadUrlKey) {
-  const container = document.getElementById('mainContainer');
-  if (STR.hasLen(threadUrlKey)) {
-    container.classList.add('oneThread');
-    container.setAttribute('data-testid', threadUrlKey);
-    // clear all that which might confuse a user about why they aren't seeing the full thread
-    // clear owner
-    txtOwnerHandle.value = '';
-    // clear search
-    txtSearch.value = '';
-    // clear topic filter
-    cmbTopicFilter.value = -1;  // clear
-  }
-  else {
-    container.removeAttribute('data-testid');
-    container.classList.remove('oneThread');
-  }
-}
 
 QUERYWORK_UI.bindElements();
 SETTINGS_UI.bindElements();
