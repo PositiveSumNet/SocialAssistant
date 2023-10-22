@@ -323,25 +323,6 @@ const setOptToggleBtn = function(elm, toggledOn) {
   }
 }
 
-const conformQueryStringToUi = function(leaveHistoryStackAlone, topic) {
-  const urlParms = new URLSearchParams(document.location.search);
-  urlParms.set(URL_PARM.OWNER, getOwnerFromUi() || '');
-  urlParms.set(URL_PARM.PAGE_TYPE, getPageType() || '');
-  urlParms.set(URL_PARM.SEARCH, getUiValue('txtSearch') || '');
-  urlParms.set(URL_PARM.SIZE, SETTINGS.getPageSize() || 50);
-  urlParms.set(URL_PARM.PAGE, QUERYING_UI.PAGING.getPageNum() || 1);
-  urlParms.set(URL_PARM.WITH_RETWEETS, getUiValue('optWithRetweets') || false);
-  urlParms.set(URL_PARM.GUESS_TOPICS, getUiValue('optGuessTopics') || false);
-  urlParms.set(URL_PARM.TOPIC, topic || getUiValue('cmbTopicFilter') || '');
-  urlParms.set(URL_PARM.THREAD, getUiValue('threadUrlKey') || '');
-
-  if (!leaveHistoryStackAlone) {
-    history.pushState(null, null, "?"+urlParms.toString());
-  }
-
-  _docLocSearch = document.location.search;
-}
-
 // companion to the above pushState so that back button works
 window.addEventListener("popstate", async function(event) {
   if (_docLocSearch != document.location.search) {
@@ -418,7 +399,7 @@ const onFetchedRawTopicContent = function(content) {
 }
 
 const renderPost = function(post) {
-  const pageType = getPageType();
+  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
   const site = PAGETYPE.getSite(pageType);
   return RENDER.POST.renderPost(post, site);
 }
@@ -498,30 +479,6 @@ const getUiValue = function(id) {
   }
 }
 
-const getPageType = function() {
-  const site = SETTINGS.getCachedSite();
-
-  if (site == SITE.GITHUB) {
-    return getActiveSyncTabPageType();
-  }
-  else {
-    const type = document.getElementById('cmbType').value;
-    if (type == POSTS) {
-      switch (site) {
-        case SITE.TWITTER:
-          return PAGETYPE.TWITTER.TWEETS;
-        case SITE.MASTODON:
-          return PAGETYPE.MASTODON.TOOTS;
-        default:
-          return undefined;
-      }
-    }
-    else {
-      return PAGETYPE.getPageType(site, type);
-    }
-  }
-}
-
 // site tab is twitter and clicked to filter to mastodon
 const onClickedMdonOption = function() {
   // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
@@ -555,16 +512,9 @@ const confirmMdonServer = function() {
   return input;
 }
 
-const getOwnerFromUi = function() {
-  // trim the '@'
-  let owner = getUiValue('txtOwnerHandle');
-  owner = owner && owner.startsWith('@') ? owner.substring(1) : owner;
-  return owner;
-}
-
 const buildSearchRequestFromUi = function() {
-  const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
-  const pageType = getPageType();
+  const owner = STR.ensurePrefix(QUERYING_UI.OWNER.getOwnerFromUi(), '@');  // prefixed in the db
+  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
   const site = PAGETYPE.getSite(pageType);
   const pageSize = SETTINGS.getPageSize();
   const searchText = getUiValue('txtSearch');
@@ -624,8 +574,8 @@ const makeNetworkSizeCounterKey = function(owner, pageType) {
 }
 
 const clearCachedCountForCurrentRequest = function() {
-  const owner = getOwnerFromUi();
-  const pageType = getPageType();
+  const owner = QUERYING_UI.OWNER.getOwnerFromUi();
+  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
 
   if (!owner || !pageType) {
     return;
@@ -638,12 +588,12 @@ const clearCachedCountForCurrentRequest = function() {
 }
 
 const requestTotalCount = function() {
-  const owner = getOwnerFromUi();
+  const owner = QUERYING_UI.OWNER.getOwnerFromUi();
   if (!owner) {
     return;
   }
   
-  const pageType = getPageType();
+  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
   
   const key = makeNetworkSizeCounterKey(owner, pageType);
   if (_counterSet.has(key)) {
@@ -667,7 +617,7 @@ const requestTotalCount = function() {
 
 // topic dropdown isn't populated yet on initial render, which is why that can get passed in
 const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
-  conformQueryStringToUi(leaveHistoryStackAlone, topic);
+  QUERYING_UI.QUERY_STRING.conformAddressBarUrlQueryParmsToUi(leaveHistoryStackAlone, topic);
   
   const msg = buildSearchRequestFromUi();
   if (STR.hasLen(topic)) {
@@ -693,8 +643,8 @@ const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
 }
 
 const renderNetworkSize = function(payload) {
-  const uiPageType = getPageType();
-  const uiOwner = getOwnerFromUi();
+  const uiPageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
+  const uiOwner = QUERYING_UI.OWNER.getOwnerFromUi();
   const dbOwnerSansPrefix = STR.stripPrefix(payload.request.networkOwner, '@');
   
   if (uiPageType != payload.request.pageType || uiOwner != dbOwnerSansPrefix) {
@@ -797,7 +747,7 @@ const configureGetEmbeddedVideo = function(a) {
 }
 
 const onAddedRows = function(container) {
-  const pageType = getPageType();
+  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
   // tag & rate
   Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm, pageType));
   Array.from(container.getElementsByClassName('postAnotherTag')).forEach(elm => RENDER.POST.TAGGING.configureAddAnotherTag(elm, pageType));
@@ -813,6 +763,7 @@ const onAddedRows = function(container) {
 ES6.TRISTATE.initAll();
 
 const txtOwnerHandle = document.getElementById('txtOwnerHandle');
+const txtSearch = document.getElementById('txtSearch');
 const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
 const followSearch = document.getElementById('txtSearch');
 const txtPageNum = document.getElementById('txtPageNum');
@@ -990,7 +941,7 @@ const handleFromClickedOwner = function(event) {
 }
 
 const suggestAccountOwner = function(userInput) {
-  const pageType = getPageType();
+  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
   switch (pageType) {
     case PAGETYPE.TWITTER.TWEETS:
     case PAGETYPE.MASTODON.TOOTS:
@@ -1268,14 +1219,14 @@ const activateGithubTab = async function(pageType) {
 const unveilGithubUi = async function(pageType) {
   switch (pageType) {
     case PAGETYPE.GITHUB.BACKUP:
-      await activateGhBackupTab();
+      await TABS_UI.SYNC.activateGhBackupTab();
       break;
     case PAGETYPE.GITHUB.RESTORE:
-      await activateGhRestoreTab();
+      await TABS_UI.SYNC.activateGhRestoreTab();
       break;
     case PAGETYPE.GITHUB.CONFIGURE:
     default:
-      await activateGhConfigureTab();
+      await TABS_UI.SYNC.activateGhConfigureTab();
       break;
   }
 }
@@ -1306,110 +1257,19 @@ document.getElementById('btnCancelGithubToken').onclick = async function(event) 
 }
 
 document.getElementById('ghConfigureTab').onclick = async function(event) {
-  await activateGhConfigureTab();
+  await TABS_UI.SYNC.activateGhConfigureTab();
   return false;
 }
 document.getElementById('ghBackupTab').onclick = async function(event) {
-  await activateGhBackupTab();
+  await TABS_UI.SYNC.activateGhBackupTab();
   return false;
 }
 document.getElementById('ghRestoreTab').onclick = async function(event) {
-  await activateGhRestoreTab();
+  await TABS_UI.SYNC.activateGhRestoreTab();
   return false;
 }
 
 GHCONFIG_UI.bindElements();
-
-const configureSyncUi = document.getElementById('configureSyncUi');
-
-const activateGhConfigureTab = async function() {
-  await GHCONFIG_UI.reflectGithubTokenStatus(); 
-  await setActiveSyncTabPageType(PAGETYPE.GITHUB.CONFIGURE);
-  configureSyncUi.style.display = 'block';
-  backupUi.style.display = 'none';
-  restoreUi.style.display = 'none';
-}
-
-const activateGhBackupTab = async function() {
-  await setActiveSyncTabPageType(PAGETYPE.GITHUB.BACKUP);
-  configureSyncUi.style.display = 'none';
-  backupUi.style.display = 'block';
-  restoreUi.style.display = 'none';
-  await GHBACKUP_UI.renderSyncBackupStatus();
-}
-
-const activateGhRestoreTab = async function() {
-  await setActiveSyncTabPageType(PAGETYPE.GITHUB.RESTORE);
-  configureSyncUi.style.display = 'none';
-  backupUi.style.display = 'none';
-  restoreUi.style.display = 'block';
-}
-
-const getActiveSyncTabPageType = function() {
-  if (document.getElementById('ghRestoreTab').classList.contains('active')) {
-    return PAGETYPE.GITHUB.RESTORE;
-  }
-  else if (document.getElementById('ghBackupTab').classList.contains('active')) {
-    return PAGETYPE.GITHUB.BACKUP;
-  }
-  else {
-    return PAGETYPE.GITHUB.CONFIGURE;
-  }
-}
-
-const setActiveSyncTabPageType = async function(pageType) {
-  const backupTab = document.getElementById('ghBackupTab');
-  const restoreTab = document.getElementById('ghRestoreTab');
-  const configureTab = document.getElementById('ghConfigureTab');
-
-  if (pageType == PAGETYPE.GITHUB.RESTORE) {
-    restoreTab.classList.add('active');
-    
-    if (backupTab.classList.contains('active')) {
-      backupTab.classList.remove('active');
-    }
-    if (configureTab.classList.contains('active')) {
-      configureTab.classList.remove('active');
-    }
-    
-    restoreTab.setAttribute('aria-current', 'page');
-    backupTab.removeAttribute('aria-current');
-    configureTab.removeAttribute('aria-current');
-  }
-  else if (pageType == PAGETYPE.GITHUB.BACKUP) {
-    backupTab.classList.add('active');
-    
-    if (restoreTab.classList.contains('active')) {
-      restoreTab.classList.remove('active');
-    }
-    if (configureTab.classList.contains('active')) {
-      configureTab.classList.remove('active');
-    }
-    
-    backupTab.setAttribute('aria-current', 'page');
-    restoreTab.removeAttribute('aria-current');
-    configureTab.removeAttribute('aria-current');
-  }
-  else {
-    // configure tab
-    configureTab.classList.add('active');
-    
-    if (restoreTab.classList.contains('active')) {
-      restoreTab.classList.remove('active');
-    }
-    if (backupTab.classList.contains('active')) {
-      backupTab.classList.remove('active');
-    }
-    
-    configureTab.setAttribute('aria-current', 'page');
-    restoreTab.removeAttribute('aria-current');
-    backupTab.removeAttribute('aria-current');
-  }
-
-  conformQueryStringToUi(false);
-  const cacheKey = SETTINGS.pageTypeCacheKey(SITE.GITHUB);
-  localStorage.setItem(cacheKey, pageType);
-}
 
 const updateForSite = function() {
   
