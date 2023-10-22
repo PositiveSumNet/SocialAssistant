@@ -270,10 +270,10 @@ _worker.onmessage = async function ({ data }) {
       RENDERBIND_UI.renderMatchedOwners(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.CONNECTIONS:
-      renderConnections(data.payload);
+      RENDERBIND_UI.renderConnections(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.POST_STREAM:
-      renderPostStream(data.payload);
+      RENDERBIND_UI.renderPostStream(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
       QUERYING_UI.COUNT.renderNetworkSize(data.payload);
@@ -293,58 +293,6 @@ _worker.onmessage = async function ({ data }) {
       break;
   }
 };
-
-const renderPost = function(post) {
-  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-  const site = PAGETYPE.getSite(pageType);
-  return RENDER.POST.renderPost(post, site);
-}
-
-const renderPostStream = function(payload) {
-  QUERYING_UI.initMainListUiElms();
-  const plist = document.getElementById('paginated-list');
-  let html = '';
-  // rows
-  const rows = payload.rows;
-  for (let i = 0; i < rows.length; i++) {
-    let row = rows[i];
-      // renderPost uses DOMPurify.sanitize
-      html += renderPost(row);
-  }
-
-  plist.innerHTML = html;
-  QUERYING_UI.SEARCH.showSearchProgress(false);
-  RENDERBIND_UI.onAddedRows(plist);
-
-  _lastRenderedRequest = JSON.stringify(payload.request);
-}
-
-const renderConnections = function(payload) {
-  QUERYING_UI.initMainListUiElms();
-  const plist = document.getElementById('paginated-list');
-  let html = '';
-
-  // rows
-  const rows = payload.rows;
-  for (let i = 0; i < rows.length; i++) {
-    let row = rows[i];
-      // renderPerson uses DOMPurify.sanitize
-      html += RENDERBIND_UI.renderPerson(row, 'followResult');
-  }
-
-  plist.innerHTML = html;
-
-  IMAGE.resolveDeferredLoadImages(plist);
-  if (SETTINGS_UI.canRenderMastodonFollowOneButtons() === true) {
-    MASTODON.renderFollowOnMastodonButtons(plist);
-  }
-  
-  QUERYING_UI.SEARCH.showSearchProgress(false);
-  RENDERBIND_UI.onAddedRows(plist);
-  QUERYWORK_UI.requestTotalCount();
-  
-  _lastRenderedRequest = JSON.stringify(payload.request);
-}
 
 ES6.TRISTATE.initAll();
 QUERYWORK_UI.bindElements();
