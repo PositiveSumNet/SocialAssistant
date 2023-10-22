@@ -318,7 +318,7 @@ worker.onmessage = async function ({ data }) {
       renderPostStream(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.NETWORK_SIZE:
-      renderNetworkSize(data.payload);
+      QUERYING_UI.COUNT.renderNetworkSize(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.INUSE_TOPICS:
       _inUseTags = new Set(data.payload);
@@ -462,81 +462,6 @@ const confirmMdonServer = function() {
   return input;
 }
 
-const buildSearchRequestFromUi = function() {
-  const owner = STR.ensurePrefix(QUERYING_UI.OWNER.getOwnerFromUi(), '@');  // prefixed in the db
-  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-  const site = PAGETYPE.getSite(pageType);
-  const pageSize = SETTINGS.getPageSize();
-  const searchText = getUiValue('txtSearch');
-  const skip = QUERYING_UI.PAGING.calcSkip();
-  const mutual = getUiValue('chkMutual');
-  const favorited = getUiValue('chkFavorited');
-  const withRetweets = getUiValue('optWithRetweets');
-  const guessTopics = getUiValue('optGuessTopics');
-
-  const threadUrlKey = URLPARSE.getQueryParm(URL_PARM.THREAD) || '';
-
-  // conditional filters
-  let withUrl = getUiValue('optWithUrl');
-  let withMdon = site == SITE.TWITTER ? getUiValue('optWithMdon') : false;
-  let withEmail = site == SITE.TWITTER ? getUiValue('optWithEmail') : false;
-  
-  // if haven't yet clicked to the mastodon tab, we might still only have the cached mdon user
-  let myMastodonHandle = _mdonConnectedUser ? _mdonConnectedUser.Handle : undefined;
-  myMastodonHandle = myMastodonHandle || (_mdonRememberedUser ? _mdonRememberedUser.Handle : undefined);
-
-  const mdonFollowing = ES6.TRISTATE.getValue(chkMdonImFollowing);
-
-  const topic = getUiValue('cmbTopicFilter');
-
-  const orderBy = QUERYING_UI.ORDERING.getOrderByFromUi(pageType, threadUrlKey, topic);
-
-  const msg = { 
-    actionType: MSGTYPE.TODB.EXECUTE_SEARCH, 
-    pageType: pageType,
-    site: site,
-    networkOwner: owner, 
-    searchText: searchText, 
-    orderBy: orderBy,
-    skip: skip,
-    take: pageSize,
-    // post filters
-    withRetweets: withRetweets,
-    guessTopics: guessTopics,
-    topic: topic,
-    threadUrlKey: threadUrlKey,
-    // conn filters
-    mutual: mutual,
-    list: LIST_FAVORITES,
-    requireList: favorited,
-    withMdon: withMdon,
-    withEmail: withEmail,
-    withUrl: withUrl,
-    myMastodonHandle: myMastodonHandle,
-    mdonFollowing: mdonFollowing
-  };
-
-  return msg;
-}
-
-const makeNetworkSizeCounterKey = function(owner, pageType) {
-  return `${owner}-${pageType}`;
-}
-
-const clearCachedCountForCurrentRequest = function() {
-  const owner = QUERYING_UI.OWNER.getOwnerFromUi();
-  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-
-  if (!owner || !pageType) {
-    return;
-  }
-
-  const key = makeNetworkSizeCounterKey(owner, pageType);
-  if (_counterSet.has(key)) {
-    _counterSet.delete(key);
-  }
-}
-
 const requestTotalCount = function() {
   const owner = QUERYING_UI.OWNER.getOwnerFromUi();
   if (!owner) {
@@ -545,7 +470,7 @@ const requestTotalCount = function() {
   
   const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
   
-  const key = makeNetworkSizeCounterKey(owner, pageType);
+  const key = QUERYING_UI.COUNT.makeNetworkSizeCounterKey(owner, pageType);
   if (_counterSet.has(key)) {
     const counter = _counters.find(function(c) { return c.key === key; });
     if (counter && counter.value) {
@@ -569,7 +494,7 @@ const requestTotalCount = function() {
 const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
   QUERYING_UI.QUERY_STRING.conformAddressBarUrlQueryParmsToUi(leaveHistoryStackAlone, topic);
   
-  const msg = buildSearchRequestFromUi();
+  const msg = QUERYING_UI.REQUEST_BUILDER.buildSearchRequestFromUi();
   if (STR.hasLen(topic)) {
     msg.topic = topic;
   }
@@ -584,34 +509,12 @@ const executeSearch = function(forceRefresh, leaveHistoryStackAlone, topic) {
   
   if (forceRefresh) {
     // ensure that the follow count is re-requested
-    clearCachedCountForCurrentRequest();
+    QUERYING_UI.COUNT.clearCachedCountForCurrentRequest();
   }
 
   QUERYING_UI.SEARCH.showSearchProgress(true);
   _docLocSearch = document.location.search; // aids our popstate behavior
   worker.postMessage(msg);
-}
-
-const renderNetworkSize = function(payload) {
-  const uiPageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-  const uiOwner = QUERYING_UI.OWNER.getOwnerFromUi();
-  const dbOwnerSansPrefix = STR.stripPrefix(payload.request.networkOwner, '@');
-  
-  if (uiPageType != payload.request.pageType || uiOwner != dbOwnerSansPrefix) {
-    return; // page status has changed since request was made
-  }
-  
-  const key = makeNetworkSizeCounterKey(uiOwner, uiPageType);
-  let counter = _counters.find(function(c) { return c.key === key; });
-  
-  if (!counter) {
-    counter = {key: key};
-    _counters.push(counter); // surprising
-  }
-  
-  const count = payload.totalCount;
-  counter.value = count;  // cached for later
-  QUERYING_UI.PAGING.displayTotalCount(count);
 }
 
 const canRenderMastodonFollowOneButtons = function() {
