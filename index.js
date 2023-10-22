@@ -1,14 +1,15 @@
+// PUBLIC VARIABLES
 // avoid double-submit
 var _lastRenderedRequest = '';
 var _docLocSearch = '';
-
 // improves experience of deleting in owner textbox
 var _deletingOwner = false;
 var _deletingMdonRemoteOwner = false;
-
 // so we can reduce how many times we ask for (expensive) total counts
 var _counterSet = new Set();
 var _counters = [];
+
+// CHROME-LEVEL EVENTS
 
 // read out to initialize (using chrome.storage.local is more seure than localStorage)
 chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER], function(result) {
@@ -35,7 +36,7 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(re
   // console.log('userauth: ' + _mdonUserAuthToken);
 });
 
-
+// BINDINGS
 QUERYWORK_UI.bindWorker();
 RENDERBIND_UI.bindEvents();
 ES6.TRISTATE.initAll();
