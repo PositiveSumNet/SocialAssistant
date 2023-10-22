@@ -80,21 +80,6 @@ const onCopiedToDb = async function(cacheKeys) {
   await ensureCopiedToDb();
 }
 
-const onGotSavedCount = function(count, pageType, metadata) {
-  const site = PAGETYPE.getSite(pageType);
-  
-  switch (site) {
-    case SITE.MASTODON:
-      MASTODON.onGotSavedCount(count, metadata.ownerAccountId, MASTODON.getFollowDirectionFromPageType(pageType));
-      return;
-    case SITE.TWITTER:
-    default:
-      // no rendering planned
-      console.log('Saved ' + count);
-      break;
-  }
-}
-
 const ensureCopiedToDb = async function() {
   const kvps = await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
   
@@ -314,7 +299,7 @@ _worker.onmessage = async function ({ data }) {
       QUERYING_UI.FILTERS.TOPICS.adjustTopicFilterVizWhen();
       break;
     case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_COUNT:
-      onGotSavedCount(data.count, data.pageType, data.metadata);
+      QUERYWORK_UI.onGotSavedCount(data.count, data.pageType, data.metadata);
       break;
     case MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP:
       await SYNCFLOW.onFetchedForBackup(data.pushable);
@@ -522,12 +507,6 @@ const optSortByStars = document.getElementById('optSortByStars');
 // mastodon account typeahead hitting api
 const txtRemoteMdon = document.getElementById('txtMdonDownloadConnsFor');
 const mdonRemoteOwnerPivotPicker = document.getElementById('mdonRemoteOwnerPivotPicker');
-
-document.getElementById('cmbType').addEventListener('change', (event) => {
-  QUERYING_UI.PAGING.resetPage();
-  QUERYING_UI.FILTERS.setQueryOptionVisibility();
-  QUERYWORK_UI.executeSearch();
-});
 
 const btnClearThreadFilter = document.getElementById('btnClearThreadFilter');
 btnClearThreadFilter.onclick = function(event) {
