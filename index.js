@@ -95,10 +95,6 @@ const onGotSavedCount = function(count, pageType, metadata) {
   }
 }
 
-const getSavableCacheKvps = async function() {
-  return await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
-}
-
 const ensureInUseTopicsFilter = function() {
   worker.postMessage({
     actionType: MSGTYPE.TODB.GET_INUSE_TOPICS
@@ -106,7 +102,7 @@ const ensureInUseTopicsFilter = function() {
 }
 
 const ensureCopiedToDb = async function() {
-  const kvps = await getSavableCacheKvps();
+  const kvps = await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
   
   const xferring = document.getElementById('transferringMsg');
   // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
