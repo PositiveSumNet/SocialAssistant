@@ -38,22 +38,6 @@ chrome.storage.local.get([MASTODON.OAUTH_CACHE_KEY.USER_AUTH_TOKEN], function(re
   // console.log('userauth: ' + _mdonUserAuthToken);
 });
 
-// guides us as to which links to look for (e.g. so that if we're focused on mdon we don't distract the user with rendered email links)
-const getPersonRenderAnchorsRule = function() {
-  if (document.getElementById('optWithMdon').checked === true) {
-    return RENDER_CONTEXT.ANCHORS.MDON_ONLY;
-  }
-  else if (document.getElementById('optWithEmail').checked === true) {
-    return RENDER_CONTEXT.ANCHORS.EMAIL_ONLY;
-  }
-  else if (document.getElementById('optWithUrl').checked === true) {
-    return RENDER_CONTEXT.ANCHORS.EXTURL_ONLY;
-  }
-  else {
-    return RENDER_CONTEXT.ANCHORS.ALL;
-  }
-}
-
 // returns back a copy of the saved data
 const onCompletedSaveAndDelete = function(payload) {
   switch (payload.onSuccessType) {
@@ -317,7 +301,7 @@ const renderPost = function(post) {
 }
 
 const renderPerson = function(person, context) {
-  const renderAnchorsRule = getPersonRenderAnchorsRule();
+  const renderAnchorsRule = RENDERBIND_UI.getPersonRenderAnchorsRule();
   const filtered = QUERYING_UI.FILTERS.detailReflectsFilter();
   return RENDER.PERSON.renderPerson(person, context, renderAnchorsRule, filtered);
 }
@@ -356,7 +340,7 @@ const renderPostStream = function(payload) {
 
   plist.innerHTML = html;
   QUERYING_UI.SEARCH.showSearchProgress(false);
-  onAddedRows(plist);
+  RENDERBIND_UI.onAddedRows(plist);
 
   _lastRenderedRequest = JSON.stringify(payload.request);
 }
@@ -382,36 +366,10 @@ const renderConnections = function(payload) {
   }
   
   QUERYING_UI.SEARCH.showSearchProgress(false);
-  onAddedRows(plist);
+  RENDERBIND_UI.onAddedRows(plist);
   QUERYWORK_UI.requestTotalCount();
   
   _lastRenderedRequest = JSON.stringify(payload.request);
-}
-
-const configureGetEmbeddedVideo = function(a) {
-  a.onclick = function(event) {
-    const postUrlKey = RENDER.POST.getPostUrlKey(a);
-    const videoRes = SETTINGS.RECORDING.VIDEO_EXTRACTION.getPreferredVideoRes();
-    const squidlrUrl = STR.buildSquidlrUrl(postUrlKey, videoRes, true);
-    window.open(squidlrUrl, '_blank');
-    a.querySelector('span').textContent = 'Video launched and downloaded in a separate tab. Next time, try "Extract Videos" from our popup menu and then use the Backups -> Upload Videos feature.';
-    a.classList.remove('fw-bold');
-    a.classList.add('small');
-    return false;
-  }
-}
-
-const onAddedRows = function(container) {
-  const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
-  // tag & rate
-  Array.from(container.getElementsByClassName('postScoredTagger')).forEach(elm => RENDER.POST.TAGGING.configureTagAndRate(elm, pageType));
-  Array.from(container.getElementsByClassName('postAnotherTag')).forEach(elm => RENDER.POST.TAGGING.configureAddAnotherTag(elm, pageType));
-  // view thread
-  Array.from(container.getElementsByClassName('btnViewThread')).forEach(elm => QUERYING_UI.THREAD.configureViewThread(elm));
-  // simple favoriting
-  Array.from(container.getElementsByClassName("canstar")).forEach(a => FAVORITING_UI.configureFavoriting(a));
-  // video elements
-  Array.from(container.querySelectorAll('.embedsVideo .videoHeader a')).forEach(a => configureGetEmbeddedVideo(a));
 }
 
 ES6.TRISTATE.initAll();
