@@ -280,7 +280,7 @@ _worker.onmessage = async function ({ data }) {
       onCompletedSaveAndDelete(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.SUGGESTED_OWNER:
-      renderSuggestedOwner(data.payload);
+      RENDERBIND_UI.renderSuggestedOwner(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.MATCHED_OWNERS:
       renderMatchedOwners(data.payload);
@@ -339,22 +339,6 @@ const renderMatchedOwners = function(payload) {
     }
     
     IMAGE.resolveDeferredLoadImages(listOwnerPivotPicker);
-  }
-}
-
-const renderSuggestedOwner = function(payload) {
-  const owner = payload.owner;
-  if (!owner || !owner.Handle || owner.Handle.length === 0) {
-    return;
-  }
-  
-  const value = document.getElementById('txtOwnerHandle').value;
-  
-  if (!value || value.length === 0) {
-    document.getElementById('txtOwnerHandle').value = owner.Handle;
-    // we're doing a page init and so far it's empty, so let's
-    QUERYING_UI.PAGING.resetPage();
-    QUERYWORK_UI.executeSearch();
   }
 }
 
@@ -430,39 +414,7 @@ const onAddedRows = function(container) {
   Array.from(container.querySelectorAll('.embedsVideo .videoHeader a')).forEach(a => configureGetEmbeddedVideo(a));
 }
 
-// public variables for filter elements that we'll attach events to etc.
 ES6.TRISTATE.initAll();
-
-const txtOwnerHandle = document.getElementById('txtOwnerHandle');
-const txtSearch = document.getElementById('txtSearch');
-const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
-const followSearch = document.getElementById('txtSearch');
-const txtPageNum = document.getElementById('txtPageNum');
-
-// FILTERS
-// cell (1,1)
-const chkMutual = document.getElementById('chkMutual');
-
-// cell (1,2) conditional
-// twitter shows Mastodon radio button until it's clicked (then swaps it for I'm following on Mastodon tri-state checkbox)
-const optWithMdon = document.getElementById('optWithMdon');
-// mastodon always shows the tri-state checkbox
-const chkMdonImFollowing = document.getElementById('chkMdonImFollowing');
-
-// cell (1,3) conditional
-// twitter shows email option until Mastodon is clicked (then swaps it for Follow on Mastodon! button)
-const optWithEmail = document.getElementById('optWithEmail');
-
-// cell (2,1)
-const chkFavorited = document.getElementById('chkFavorited');
-// cell (2,2)
-const optWithUrl = document.getElementById('optWithUrl');
-// cell (2,3)
-const optClear = document.getElementById('optClear');
-
-// post option buttons
-const optWithRetweets = document.getElementById('optWithRetweets');
-
 QUERYWORK_UI.bindElements();
 SETTINGS_UI.bindElements();
 GHBACKUP_UI.bindElements();
