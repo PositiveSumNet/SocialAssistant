@@ -385,7 +385,7 @@ const renderPost = function(post) {
 const renderPerson = function(person, context) {
   const renderAnchorsRule = getPersonRenderAnchorsRule();
   const filtered = QUERYING_UI.FILTERS.detailReflectsFilter();
-  return RENDER.renderPerson(person, context, renderAnchorsRule, filtered);
+  return RENDER.PERSON.renderPerson(person, context, renderAnchorsRule, filtered);
 }
 
 const renderMatchedOwners = function(payload) {
@@ -642,23 +642,6 @@ const renderNetworkSize = function(payload) {
   QUERYING_UI.PAGING.displayTotalCount(count);
 }
 
-const initMainListUiElms = function() {
-  const owner = getUiValue('txtOwnerHandle');
-  if (STR.hasLen(owner)) {
-    optWithRetweets.style.display = 'inline-block';
-  }
-  else {
-    optWithRetweets.style.display = 'none';
-  }
-  
-  document.getElementById('paginated-list').replaceChildren();
-  document.getElementById('listOwnerPivotPicker').replaceChildren();
-  document.getElementById('txtSearch').setAttribute('placeholder', 'search...');
-
-  const pageGearTip = `Page size is ${SETTINGS.getPageSize()}. Click to modify.`;
-  document.getElementById('pageGear').setAttribute("title", pageGearTip);
-}
-
 const canRenderMastodonFollowOneButtons = function() {
   const site = SETTINGS.getCachedSite();
   const mdonMode = getUiValue('optWithMdon');
@@ -666,7 +649,7 @@ const canRenderMastodonFollowOneButtons = function() {
 }
 
 const renderPostStream = function(payload) {
-  initMainListUiElms();
+  QUERYING_UI.initMainListUiElms();
   const plist = document.getElementById('paginated-list');
   let html = '';
   // rows
@@ -685,7 +668,7 @@ const renderPostStream = function(payload) {
 }
 
 const renderConnections = function(payload) {
-  initMainListUiElms();
+  QUERYING_UI.initMainListUiElms();
   const plist = document.getElementById('paginated-list');
   let html = '';
 
@@ -1027,7 +1010,7 @@ listOwnerPivotPicker.onclick = function(event) {
 };
 
 const onChooseOwner = function() {
-  initMainListUiElms();
+  QUERYING_UI.initMainListUiElms();
   listOwnerPivotPicker.replaceChildren();
   QUERYING_UI.PAGING.resetPage();
   executeSearch();
@@ -1041,88 +1024,6 @@ btnClearCache.addEventListener('click', async () => {
   }
   return true;
 });
-
-// a full page refresh is in order (helps avoid disk log + redraws the full page)
-document.getElementById('uploadDone').onclick = function(event) {
-  // a full page refresh is in order
-  location.reload();
-  return false;
-};  
-
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-  _dropArea.addEventListener(eventName, ES6.preventDragBehaviors, false)   
-  document.body.addEventListener(eventName, ES6.preventDragBehaviors, false)
-});
-
-// Highlight drop area when item is dragged over it
-['dragenter', 'dragover'].forEach(eventName => {
-  _dropArea.addEventListener(eventName, highlightDropArea, false)
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-  _dropArea.addEventListener(eventName, unhighlightDropArea, false)
-});
-
-// Handle dropped files
-_dropArea.addEventListener('drop', handleDrop, false);
-
-_fileElem.addEventListener('change', (event) => {
-  handleUploadFiles(event.target.files);
-});
-
-const handleUploadFiles = function(files) {
-  files = [...files];
-  files.forEach(processVideoUpload);
-}
-
-function highlightDropArea(e) {
-  _dropArea.classList.add('highlightDropArea');
-}
-
-function unhighlightDropArea(e) {
-  _dropArea.classList.remove('active');
-}
-
-function handleDrop(e) {
-  var dt = e.dataTransfer;
-  var files = dt.files;
-
-  handleUploadFiles(files);
-}
-
-// stackoverflow.com/questions/24886628/upload-file-inside-chrome-extension
-// stackoverflow.com/questions/61012790/how-to-read-large-video-files-in-javascript-using-filereader
-const processVideoUpload = function(file) {
-  const reader = new FileReader();
-
-  // set the event for when reading completes
-  reader.onload = async function(e) {
-    const uploadedCntElem = document.getElementById('uploadedCnt');
-    uploadedCntElem.innerText = parseInt(uploadedCntElem.innerText) + 1;
-    // base64.guru/converter/encode/video
-    // outputs e.g.:
-    // data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAA...
-    let buffer = e.target.result;
-    console.log(buffer);
-    // outputs e.g.: 'scafaria_status_1626566689864163329 (1).mp4'
-    console.log(reader.fileName);
-    // let videoBlob = new Blob([new Uint8Array(buffer)], { type: 'video/mp4' });
-    // let url = window.URL.createObjectURL(videoBlob);
-
-    onProcessedUploadBatch();
-  }
-
-  // start reading
-  // stackoverflow.com/questions/36280818/how-to-convert-file-to-base64-in-javascript
-  reader.fileName = file.name;
-  // bacancytechnology.com/qanda/javascript/javascript-using-the-filereader-api
-  reader.readAsDataURL(file);
-}
-
-const onProcessedUploadBatch = function() {
-  const processedCntElem = document.getElementById('uploadProcessedCnt');
-  processedCntElem.innerText = parseInt(processedCntElem.innerText) + 1;
-}
 
 /************************/
 // Github Backup
@@ -1181,68 +1082,16 @@ const activateGithubTab = async function(pageType) {
     updateForSite();
   }
 
-  await unveilGithubUi(pageType);
+  await TABS_UI.SYNC.unveilGithubUi(pageType);
 }
 
-const unveilGithubUi = async function(pageType) {
-  switch (pageType) {
-    case PAGETYPE.GITHUB.BACKUP:
-      await TABS_UI.SYNC.activateGhBackupTab();
-      break;
-    case PAGETYPE.GITHUB.RESTORE:
-      await TABS_UI.SYNC.activateGhRestoreTab();
-      break;
-    case PAGETYPE.GITHUB.CONFIGURE:
-    default:
-      await TABS_UI.SYNC.activateGhConfigureTab();
-      break;
-  }
-}
-
-document.getElementById('ghConfigDataTab').onclick = async function(event) {
-  GHCONFIG_UI.setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.DATA);
-  await GHCONFIG_UI.reflectGithubTokenStatus();
-  return false;
-}
-document.getElementById('ghConfigVideosTab').onclick = async function(event) {
-  GHCONFIG_UI.setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.VIDEOS);
-  await GHCONFIG_UI.reflectGithubTokenStatus();
-  return false;
-}
-
-document.getElementById('btnCancelGithubToken').onclick = async function(event) {
-  // the goal is to switch back to the tab of the token type that we do have
-  const hasDataToken = await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.DATA);
-  const hasVideoToken = await SETTINGS.GITHUB.hasSyncToken(GITHUB.REPO_TYPE.VIDEOS);
-  if (hasDataToken == true) {
-    GHCONFIG_UI.setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.DATA);
-  }
-  else if (hasVideoToken == true) {
-    GHCONFIG_UI.setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.VIDEOS);
-  }
-  await GHCONFIG_UI.reflectGithubTokenStatus();
-  return false;
-}
-
-document.getElementById('ghConfigureTab').onclick = async function(event) {
-  await TABS_UI.SYNC.activateGhConfigureTab();
-  return false;
-}
-document.getElementById('ghBackupTab').onclick = async function(event) {
-  await TABS_UI.SYNC.activateGhBackupTab();
-  return false;
-}
-document.getElementById('ghRestoreTab').onclick = async function(event) {
-  await TABS_UI.SYNC.activateGhRestoreTab();
-  return false;
-}
-
+TABS_UI.bindElements();
 GHCONFIG_UI.bindElements();
 
 const updateForSite = function() {
   
   const site = SETTINGS.getCachedSite();
-  initMainListUiElms();
+  QUERYING_UI.initMainListUiElms();
   _lastRenderedRequest = '';
   
   const owner = SETTINGS.getCachedOwner(site);
