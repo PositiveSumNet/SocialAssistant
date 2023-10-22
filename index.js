@@ -647,47 +647,6 @@ cmbTopicFilter.addEventListener('change', (event) => {
   QUERYWORK_UI.executeSearch();
 });
 
-// searching
-const handleTypeSearch = ES6.debounce((event) => {
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-}, 250);
-// ... uses debounce
-followSearch.addEventListener('input', handleTypeSearch);
-
-// hit enter on page number
-txtPageNum.addEventListener('keydown', function(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    QUERYWORK_UI.executeSearch();
-  }
-});
-
-const handleFromClickedOwner = function(event) {
-  const personElm = ES6.findUpClass(event.target, 'person');
-  if (!personElm) {
-    console.log('Errant owner click');
-    return;
-  }
-  const handleElm = personElm.querySelector('.personLabel .personHandle');
-  let handleText = handleElm.innerText;
-  handleText = STR.stripPrefix(handleText, '@');
-  return handleText;
-}
-
-// typeahead for account owner
-// w3collective.com/autocomplete-search-javascript/
-const ownerSearch = ES6.debounce((event) => {
-  const userInput = getUiValue('txtOwnerHandle');
-
-  if (!userInput || userInput.length === 0) {
-    listOwnerPivotPicker.replaceChildren();
-  }
-  
-  QUERYWORK_UI.suggestAccountOwner(userInput);
-}, 250);
-txtOwnerHandle.addEventListener('input', ownerSearch);
-
 QUERYWORK_UI.bindElements();
 SETTINGS_UI.bindElements();
 GHBACKUP_UI.bindElements();
