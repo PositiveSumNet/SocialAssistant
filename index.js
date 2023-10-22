@@ -267,7 +267,7 @@ _worker.onmessage = async function ({ data }) {
       RENDERBIND_UI.renderSuggestedOwner(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.MATCHED_OWNERS:
-      renderMatchedOwners(data.payload);
+      RENDERBIND_UI.renderMatchedOwners(data.payload);
       break;
     case MSGTYPE.FROMDB.RENDER.CONNECTIONS:
       renderConnections(data.payload);
@@ -300,32 +300,6 @@ const renderPost = function(post) {
   return RENDER.POST.renderPost(post, site);
 }
 
-const renderPerson = function(person, context) {
-  const renderAnchorsRule = RENDERBIND_UI.getPersonRenderAnchorsRule();
-  const filtered = QUERYING_UI.FILTERS.detailReflectsFilter();
-  return RENDER.PERSON.renderPerson(person, context, renderAnchorsRule, filtered);
-}
-
-const renderMatchedOwners = function(payload) {
-  const owners = payload.owners;
-  listOwnerPivotPicker.replaceChildren();
-  
-  if (owners.length === 1 && !_deletingOwner) {
-    // exact match; pick it! (after an extra check that the user isn't 
-    // trying to delete, in which case auto-complete would be annoying)
-    txtOwnerHandle.value = STR.stripPrefix(owners[0].Handle, '@');
-    QUERYWORK_UI.onChooseOwner();
-  }
-  else {
-    for (i = 0; i < owners.length; i++) {
-      // renderPerson uses DOMPurify.sanitize
-      listOwnerPivotPicker.innerHTML += renderPerson(owners[i], 'owner');
-    }
-    
-    IMAGE.resolveDeferredLoadImages(listOwnerPivotPicker);
-  }
-}
-
 const renderPostStream = function(payload) {
   QUERYING_UI.initMainListUiElms();
   const plist = document.getElementById('paginated-list');
@@ -355,7 +329,7 @@ const renderConnections = function(payload) {
   for (let i = 0; i < rows.length; i++) {
     let row = rows[i];
       // renderPerson uses DOMPurify.sanitize
-      html += renderPerson(row, 'followResult');
+      html += RENDERBIND_UI.renderPerson(row, 'followResult');
   }
 
   plist.innerHTML = html;
