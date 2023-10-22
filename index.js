@@ -562,32 +562,6 @@ const getOwnerFromUi = function() {
   return owner;
 }
 
-const getOrderByFromUi = function(threadUrlKey, topic) {
-  const pageType = getPageType();
-  switch (pageType) {
-    case PAGETYPE.TWITTER.TWEETS:
-    case PAGETYPE.MASTODON.TOOTS:
-      if (STR.hasLen(threadUrlKey)) {
-        // thread-view shows oldest first
-        return ORDER_BY.POST_TIME_ASC;
-      }
-      else if (STR.hasLen(topic)) {
-        if (SETTINGS.getSortByStars() == true) {
-          return ORDER_BY.POST_RATING;
-        }
-        else {
-          return ORDER_BY.POST_TIME_DESC;
-        }
-      }
-      else {
-        // default
-        return ORDER_BY.POST_TIME_DESC;
-      }
-    default:
-      return ORDER_BY.HANDLE;
-  }
-}
-
 const buildSearchRequestFromUi = function() {
   const owner = STR.ensurePrefix(getOwnerFromUi(), '@');  // prefixed in the db
   const pageType = getPageType();
@@ -615,7 +589,7 @@ const buildSearchRequestFromUi = function() {
 
   const topic = getUiValue('cmbTopicFilter');
 
-  const orderBy = getOrderByFromUi(threadUrlKey, topic);
+  const orderBy = QUERYING_UI.ORDERING.getOrderByFromUi(pageType, threadUrlKey, topic);
 
   const msg = { 
     actionType: MSGTYPE.TODB.EXECUTE_SEARCH, 
