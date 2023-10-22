@@ -406,26 +406,6 @@ const getUiValue = function(id) {
   }
 }
 
-// site tab is twitter and clicked to filter to mastodon
-const onClickedMdonOption = function() {
-  // ensure we prompt for server on first-time click of 'w/ mastodon' without them having to click the gear
-  ensureAskedMdonServer();
-  
-  QUERYING_UI.FILTERS.setQueryOptionVisibility();
-
-  // continue even if user cancelled the chance to input a mdon server
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();  
-}
-
-const ensureAskedMdonServer = function() {
-  const asked = SETTINGS.getAskedMdonServer();
-  
-  if (!asked) {
-    SETTINGS_UI.confirmMdonServer();
-  }
-}
-
 const canRenderMastodonFollowOneButtons = function() {
   const site = SETTINGS.getCachedSite();
   const mdonMode = getUiValue('optWithMdon');
@@ -585,67 +565,6 @@ const setOneThreadState = function(threadUrlKey) {
     container.classList.remove('oneThread');
   }
 }
-
-chkMutual.addEventListener('change', (event) => {
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
-chkFavorited.addEventListener('change', (event) => {
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
-optWithMdon.addEventListener('change', (event) => {
-  onClickedMdonOption();
-});
-optWithEmail.addEventListener('change', (event) => {
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
-optWithUrl.addEventListener('change', (event) => {
-  QUERYING_UI.FILTERS.setQueryOptionVisibility();
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
-chkMdonImFollowing.addEventListener('change', (event) => {
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
-optClear.addEventListener('change', (event) => {
-  QUERYING_UI.FILTERS.setQueryOptionVisibility();
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
-
-optWithRetweets.onclick = function(event) {
-  optWithRetweets.classList.toggle('toggledOn');
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-  return false;
-};
-
-optGuessTopics.onclick = function(event) {
-  optGuessTopics.classList.toggle('toggledOn');
-  QUERYING_UI.FILTERS.TOPICS.setTopicFilterVisibility();
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-  return false;
-};
-
-optSortByStars.onclick = function(event) {
-  optSortByStars.classList.toggle('toggledOn');
-  const shouldSortByStars = getUiValue('optSortByStars');
-  SETTINGS.setSortByStars(shouldSortByStars);
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-  return false;
-};
-
-const cmbTopicFilter = document.getElementById('cmbTopicFilter');
-cmbTopicFilter.addEventListener('change', (event) => {
-  QUERYING_UI.FILTERS.TOPICS.setTopicFilterModeInUi();
-  QUERYING_UI.PAGING.resetPage();
-  QUERYWORK_UI.executeSearch();
-});
 
 QUERYWORK_UI.bindElements();
 SETTINGS_UI.bindElements();
