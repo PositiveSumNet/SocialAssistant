@@ -688,14 +688,6 @@ const ownerSearch = ES6.debounce((event) => {
 }, 250);
 txtOwnerHandle.addEventListener('input', ownerSearch);
 
-// auto-populate with a few owners on-focus (if empty)
-txtOwnerHandle.onfocus = function () {
-  const userInput = this.value;
-  if (!userInput || userInput.length === 0) {
-    QUERYWORK_UI.suggestAccountOwner(userInput);
-  }
-};
-
 QUERYWORK_UI.bindElements();
 SETTINGS_UI.bindElements();
 GHBACKUP_UI.bindElements();
