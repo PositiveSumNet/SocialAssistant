@@ -46,3 +46,4 @@ GHBACKUP_UI.bindElements();
 TABS_UI.bindElements();
 GHCONFIG_UI.bindElements();
 MDON_UI.bindElements();
+GHVIDEOUP_UI.bindElements();

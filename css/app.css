@@ -131,6 +131,7 @@ a {
   border: 2px dashed #ccc;
   border-radius: 20px;
   padding: 20px;
+  margin-top: 4px;
 }
 
 #drop-area.highlight {
