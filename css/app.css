@@ -124,7 +124,7 @@ a {
 }
 
 #uploadui {
-  width: 480px;
+  width: 600px;
 }
 
 #drop-area {
@@ -543,4 +543,8 @@ a.postAnotherTag {
 
 .border-light-top {
   border-top: solid 1px #ced4da;
+}
+
+.mediaContainer video {
+  max-width: 100%;
 }
