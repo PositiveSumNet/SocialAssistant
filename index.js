@@ -43,6 +43,7 @@ ES6.TRISTATE.initAll();
 QUERYWORK_UI.bindElements();
 SETTINGS_UI.bindElements();
 GHBACKUP_UI.bindElements();
+GHRESTORE_UI.bindElements();
 TABS_UI.bindElements();
 GHCONFIG_UI.bindElements();
 MDON_UI.bindElements();
