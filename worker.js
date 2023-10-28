@@ -25,6 +25,7 @@ importScripts('/lib/shared/appschema.js');
 importScripts('/lib/shared/syncflow.js');
 importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
+importScripts('/lib/worker/dbsyncsaver.js');
 importScripts('/lib/worker/twitterprofilesavemapper.js');
 importScripts('/lib/worker/twitterconnsavemapper.js');
 importScripts('/lib/worker/tweetsavemapper.js');
@@ -278,6 +279,9 @@ onmessage = (evt) => {
       break;
     case MSGTYPE.TODB.FETCH_FOR_RESTORE:
       fetchForRestore(evt.data);
+      break;
+    case MSGTYPE.TODB.SAVE_FOR_RESTORE:
+      DBSYNCSAVER.saveForRestore(evt.data.step, evt.data.data);
       break;
     default:
       break;
