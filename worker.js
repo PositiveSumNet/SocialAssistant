@@ -276,18 +276,33 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.FETCH_FOR_BACKUP:
       fetchForBackup(evt.data);
       break;
+    case MSGTYPE.TODB.FETCH_FOR_RESTORE:
+      fetchForRestore(evt.data);
+      break;
     default:
       break;
   }
 };
 
+const fetchForRestore = function(request) {
+  const pushStep = request.pushStep;
+  const dbFetchFn = SYNCFLOW.PUSH_EXEC.getDbFetchFn(pushStep[SYNCFLOW.STEP.type]);
+  const rows = dbFetchFn(pushStep);
+
+  postMessage({ 
+    type: MSGTYPE.FROMDB.CONTINUE_RESTORE, 
+    request: request,
+    rows: rows 
+  });
+}
+
 const fetchForBackup = function(request) {
   const step = request.step;
-  const pushable = SYNCFLOW.PUSH_EXEC.buildPushable(step);
+  const syncable = SYNCFLOW.PUSH_EXEC.buildPushable(step);
 
   postMessage({ 
     type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
-    pushable: pushable });
+    syncable: syncable });
 }
 
 const inputOwner = function(request) {
