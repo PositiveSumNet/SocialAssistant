@@ -33,6 +33,15 @@ importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
 importScripts('/lib/worker/connfetcher.js');
 importScripts('/lib/worker/postfetcher.js');
+importScripts('/lib/worker/syncimport/importmapperfactory.js');
+importScripts('/lib/worker/syncimport/networkfollowersimportmapper.js');
+importScripts('/lib/worker/syncimport/networkfollowingsimportmapper.js');
+importScripts('/lib/worker/syncimport/postimgsimportmapper.js');
+importScripts('/lib/worker/syncimport/postsimportmapper.js');
+importScripts('/lib/worker/syncimport/posttopicratingsimportmapper.js');
+importScripts('/lib/worker/syncimport/profilefavoritesimportmapper.js');
+importScripts('/lib/worker/syncimport/profileimgsimportmapper.js');
+importScripts('/lib/worker/syncimport/profilesimportmapper.js');
 
 self
   .sqlite3InitModule({
