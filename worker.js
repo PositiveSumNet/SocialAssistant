@@ -290,7 +290,7 @@ onmessage = (evt) => {
       fetchForRestore(evt.data);
       break;
     case MSGTYPE.TODB.SAVE_FOR_RESTORE:
-      DBSYNCSAVER.saveForRestore(evt.data.step, evt.data.data);
+      DBSYNCSAVER.saveForRestore(evt.data);
       break;
     default:
       break;
