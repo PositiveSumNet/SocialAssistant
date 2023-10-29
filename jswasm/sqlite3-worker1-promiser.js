@@ -23,7 +23,7 @@
 */
 'use strict';
 
-self.sqlite3Worker1Promiser = function callee(config = callee.defaultConfig){
+globalThis.sqlite3Worker1Promiser = function callee(config = callee.defaultConfig){
   
   if(1===arguments.length && 'function'===typeof arguments[0]){
     const f = config;
@@ -59,7 +59,7 @@ self.sqlite3Worker1Promiser = function callee(config = callee.defaultConfig){
       if(msgHandler && msgHandler.onrow){
         msgHandler.onrow(ev);
         return;
-      }        
+      }
       if(config.onunhandled) config.onunhandled(arguments[0]);
       else err("sqlite3Worker1Promiser() unhandled worker message:",ev);
       return;
@@ -86,10 +86,9 @@ self.sqlite3Worker1Promiser = function callee(config = callee.defaultConfig){
     if(1===arguments.length){
       msg = arguments[0];
     }else if(2===arguments.length){
-      msg = {
-        type: arguments[0],
-        args: arguments[1]
-      };
+      msg = Object.create(null);
+      msg.type = arguments[0];
+      msg.args = arguments[1];
     }else{
       toss("Invalid arugments for sqlite3Worker1Promiser()-created factory.");
     }
@@ -122,7 +121,7 @@ self.sqlite3Worker1Promiser = function callee(config = callee.defaultConfig){
     return p;
   };
 };
-self.sqlite3Worker1Promiser.defaultConfig = {
+globalThis.sqlite3Worker1Promiser.defaultConfig = {
   worker: function(){
     let theJs = "sqlite3-worker1.js";
     if(this.currentScript){
@@ -130,16 +129,16 @@ self.sqlite3Worker1Promiser.defaultConfig = {
       src.pop();
       theJs = src.join('/')+'/' + theJs;
       
-    }else{
+    }else if(globalThis.location){
       
-      const urlParams = new URL(self.location.href).searchParams;
+      const urlParams = new URL(globalThis.location.href).searchParams;
       if(urlParams.has('sqlite3.dir')){
         theJs = urlParams.get('sqlite3.dir') + '/' + theJs;
       }
     }
-    return new Worker(theJs + self.location.search);
+    return new Worker(theJs + globalThis.location.search);
   }.bind({
-    currentScript: self?.document?.currentScript
+    currentScript: globalThis?.document?.currentScript
   }),
   onerror: (...args)=>console.error('worker1 promiser error',...args)
 };
