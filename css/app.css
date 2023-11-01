@@ -454,7 +454,7 @@ a.postAnotherTag {
   display: none;
 }
 
-.btnViewThread {
+.floatright {
   display: block;
   float: right;
 }
@@ -548,3 +548,20 @@ a.postAnotherTag {
 .mediaContainer video {
   max-width: 100%;
 }
+
+.btnDelPost {
+  display: inline;
+}
+
+.btnDelPostConfirm, .btnDelPostCancel {
+  display: none;
+}
+
+.deleting .btnDelPost {
+  display: none;
+}
+
+.deleting .btnDelPostConfirm, .deleting .btnDelPostCancel {
+  display: inline;
+}
+
