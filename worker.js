@@ -54,7 +54,7 @@ self
       let scripts = getMigrationScripts();
       DBORM.start(scripts);
       // tell index.js that worker is ready to receive on-startup data
-      postMessage({ type: 'workerReady' });
+      postMessage({ type: MSGTYPE.FROMDB.WORKER_READY });
     } catch (e) {
       DBORM.LOGGING.error('Exception:', e.message);
     }

@@ -565,3 +565,10 @@ a.postAnotherTag {
   display: inline;
 }
 
+#transferringMsg {
+  color: #ddd;
+}
+
+#transferringMsg.completed {
+  color: #ffe34c;
+}
