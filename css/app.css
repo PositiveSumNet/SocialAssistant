@@ -348,8 +348,16 @@ input.textinput:focus {
   background-color: #e9ecef;
 }
 
-.postScoredTagger>select {
+.postScoredTaggers input[type=text] {
+  line-height: normal;
+}
+
+.postScoredTagger>select, .postScoredTagger>input[type=text] {
   color: #14416A;
+}
+
+.postScoredTagger>input[type=text] {
+  cursor: default;
 }
 
 .postScoredTagger.noneSelected {
@@ -366,6 +374,35 @@ input.textinput:focus {
 
 .postScoredTagger.noneSelected:hover .postTagStars {
   display: inline;
+}
+
+a.postTagCancel {
+  display: none;
+  border: solid 1px white;
+  background-color: #f5a11d;
+  color: white;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+a.postTagCancel:hover {
+  color: black;
+}
+
+.topicsPicker {
+  display: none;
+}
+
+.postScoredTaggers.pickingTag .postTagCancel {
+  display: inline-block;
+}
+
+.postScoredTaggers.pickingTag .topicsPicker {
+  display: block;
+}
+
+.postScoredTaggers.pickingTag .postTagStars, .postScoredTaggers.pickingTag .postScoredTagger.noneSelected:hover .postTagStars {
+  display: none;
 }
 
 .postScoredTagger.noneSelected .postTagStars:hover {
@@ -439,6 +476,10 @@ a.postAnotherTag {
 
 .postScoredTaggers.hasTag a.postAnotherTag {
   display: inline;
+}
+
+.postScoredTaggers.pickingTag a.postAnotherTag, .postScoredTaggers.pickingTag.hasTag a.postAnotherTag {
+  display: none;
 }
 
 #topicFilter {
@@ -571,4 +612,51 @@ a.postAnotherTag {
 
 #transferringMsg.completed {
   color: #ffe34c;
+}
+
+.topicsPicker {
+  background-color: #ececec;
+  border: solid 2px #ced4da;
+  margin: 6px;
+  padding: 6px;
+}
+
+.topicListItem {
+  display: inline-block;
+  border: solid 1px #ced4da;
+  background-color: white;
+  margin: 4px;
+  padding: 6px;
+}
+
+.topicListItem:hover, .topicListItem.active {
+  border: solid 1px #216CB1;
+  background-color: #216CB1;
+}
+
+.topicListItem:hover a, .topicListItem.active a {
+  color: white;
+}
+
+.topicListItem:first-of-type, .topicListItem:last-of-type {
+  border: solid 1px #f5a11d;
+}
+
+.btnDeprecateTopic {
+  display: none;
+  border: solid 1px #216CB1;
+  background-color: #216CB1;
+  padding: 0px;
+}
+
+.topicListItem:hover .btnDeprecateTopic {
+  display: block;
+}
+
+.topicListItem:first-of-type .btnDeprecateTopic, .topicListItem:last-of-type .btnDeprecateTopic {
+  display: none;
+}
+
+.btnDeprecateTopic {
+  cursor: pointer;
 }
