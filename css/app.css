@@ -364,7 +364,7 @@ input.textinput:focus {
   opacity: 40%;
 }
 
-.postScoredTagger.noneSelected:hover {
+.postScoredTagger.noneSelected:hover, .pickingTag .postScoredTagger.noneSelected {
   opacity: 100%;
 }
 
