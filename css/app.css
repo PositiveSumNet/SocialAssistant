@@ -711,3 +711,7 @@ ul.subtopicsUl {
 .topicListItem.active .subtopicsUl {
   display: block;
 }
+
+.addSubtopicBtn {
+  border: solid 1px #f5a11d; 
+}
