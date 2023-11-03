@@ -378,7 +378,7 @@ input.textinput:focus {
 
 a.postTagCancel {
   display: none;
-  border: solid 1px white;
+  border: solid 1px #14416A;
   background-color: #f5a11d;
   color: white;
   padding-left: 6px;
@@ -663,7 +663,7 @@ a.postAnotherTag {
 }
 
 .subTopicBtn a, .subTopicBtn a {
-  color: #14416A
+  color: #14416A;
 }
 
 .subTopicBtn:hover a, .subTopicBtn.active a {
