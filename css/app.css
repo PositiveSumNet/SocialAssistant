@@ -386,7 +386,9 @@ a.postTagCancel {
 }
 
 a.postTagCancel:hover {
-  color: black;
+  background-color: #216CB1;
+  border: solid 1px #f5a11d;
+  color: white;
 }
 
 .topicsPicker {
@@ -634,6 +636,10 @@ a.postAnotherTag {
   background-color: white;
   margin: 4px;
   padding: 6px;
+}
+
+ul.subtopicsUl {
+  padding-left: 0px;
 }
 
 .subTopicBtn {
