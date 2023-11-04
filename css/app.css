@@ -717,3 +717,21 @@ ul.subtopicsUl {
 .addSubtopicBtn {
   border: solid 1px #f5a11d; 
 }
+
+#listTopicPicker {
+  opacity: 100%;
+  background-color: #216CB1;
+  color: white;
+}
+
+.topicFilterWidth {
+  width: 60%;
+}
+
+#listTopicPicker>ul>li>ul {
+  display: none;
+}
+
+#listTopicPicker>ul>li:hover>ul {
+  display: block;
+}
