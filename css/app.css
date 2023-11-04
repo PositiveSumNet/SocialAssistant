@@ -642,7 +642,7 @@ ul.subtopicsUl {
   padding-left: 0px;
 }
 
-.subTopicBtn {
+.subtopicBtn {
   display: inline-block;
   border: solid 1px white;
   background-color: #ececec;
@@ -655,7 +655,7 @@ ul.subtopicsUl {
   background-color: #216CB1;
 }
 
-.subTopicBtn:hover, .subTopicBtn.active {
+.subtopicBtn:hover, .subtopicBtn.active {
   background-color: white;
   border: solid 1px #f5a11d;
 }
@@ -668,23 +668,23 @@ ul.subtopicsUl {
   color: #eef5fc;
 }
 
-.subTopicBtn a.subTopicLnk {
+.subtopicBtn a.subtopicLnk {
   color: #14416A;
 }
 
-.subTopicBtn:hover a.subTopicLnk, .subTopicBtn.active a.subTopicLnk {
+.subtopicBtn:hover a.subtopicLnk, .subtopicBtn.active a.subtopicLnk {
   color: black;
 }
 
-.subTopicBtn a.btnDeprecateSubtopic {
+.subtopicBtn a.btnDeprecateSubtopic {
   color: white;
 }
 
-.subTopicBtn:hover a.btnDeprecateSubtopic, .subTopicBtn.active a.btnDeprecateSubtopic {
+.subtopicBtn:hover a.btnDeprecateSubtopic, .subtopicBtn.active a.btnDeprecateSubtopic {
   color: #eef5fc;
 }
 
-.subTopicBtn.active a.subTopicLnk {
+.subtopicBtn.active a.subtopicLnk {
   font-weight: bold;
 }
 
@@ -692,7 +692,7 @@ ul.subtopicsUl {
   border: solid 1px #f5a11d;
 }
 
-.topicListItem:hover .btnDeprecateTopic, .subTopicBtn:hover .btnDeprecateSubtopic {
+.topicListItem:hover .btnDeprecateTopic, .subtopicBtn:hover .btnDeprecateSubtopic {
   display: block;
 }
 
