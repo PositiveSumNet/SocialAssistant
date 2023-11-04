@@ -390,9 +390,7 @@ a.postTagCancel {
 }
 
 a.postTagCancel:hover {
-  background-color: #216CB1;
-  border: solid 1px #f5a11d;
-  color: white;
+  color: #14416A;
 }
 
 .topicsPicker {
