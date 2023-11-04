@@ -352,8 +352,12 @@ input.textinput:focus {
   line-height: normal;
 }
 
-.postScoredTagger>select, .postScoredTagger>input[type=text] {
+.postScoredTagger>input[type=text] {
   color: #14416A;
+}
+
+.postTagText {
+  width: 33%;
 }
 
 .postScoredTagger>input[type=text] {
