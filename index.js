@@ -2,9 +2,10 @@
 // avoid double-submit
 var _lastRenderedRequest = '';
 var _docLocSearch = '';
-// improves experience of deleting in owner textbox
+// improves experience of deleting in autocomplete textbox
 var _deletingOwner = false;
 var _deletingMdonRemoteOwner = false;
+var _deletingTopicFilter = false;
 // so we can reduce how many times we ask for (expensive) total counts
 var _counterSet = new Set();
 var _counters = [];

@@ -282,6 +282,9 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.GET_INUSE_TOPICS:
       POSTFETCHER.ensureInUseTopicsFilter();
       break;
+    case MSGTYPE.TODB.SEARCH_INUSE_TOPICS:
+      POSTFETCHER.searchInUseTopics(evt.data);
+      break;
     case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
       savePageRecords(evt.data)
       break;

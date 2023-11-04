@@ -425,7 +425,8 @@
             <a data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
           </div>
           <div id="postQueryOptions" class="col-5 pt-2" style="display:none;">
-            <select id="cmbTopicFilter">
+            <input id="txtTopicFilter" type="text" class="form-control" placeholder="filter by topic" style="display:inline;width:60%;" data-toggle='tooltip' title='Tag and rate posts, then filter them here.'>
+            <select id="cmbTopicFilter" style="width: 100px;">
             </select>
             <a class="optToggle" href="#" id="optGuessTopics" data-toggle='tooltip' title='Guess topics'><i class='bi-magic'></i></a>
             <a class="optToggle" href="#" id="optWithRetweets" data-toggle='tooltip' title='Toggle whether to include retweets for selected account'><i class='bi-repeat'></i></a>
@@ -488,6 +489,7 @@
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>
         <div id='listOwnerPivotPicker' class='row pt-2'></div>
+        <div id='listTopicPicker' class='row pt-2'></div>
         <div id="filteredThreadSection" class="row">
           <div>
             <a href="#" id="btnClearThreadFilter"><i class="bi-x-circle"></i> Filtered by thread. Click to clear.</a>
