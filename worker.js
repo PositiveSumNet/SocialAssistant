@@ -273,7 +273,7 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.DELETE_ENTITY_SUBJECT_UX:
       DBORM.SAVING.deleteBySubject(evt.data, getAllEntities());
       break;
-    case MSGTYPE.TODB.DELETE_POSTCABLE_IMPORT:
+    case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
       DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
       break;
     case MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE:
