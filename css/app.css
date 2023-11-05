@@ -736,7 +736,7 @@ ul.biLevelMenu>li:hover>ul {
   display: none;
 }
 
-#postQueryOptions:hover #listTopicPicker>ul, #postQueryOptions.hovering #listTopicPicker>ul, #postQueryOptions.editingTopicFilter #listTopicPicker>ul {
+#postQueryOptions:hover #topicFilterCtrl:hover #listTopicPicker>ul, #postQueryOptions.hovering #topicFilterCtrl:hover #listTopicPicker>ul, #postQueryOptions.editingTopicFilter #listTopicPicker>ul {
   display: block;
 }
 
