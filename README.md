@@ -9,7 +9,8 @@ Install it at the Chrome app store [from here](https://whosum.com/assistant) or 
 Development is led by [Positive Sum Networks](https://positivesum.net), a New York based non-profit. PSN, together with the open source community, is building a suite of apps and services under the name [Whosum](https://whosum.com). Per the Whosum launch video 
 >"Who you are and who you know. We hold these WHOs to be self-evident as your property and your source of power." 
 
-This project is for "who you know". After installing, go to Chrome -> More Tools -> Extensions and click Details. Then turn it on. You should see an icon with '+Σ'. Click it to get started:
+After installing, go to Chrome -> More Tools -> Extensions and click Details. Then turn it on. You should see an icon with '+Σ'. Click it to get started:
+- NEW: Record, search, tag, and rate Tweets!
 - Record lists of Twitter followers/following
 - Review and search within follow lists to find Mastodon profile links and other helpful data.
 
@@ -19,11 +20,11 @@ Twitter is just the beginning. Our roadmap calls for helping individuals to pull
 
 We encourage developers to submit pull requests. We also look forward to collaborating with for-profit companies who share our vision of creating "digital robot butler" apps that *privately* leverage personal data as described [here](https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81). PSN aims to create the patterns and infrastructure that will allow [new economic models](https://prosocialcapitalism.com) to thrive, free from surveillance capitalism and manipulative business practices. 
 
-While this project is for "who you know", we invite you to also check out the Whosum ["possum passport"](https://whosum.com/prove) feature for portable identity ("who you are"). Together, these tools will allow decentralized and prosocial networking alternatives that extend experiences like Mastodon (which we also recommend!).
+We invite you to also check out the Whosum ["possum passport"](https://whosum.com/prove) feature for portable identity ("who you are"). Together, these tools will allow decentralized and prosocial networking alternatives that extend experiences like Mastodon (which we also recommend!).
 
 >>>>>>>>>>>>>>
 
-Developer notes for converting to Firefox. Manifest requires:
+Developer notes for converting to Firefox (SQLite OPFS is not yet supported by FF). Manifest requires:
 
 "background": {
     "scripts": ["background.js"]
