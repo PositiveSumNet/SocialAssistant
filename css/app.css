@@ -716,7 +716,6 @@ ul.subtopicsUl {
 
 #listTopicPicker {
   opacity: 100%;
-  background-color: #216CB1;
   color: white;
   display: block;
 }
@@ -725,19 +724,23 @@ ul.subtopicsUl {
   width: 60%;
 }
 
-ul.biLevelMenu>li>ul {
+ul.biLevelMenu>li>ul, ul.biLevelMenu>li>.menuBottomSpacer {
   display: none;
 }
 
-ul.biLevelMenu>li:hover>ul {
+ul.biLevelMenu>li:hover>ul, ul.biLevelMenu>li:hover>.menuBottomSpacer {
   display: block;
 }
 
-#listTopicPicker>ul {
+#listTopicPicker>ul, #listTopicPicker>.menuBottomSpacer {
   display: none;
 }
 
 #postQueryOptions:hover #topicFilterCtrl:hover #listTopicPicker>ul, #postQueryOptions.hovering #topicFilterCtrl:hover #listTopicPicker>ul, #postQueryOptions.editingTopicFilter #listTopicPicker>ul {
+  display: block;
+}
+
+#postQueryOptions:hover #topicFilterCtrl:hover #listTopicPicker>.menuBottomSpacer, #postQueryOptions.hovering #topicFilterCtrl:hover #listTopicPicker>.menuBottomSpacer, #postQueryOptions.editingTopicFilter #listTopicPicker>.menuBottomSpacer {
   display: block;
 }
 
@@ -751,4 +754,8 @@ ul.biLevelMenu>li:hover>ul {
 
 .topicFilterTopic:hover {
   font-weight: bold;
+}
+
+.menuBottomSpacer {
+  height: 5rem;
 }
