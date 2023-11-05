@@ -728,10 +728,30 @@ ul.subtopicsUl {
   width: 60%;
 }
 
-#listTopicPicker>ul>li>ul {
+ul.biLevelMenu>li>ul {
   display: none;
 }
 
-#listTopicPicker>ul>li:hover>ul {
+ul.biLevelMenu>li:hover>ul {
   display: block;
+}
+
+#listTopicPicker>ul {
+  display: none;
+}
+
+#postQueryOptions:hover #listTopicPicker>ul, #postQueryOptions.hovering #listTopicPicker>ul, #postQueryOptions.editingTopicFilter #listTopicPicker>ul {
+  display: block;
+}
+
+.topicFilterChoice:hover {
+  background-color: #eef5fc;
+}
+
+.subtopicFilterChoice:hover {
+  background-color: #ececec;
+}
+
+.topicFilterTopic:hover {
+  font-weight: bold;
 }
