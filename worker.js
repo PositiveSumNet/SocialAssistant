@@ -12,21 +12,35 @@
 // on startup
 // DBORM.LOGGING.log('Loading and initializing sqlite3 module...');
 importScripts('/jswasm/sqlite3.js');
+importScripts('/lib/dbui/topiclib.js');
 importScripts('/lib/shared/constants.js');
 importScripts('/lib/shared/pagetypes.js');
 importScripts('/lib/shared/settingslib.js');
 importScripts('/lib/shared/es6lib.js');
 importScripts('/lib/shared/strlib.js');
+importScripts('/lib/shared/cryptolib.js');
 importScripts('/lib/shared/appgraphs.js');
 importScripts('/lib/shared/datatypes.js');
 importScripts('/lib/shared/appschema.js');
+importScripts('/lib/shared/syncflow.js');
 importScripts('/lib/shared/queue.js');
 importScripts('/lib/worker/dbormlib.js');
+importScripts('/lib/worker/dbsyncsaver.js');
 importScripts('/lib/worker/twitterprofilesavemapper.js');
 importScripts('/lib/worker/twitterconnsavemapper.js');
+importScripts('/lib/worker/tweetsavemapper.js');
 importScripts('/lib/worker/mastodonconnsavemapper.js');
 importScripts('/lib/worker/savemapperfactory.js');
 importScripts('/lib/worker/connfetcher.js');
+importScripts('/lib/worker/postfetcher.js');
+importScripts('/lib/worker/syncimport/importmapperfactory.js');
+importScripts('/lib/worker/syncimport/networkimportmapper.js');
+importScripts('/lib/worker/syncimport/postimgsimportmapper.js');
+importScripts('/lib/worker/syncimport/postsimportmapper.js');
+importScripts('/lib/worker/syncimport/posttopicratingsimportmapper.js');
+importScripts('/lib/worker/syncimport/profilefavoritesimportmapper.js');
+importScripts('/lib/worker/syncimport/profileimgsimportmapper.js');
+importScripts('/lib/worker/syncimport/profilesimportmapper.js');
 
 self
   .sqlite3InitModule({
@@ -40,7 +54,7 @@ self
       let scripts = getMigrationScripts();
       DBORM.start(scripts);
       // tell index.js that worker is ready to receive on-startup data
-      postMessage({ type: 'workerReady' });
+      postMessage({ type: MSGTYPE.FROMDB.WORKER_READY });
     } catch (e) {
       DBORM.LOGGING.error('Exception:', e.message);
     }
@@ -66,11 +80,42 @@ const _script4Entities = [
   APPSCHEMA.SocialSourceIdentifier
 ];
 
+const _script8Entities = [
+  APPSCHEMA.SocialTopicSubtopic,
+  APPSCHEMA.SocialSubtopicKeyword,
+  APPSCHEMA.SocialPostTime,
+  APPSCHEMA.SocialPostAuthorHandle,
+  APPSCHEMA.SocialPostReplyToUrlKey,
+  APPSCHEMA.SocialPostThreadUrlKey,
+  APPSCHEMA.SocialPostReposter,
+  APPSCHEMA.SocialPostQuoteOf,
+  APPSCHEMA.SocialPostText,
+  APPSCHEMA.SocialPostSearchBlob,
+  APPSCHEMA.SocialPostCardSearchBlob,
+  APPSCHEMA.SocialPostCardText,
+  APPSCHEMA.SocialPostCardShortUrl,
+  APPSCHEMA.SocialPostCardFullUrl,
+  APPSCHEMA.SocialPostCardImgSourceUrl,
+  APPSCHEMA.SocialPostCardImgBinary,
+  APPSCHEMA.SocialPostRegImgSourceUrl,
+  APPSCHEMA.SocialPostRegImgBinary,
+  APPSCHEMA.SocialPostReplyCount,
+  APPSCHEMA.SocialPostLikeCount,
+  APPSCHEMA.SocialPostReshareCount,
+  APPSCHEMA.SocialPostSubtopicRating
+];
+
+const _script9Entities = [
+  APPSCHEMA.SocialPostEmbedsVideo
+];
+
 const getAllEntities = function() {
   const arr = [];
   // as we add more entities beyond the initial set, this array will be a superset
   arr.push(..._initialEntities);
   arr.push(..._script4Entities);
+  arr.push(..._script8Entities);
+  arr.push(..._script9Entities);
   return arr;
 }
 
@@ -100,7 +145,10 @@ const getMigrationScripts = function() {
   scripts.push(DBORM.MIGRATION.newScript(sql5, 5));
 
   // script 6 is because tables were case-sensitive before and should be case inensitive
-  const sql6 = `${writeMakeTablesCaseInsensitiveSql()}
+  const entsToMakeCaseInsensitive = [];
+  entsToMakeCaseInsensitive.push(..._initialEntities);
+  entsToMakeCaseInsensitive.push(..._script4Entities);
+  const sql6 = `${writeMakeTablesCaseInsensitiveSql(entsToMakeCaseInsensitive)}
     ${DBORM.MIGRATION.writeUpdateMigrationVersionSql(6)}`;
 
   scripts.push(DBORM.MIGRATION.newScript(sql6, 6));
@@ -108,6 +156,12 @@ const getMigrationScripts = function() {
   // script 7 is because import tables were case-sensitive before and should be case insensitive
   scripts.push(DBORM.MIGRATION.writeEnsureImportTablesScript(7, APPNAME, true));
 
+  const sql8 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script8Entities, 8);
+  scripts.push(DBORM.MIGRATION.newScript(sql8, 8));
+  
+  const sql9 = DBORM.MIGRATION.writeEnsureEntityTablesStep(_script9Entities, 9);
+  scripts.push(DBORM.MIGRATION.newScript(sql9, 9));
+  
   return scripts;
 }
 
@@ -177,9 +231,7 @@ const migrateToCaseInsensitiveSql = function(entity) {
   return sql;
 }
 
-const writeMakeTablesCaseInsensitiveSql = function() {
-  const entities = getAllEntities();
-
+const writeMakeTablesCaseInsensitiveSql = function(entities) {
   let sql = '';
   for (let i = 0; i < entities.length; i++) {
     let entity = entities[i];
@@ -204,13 +256,13 @@ onmessage = (evt) => {
       DBORM.SAVING.xferCacheToDb(evt.data);
       break;
     case MSGTYPE.TODB.SUGGEST_OWNER:
-      CONNFETCHER.suggestOwner(evt.data);
+      suggestOwner(evt.data);
       break;
-    case MSGTYPE.TODB.INPUT_FOLLOW_OWNER:
-      CONNFETCHER.inputFollowOwner(evt.data);
+    case MSGTYPE.TODB.INPUT_OWNER:
+      inputOwner(evt.data);
       break;
-    case MSGTYPE.TODB.NETWORK_SEARCH:
-      CONNFETCHER.networkSearch(evt.data);
+    case MSGTYPE.TODB.EXECUTE_SEARCH:
+      executeSearch(evt.data);
       break;
     case MSGTYPE.TODB.GET_NETWORK_SIZE:
       CONNFETCHER.getNetworkSize(evt.data);
@@ -218,19 +270,91 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.SET_LIST_MEMBER:
       DBORM.SAVING.setListMember(evt.data);
       break;
-    case MSGTYPE.TODB.EXPORT_BACKUP:
-      DBORM.EXPORT.exportBackup(evt.data, getAllEntities());
+    case MSGTYPE.TODB.DELETE_ENTITY_SUBJECT_UX:
+      DBORM.SAVING.deleteBySubject(evt.data, getAllEntities());
       break;
     case MSGTYPE.TODB.ON_RECEIVED_SYNCABLE_IMPORT:
       DBORM.IMPORT.receiveSyncableImport(evt.data, getAllEntities());
       break;
+    case MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE:
+      DBORM.SAVING.executeSaveAndDelete(evt.data);
+      break;
+    case MSGTYPE.TODB.SEARCH_INUSE_TOPICS:
+      POSTFETCHER.searchInUseTopics(evt.data);
+      break;
     case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
       savePageRecords(evt.data)
+      break;
+    case MSGTYPE.TODB.FETCH_FOR_BACKUP:
+      fetchForBackup(evt.data);
+      break;
+    case MSGTYPE.TODB.FETCH_FOR_RESTORE:
+      fetchForRestore(evt.data);
+      break;
+    case MSGTYPE.TODB.SAVE_FOR_RESTORE:
+      DBSYNCSAVER.saveForRestore(evt.data);
       break;
     default:
       break;
   }
 };
+
+const fetchForRestore = function(request) {
+  const pushStep = request.pushStep;
+  const dbFetchFn = SYNCFLOW.PUSH_EXEC.getDbFetchFn(pushStep[SYNCFLOW.STEP.type]);
+  const rows = dbFetchFn(pushStep);
+
+  postMessage({ 
+    type: MSGTYPE.FROMDB.CONTINUE_RESTORE, 
+    request: request,
+    rows: rows 
+  });
+}
+
+const fetchForBackup = function(request) {
+  const step = request.step;
+  const syncable = SYNCFLOW.PUSH_EXEC.buildPushable(step);
+
+  postMessage({ 
+    type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
+    syncable: syncable });
+}
+
+const inputOwner = function(request) {
+  switch (request.pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      POSTFETCHER.inputOwner(request);
+      break;
+    default:
+      CONNFETCHER.inputOwner(request);
+      break;
+  }
+}
+
+const suggestOwner = function(request) {
+  switch (request.pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      // to-do
+      break;
+    default:
+      CONNFETCHER.suggestOwner(request);
+      break;
+  }
+}
+
+const executeSearch = function(request) {
+  switch (request.pageType) {
+    case PAGETYPE.TWITTER.TWEETS:
+    case PAGETYPE.MASTODON.TOOTS:
+      POSTFETCHER.postSearch(request);
+      break;
+    default:
+      CONNFETCHER.networkSearch(request);
+      break;
+  }
+}
 
 const savePageRecords = function(data) {
   const recordCount = DBORM.SAVING.saveRecords(data);

@@ -27,20 +27,30 @@
         "lib/shared/settingslib.js", 
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
-        "lib/shared/bgfetchlib.js", 
+        "lib/shared/cryptolib.js", 
         "lib/shared/emojilib.js", 
-        "lib/content/urlparsing.js", 
+        "lib/shared/urlparsing.js", 
         "lib/content/recordinglib.js", 
         "lib/content/twitter/twitterparsing.js", 
         "lib/content/twitter/twitterfollowparsing.js", 
-        "lib/content/twitter/twitterfollowrecorder.js", 
+        "lib/content/twitter/twitterfollowrecorder.js",
+        "lib/content/twitter/twittertweetsrecorder.js",
+        "lib/content/twitter/twittertweetparsing.js",
+        "lib/content/nitter/nittertweetsrecorder.js",
+        "lib/content/nitter/nitterparsing.js", 
+        "lib/content/nitter/nittertweetparsing.js",
         "lib/content/nitter/nitterprofileparsing.js", 
+        "lib/content/embvideo/squiddy.js", 
         "lib/content/recorderfactory.js",
         "content.js"
       ],
+      "all_frames": true,
       "matches": [
-        "https://twitter.com/*",
-        "https://mobile.twitter.com/*"
+        "https://*.twitter.com/*",
+        "https://*.x.com/*",
+        "https://*.nitter.net/*",
+        "https://*.nitter.cz/*",
+        "https://*.squidlr.com/*"
       ]
     }
   ],
@@ -50,7 +60,8 @@
   "permissions": [
     "activeTab", 
     "storage", 
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "scripting"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"

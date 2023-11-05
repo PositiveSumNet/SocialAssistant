@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html style="width:375px; height:600px;" lang="en">
+<html style="width:450px; height:700px;" lang="en">
   <head>
     <title>Whosum Social Assistant</title>
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" >
@@ -7,6 +7,7 @@
     <link href="lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" >
   </head>
   <body class="p-4">
+    <a id="btnClose" href="#" style="display:block;float:right;top:0;" data-toggle='tooltip' title='Click to close this dialog box (it does not need to be open while you record data)'><i class="h3 bi-x"></i></a>
     <h1 style="font-family:Ink Free">Whosum Social Assistant</h1>
     <div id="termsSection">
       <h5>Terms of Use</h5>
@@ -17,49 +18,162 @@
       <button class="btn btn-primary" id="btnAgreeToTerms">I Agree</button>
     </div>
     <div id="appSection" style="display:none;">
-      <div id="twitterSection">
-        <h5 id="recordTwitterBanner">Record Twitter Follow List</h5>
-        <div id="runnableTwitterPageMsg" style="display:none;">
-          <div class="d-grid gap-2">
-            <button class="btn btn-primary ifRecording hideIfRecording" id="btnRecTwitterManualScroll">As I scroll manually</button>
-            <button class="btn btn-primary ifRecording hideIfRecording" id="btnRecTwitterAutoScroll">With auto-scroll</button>
-            <button class="btn btn-primary ifRecording hideIfNotRecording" id="btnRecTwitterStop">Stop recording</button>
+      <div id="notYetRecordingSection" class="appRecordingSection" style="display:none;">
+        <h5>Record <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span> to a personal database...</h5>
+        <div class="d-grid gap-3">
+          <button id="btnChooseManual" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can decide what content to record as you use Twitter.'>As I scroll manually</button>
+          <button id="btnChooseAutoScroll" class="btn btn-primary" data-toggle='tooltip' title='On the next screen you can set up an automated Twitter recording.'>With auto-scroll</button>
+          <button id="btnChooseThreadFinisher" style="display: none;" class="btn btn-secondary" data-toggle='tooltip' title='Finish recording potentially incomplete threads.'>For incomplete threads</button>
+          <button id="btnChooseVideoExtracter" style="display: none;" class="btn btn-secondary" data-toggle='tooltip' title='Extract embedded videos.'>Extract videos</button>
+          <div class="mt-2 small"><i class="bi-info-circle"></i> Concerned about X terms of use despite <a href="https://www.fbm.com/publications/what-recent-rulings-in-hiq-v-linkedin-and-other-cases-say-about-the-legality-of-data-scraping/" target="_blank">this</a>? Recording manually is more conservative, either via X, <a href="https://nitter.net/positivesumnet/with_replies" target="_blank">nitter.net</a> or <a href="https://nitter.cz/positivesumnet/with_replies" target="_blank">nitter.cz</a>.<br></div>
+        </div>
+        <br>
+        <h5>When done, or for <span class="text-mastodon"><i class="bi-mastodon"></i> Mastodon</span> <span class="small">(<a href="https://www.youtube.com/watch?v=Bif2HLXSMhs" target="_blank">per video</a>)</span>...</h5>
+        <div class="d-grid gap-3">
+          <button id="btnReviewDb" class="btn btn-success" data-toggle='tooltip' title='The database lets you work with Twitter data you recorded and lets you pull in Mastodon data.'>Review the Database!</button>
+        </div>
+        <br>
+        <div><i class="bi-info-circle"></i> Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></div>
+      </div>
+      <div id="navFinisherSection" class="appRecordingSection" style="display: none;">
+        <h5 id="finishVideosHeader">Click to save embedded videos:</h5>
+        <h5 id="finishThreadHeader">Click to visit and record rest of thread:</h5>
+        <div class="container-fluid pt-2">
+          <div class="row pb-1">
+            <div class='input-group col' id="videoResSection">
+              <label for='cmbVideoRes' class='text-muted input-group-text'>res</label>
+              <select id="cmbVideoRes" class="ps-2" data-toggle="tooltip" title="Choose your preferred video resolution (where available)">
+                <option value="high">hi-res</option>
+                <option value="medium">med-res</option>
+                <option value="lowest">lowest-res</option>
+              </select>
+            </div>
+            <div class='input-group col' id="navThreadHowSection">
+              <label for='cmbNavThreadHow' class='text-muted input-group-text'>via</label>
+              <select id="cmbNavThreadHow" class="ps-2">
+                <option value="x.com">Twitter</option>
+                <option value="nitter.net">Nitter.net</option>
+                <option value="nitter.cz">Nitter.cz</option>
+              </select>
+            </div>
+            <div style="font-size: 1.2rem;" class="col my-auto">
+              <a href="#" id="btnNavPrior" data-toggle="tooltip" title="Prior set"><i class="bi-arrow-left-circle"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnNavNext" data-toggle="tooltip" title="Next set"><i class="bi-arrow-right-circle"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnClearSelNav" data-toggle="tooltip" title="Dismiss suggestions shown"><i class="bi-trash"></i></a>
+              <span class='basicSep'> | </span>
+              <a href="#" id="btnClearNavAll" data-toggle="tooltip" title="Clear all suggestions"><i class="bi-trash-fill"></i></a>
+            </div>
+          </div>
+          <div class='input-group' id="navFilterSection">
+            <label for='txtNavFilterOwner' class='text-muted input-group-text'>for</label>
+            <input name="txtNavFilterOwner" id="txtNavFilterOwner" placeholder="@filterByAuthor" type="text" class="ps-2">
+            <a id="btnNavFilterOwner" href="#" class="btn btn-secondary"><i class="bi-filter-circle"></i> Filter</a>
+          </div>
+          <div id="nitterTipSection" class="small text-muted pt-2" style="visibility: hidden;">
+            <span>If you enjoy nitter, consider <a href="https://nitter.net/about" target="_blank">a donation</a>. We're not affiliated.</span>
+          </div>
+          <div id="squidlrTipSection" class="pt-2">
+            <span>Uses <a href="https://squidlr.com" target="_blank">Squidlr</a> to get video URLs. We're not affiliated.</span>
+          </div>
+          <div class="row p-3">
+            <select id="lstNavFinisher" size="10" class="p-1">
+            </select>
           </div>
         </div>
-        <div id="invalidTwitterPageMsg" style="display:none;">
-          <p style="color:#ff0000">Navigate to the 'followers' or 'following' list of a Twitter account to continue</p>
-          <p class="d-grid gap-2">
-            <a class="btn btn-primary" href="https://youtu.be/BGFnMst3RAk" target="_blank">Video tutorial</a>
-          </p>
-          <p class="d-grid gap-2">
-            <a class="btn btn-primary" href="https://twitter.com/positivesumnet/following" target="_blank">View an example page</a>
-          </p>
+        <div class="d-grid gap-3">
+          <button id="btnDoneNav" class="btn btn-primary" data-toggle='tooltip' title='Go to prior page.'>Done for now</button>
+        </div>
+      </div>
+      <div id="configureManualRecordingSection" class="appRecordingSection" style="display:none;">
+        <h5>While using <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span>, privately record:</h5>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="chkManualRecordsFollowLists">
+          <label class="form-check-label" for="chkManualRecordsFollowLists">Follow lists</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="chkManualRecordsTweets">
+          <label class="form-check-label" for="chkManualRecordsTweets">Tweets</label>
+        </div>
+        <div id="manualNonSelError" style="color:red;display:none;">Pick at least one above</div>
+        <br>
+        <p><i class="bi-info-circle"></i> Recording will stop in <code id="startClockFor">10:00</code> minutes -- or sooner if you return here and click 'Stop Recording'.</p>
+        <p><i class="bi-info-circle"></i> You can focus on a specific date range <a id="linkManualSampleDateRange" href="#">like this</a>.</p>
+        <div class="d-grid gap-3">
+          <button id="btnStartManualRecording" class="btn btn-primary" data-toggle='tooltip' title='Click to close this dialog and start recording.'>Start Recording</button>
+          <button id="btnManualPreviewExamplePage" class="btn btn-secondary" data-toggle='tooltip' title='Click to view an example page.'>View Example Page</button>
+          <button id="btnEscapeManualRecordingConfig" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Cancel</button>
+        </div>
+      </div>
+      <div id="manuallyRecordingSection" class="appRecordingSection" style="display:none;">
+        <h5><i class="bi-camera-reels-fill"></i> Recording Twitter<span id="manuallyRecordingWhat"> (follows and tweets)</span></h5>
+        <p>Session expiration: <code id="sessionExpiration">10:00</code></p>
+        <div class="d-grid gap-3">
+          <button class="btn btn-primary" id="btnStopManualRecording" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
+          <button id="btnExtendTimer" class="btn btn-secondary">Extend Timer</button>
+          <button id="btnManualViewExamplePage" class="btn btn-secondary" data-toggle='tooltip' title='Click to view an example page.'>View Example Page</button>
+        </div>
+      </div>
+      <div id="configureAutoRecordingSection" class="appRecordingSection" style="display:none;">
+        <h5>For <span class="text-twitter"><i class="bi-twitter"></i> Twitter</span> User:</h5>
+        <div class='input-group'>
+          <label for='txtAutoRecordFor' id="lblAutoRecordFor" class='text-muted input-group-text'>@</label>
+          <input id='txtAutoRecordFor' style="max-width:250px;" type='text' placeholder='username' class='form-control' >
+        </div>
+        <br>
+        <h5>Auto-scroll and record:</h5>
+        <div class="form-check form-switch">
+          <input class="form-check-input optAutoHow" type="radio" name="optAutoRecord" id="optAutoRecordFollowing">
+          <label class="form-check-label" for="optAutoRecordFollowing">Who they follow</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input optAutoHow" name="optAutoRecord" type="radio" id="optAutoRecordFollowers">
+          <label class="form-check-label" for="optAutoRecordFollowers">Who follows them</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input optAutoHow" name="optAutoRecord" type="radio" id="optAutoRecordTweets">
+          <label class="form-check-label" for="optAutoRecordTweets">Their tweets</label> <span class="text-danger small" style="display:none;"> *choose Nitter or Twitter</span>
+        </div>
+        <div class="indented-from-switches text-muted">
+          <label for="txtAutoRecordPriorTo">(optional) prior to</label>
+          <input id="txtAutoRecordPriorTo" name="txtAutoRecordPriorTo" type="text" placeholder="mm/dd/yyyy">
+        </div>
+        <div id="autoNonSelError" style="color:red;display:none;"></div>
+        <br>
+        <div class="d-grid gap-3">
+          <button id="btnStartAutoRecording" class="btn btn-primary" data-toggle='tooltip' title='Click to close this dialog and start recording.'>Start Recording</button>
+          <button id="btnEscapeAutoRecordingConfig" class="btn btn-secondary" data-toggle='tooltip' title='Go to prior page.'>Cancel</button>
+        </div>
+        <br>
+        <p id="msgRecordingMayPause"><i class="bi-info-circle"></i> Recording may <span class="text-danger">pause</span> if you switch focus away from the Twitter tab.</p>
+      </div>
+      <div id="autoRecordingSection" class="appRecordingSection" style="display:none;">
+        <h5><i class="bi-camera-reels-fill"></i> Recording Twitter with auto-scroll</h5>
+        <h5 class="text-center text-primary"><a id="btnAutoRecordingWhat" href="#" data-toggle='tooltip' title='Click to return to the relevant tab.'>@userName tweets</a></h5>
+        <p class="small"><i class="bi-info-circle"></i> You can stop to review progress at any time and resume later</p>
+        <p class="small"><i class="bi-info-circle"></i> Try to reuse the same browser tab so you don't lose your place with the scroll</p>
+        <div class="d-grid gap-3">
+          <button class="btn btn-primary" id="btnStopAutoRecording" data-toggle='tooltip' title='Click to stop recording.'>Stop Recording</button>
         </div>
       </div>
       <br>
-      <div id="reviewDbSection">
-        <h5>Review Social Database</h5>
-        <div>
-          <div class="d-grid gap-2">
-            <button class="btn btn-primary" id="btnReviewDb">Review Database</button>
-          </div>
-        </div>
+      <div>
+        <a href="https://whosum.com/privacy" target="_blank">Privacy</a> |
+        <a href="https://whosum.com/terms" target="_blank">Terms</a> |
+        <a href="https://github.com/positivesumnet/socialassistant" target="_blank">Code</a> |
+        <a href='https://whosum.com/faq' target='_blank'>Help</a>
       </div>
+      <br>
+      <div class="text-center"><img src="/images/possum800.png" style="width:255px; height:170px;" alt="possum-mascot"></div>
     </div>
-    <br>
-    <div>
-      <a href="https://whosum.com/privacy" target="_blank">Privacy</a> |
-      <a href="https://whosum.com/terms" target="_blank">Terms</a> |
-      <a href="https://github.com/positivesumnet/socialassistant" target="_blank">Code</a> |
-      <a href='https://whosum.com/faq' target='_blank'>Help</a>
-    </div>
-    <br>
-    <div class="text-center"><img src="/images/possum800.png" style="width:255px; height:170px;" alt="possum-mascot"></div>
+    <script src='lib/shared/purify.min.js'></script>
     <script src="lib/shared/constants.js"></script>
+    <script src="lib/shared/es6lib.js"></script>
     <script src="lib/shared/pagetypes.js"></script>
     <script src="lib/shared/settingslib.js"></script>
     <script src="lib/shared/strlib.js"></script>
-    <script src="lib/content/urlparsing.js"></script>
+    <script src="lib/shared/urlparsing.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -1,6 +1,5 @@
-// background scraping
-var _bgScrapeRequests = [];
-const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
+var _lastSetBadgeText;
+var _badgeSetCounter = 0;
 
 /**************************/
 // ON-INSTALL
@@ -12,9 +11,11 @@ chrome.runtime.onInstalled.addListener((details) => {
   const previousVersion = details.previousVersion;
   const reason = details.reason;
   
-  console.log(`Previous Version: ${previousVersion }`);
-  console.log(`Current Version: ${currentVersion }`);
-
+  if (previousVersion != currentVersion) {
+    console.log(`Previous Version: ${previousVersion }`);
+    console.log(`Current Version: ${currentVersion }`);
+  }
+  
   switch (reason) {
     case 'install':
       console.log('New User installed the extension.');
@@ -57,10 +58,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse(saveResponse);
         return returnsData;
       case 'setBadge':
-        chrome.action.setBadgeText({text: request.badgeText});
+        fancySetBadge(request.badgeText);
         return returnsData;
-      case 'letsScrape':
-        await ensureQueuedScrapeRequests(request.nitterUrl, request.lastScrape);
+      case 'logMe':
+        console.log(request.data);
+        return returnsData;
+      case 'savedThreadToBg':
+        await onSavedThread(request.threadUrlKeys);
+        return returnsData;
+      case 'foundPartialThread':
+        await saveThreadExpansionUrlKey(request.threadUrlKey);
+        return returnsData;
+      case 'foundEmbeddedVideo':
+        await saveEmbeddedVideoUrlKey(request.urlKey);
         return returnsData;
       default:
         return returnsData;
@@ -69,53 +79,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return returnsData;
 });
 
-/******************************/
-// CSP HEADER STRIPPING
-// COMMENTED OUT FOR NOW
-/******************************/
-/*
-chrome.runtime.onInstalled.addListener(() => {
-  
-  // developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
-  const RULE = {
-    id: 1,
-    condition: {
-      initiatorDomains: [chrome.runtime.id],
-      requestDomains: [
-        'nitter.net',
-        'nitter.it',
-        'nitter.at'
-      ],
-      resourceTypes: ['sub_frame'],
-    },
-    action: {
-      type: 'modifyHeaders',
-      responseHeaders: [
-        {header: 'X-Frame-Options', operation: 'remove'},
-        {header: 'Content-Security-Policy', operation: 'set', value: ''},
-        {header: 'Cross-Origin-Resource-Policy', operation: 'set', value: 'cross-origin'},
-        {header: 'Cross-Origin-Embedder-Policy', operation: 'set', value: 'require-corp'}
-      ],
-    },
-  };
-  
-  chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: [RULE.id],
-    addRules: [RULE],
-  });
-});
-*/
-
 /**************************/
 // SAVING
 /**************************/
 
 const processSave = async function(request) {
   const records = request.payload;
-
-  if (request.skipImg64 != true) {
-    await injectImageBase64s(records);
-  }
+  await injectImageBase64s(records);
 
   saveToTempStorage(records);
   return {saved: records, success: true};
@@ -127,11 +97,21 @@ const processSave = async function(request) {
 const injectImageBase64s = async function(records) {
   for (let i = 0; i < records.length; i++) {
     let item = records[i];
-    if (item.imgCdnUrl) {
-      try {
+    if (!item.skipImg64) {
+      // a) the first way we can inject is simplest (by convention, imgCdnUrl gets an img64Url companion property)
+      if (item.imgCdnUrl) {
         item.img64Url = await getImageBase64(item.imgCdnUrl);
-      } catch (error) {
-        console.error(error);
+      }
+
+      // b) the other way we can inject is setting the img64Url companion property from RECORDING.infuseImgCdns
+      // (so that background.js can avoid knowledge of specific savable entities... especially since we don't yet use 'module' approach)
+      if (item.imgInfos && item.imgInfos.length > 0) {
+        for (let j = 0; j < item.imgInfos.length; j++) {
+          let imgInfo = item.imgInfos[j];
+          if (imgInfo.imgCdnUrl) {
+            imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
+          }
+        }
       }
     }
   }
@@ -150,178 +130,104 @@ const saveToTempStorage = function(records) {
 
 // stackoverflow.com/questions/57346889/how-to-return-base64-data-from-a-fetch-promise
 const getImageBase64 = async function(url) {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const reader = new FileReader();
-  await new Promise((resolve, reject) => {
-    reader.onload = resolve;
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-  return reader.result.replace(/^data:.+;base64,/, '')
-}
-
-/******************************************/
-// OFFSCREEN SCRAPING
-// groups.google.com/a/chromium.org/g/chromium-extensions/c/v0srmN-1hg0/m/QB7Hv74zAAAJ
-/******************************************/
-
-const hasDocument = async function() {
-  // Check all windows controlled by the service worker if one of them is the offscreen document
-  const matchedClients = await clients.matchAll();
-  for (const client of matchedClients) {
-    if (client.url.endsWith(OFFSCREEN_DOCUMENT_PATH)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-const scrapeRequestMatchesParsedUrl = function(request, parsedUrl) {
-
-  if (request.pageType != parsedUrl.pageType) {
-    return false;
-  }
-  
-  switch (request.pageType) {
-    case 'nitterProfile':
-      return handlesMatch(request.handle, parsedUrl.owner);
-    default:
-      return false;
-  }
-}
-
-const handlesMatch = function(h1, h2) {
-  if (!h1 || !h2) {return false;}
-
-  if (!h1.startsWith('@')) {
-    h1 = '@' + h1;
-  }
-  if (!h2.startsWith('@')) {
-    h2 = '@' + h2;
-  }
-
-  return h1.toLowerCase() == h2.toLowerCase();
-}
-
-const processLastScrape = function(parsedUrl) {
-  if (!parsedUrl) { return; }
-  
-  let removalCacheKey = '';
-  for (let i = 0; i < _bgScrapeRequests.length; i++) {
-    let request = _bgScrapeRequests[i];
-    if (scrapeRequestMatchesParsedUrl(request, parsedUrl) == true) {
-      _bgScrapeRequests.splice(i, 1);
-      removalCacheKey = request.cacheKey;
-      break;
-    }
-  }
-
-  // if we've now processed the last item, that storage item can be removed
-  if (_bgScrapeRequests.length == 0 && removalCacheKey.length > 0) {
-    chrome.storage.local.remove(removalCacheKey);
-  }
-  // tell listeners we just scraped this
-  chrome.runtime.sendMessage(
-    {
-      actionType: 'bgScraped',
-      parsedUrl: parsedUrl
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const reader = new FileReader();
+    await new Promise((resolve, reject) => {
+      reader.onload = resolve;
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
+    return reader.result.replace(/^data:.+;base64,/, '')
+  }
+  catch(err) {
+    console.log(`img64err: ${err}`);
+    return undefined;
+  }
 }
 
-// pass in an optional parsedUrl for a scrape that just completed
-const ensureQueuedScrapeRequests = async function(nitterUrl, lastScrape) {
-  // pull the last scrape out of the in-memory variable
-  // and if it was the last one, remove the cacheKey holding its batch
-  processLastScrape(lastScrape);
-  if (_bgScrapeRequests.length > 0) { 
-    // if there are more items already in the in-memory-queue to process, then we can just kick off the next one
-    await scrapeNext(nitterUrl);
+/**************************/
+// EMBEDDED VIDEOS
+/**************************/
+
+const saveEmbeddedVideoUrlKey = async function(urlKey) {
+  const EMBEDDED_VIDEO_URLKEY = 'embVideo-';
+  if (urlKey) {
+    const key = `${EMBEDDED_VIDEO_URLKEY}${urlKey}`;
+    await chrome.storage.local.set({ [key]: urlKey });
+  }
+}
+
+/**************************/
+// THREADS
+/**************************/
+
+// a clone of SETTINGs.RECORDING.removeThreadExpansionUrlKey
+// until we use "modules" approach to background though, can't stay DRY
+const saveThreadExpansionUrlKey = async function(threadUrlKey) {
+  const THREAD_EXPANSION_URLKEY = 'threadMore-';
+  if (threadUrlKey) {
+    const key = `${THREAD_EXPANSION_URLKEY}${threadUrlKey}`;
+    await chrome.storage.local.set({ [key]: threadUrlKey });
+  }
+}
+
+// a clone of SETTINGs.RECORDING.removeThreadExpansionUrlKey
+// until we use "modules" approach to background though, can't stay DRY
+const onSavedThread = async function(threadUrlKeys) {
+
+  for (let i = 0; i < threadUrlKeys.length; i++) {
+    let threadUrlKey = threadUrlKeys[i];
+    // this gives the user time to plunk around with the page
+    // i.e. in case they're scrolling through it etc. while reviewing threads to expand
+    // (and where not already recording manually)
+    // this is part of the popup's threaa expansion flow
+    setTimeout(async () => {
+      const THREAD_EXPANSION_URLKEY = 'threadMore-';
+      const key = `${THREAD_EXPANSION_URLKEY}${threadUrlKey}`;
+      await chrome.storage.local.remove(key);
+    }, 10000);
+  }
+}
+
+/**************************/
+// MISC
+/**************************/
+
+const fancySetBadge = function(text) {
+  chrome.action.setBadgeText({text: text});
+  
+  _badgeSetCounter++;
+  const isEven = (_badgeSetCounter % 2) == 0;
+  // toggle color
+  if (isEven == true || text == 'DONE') {
+    chrome.action.setBadgeBackgroundColor({color: "#1A73E8" });
   }
   else {
-    const all = await chrome.storage.local.get();
-    const entries = Object.entries(all);
-  
-    const clearCacheForTesting = false; // temporary aid to debugging
-  
-    for (const [key, val] of entries) {
-      // i.e. STORAGE_PREFIX.BG_SCRAPE
-      if (key.startsWith('bgscrape-')) {
-        if (clearCacheForTesting == true) {
-          // only relevant while testing
-          //console.log(key);
-          //console.log(val);
-          //chrome.storage.local.remove(key);
-        }
-        else {
-          // we only want to kick off one set of handles at a time, so...
-          // add handles to queue
-          enqueueScrapeRequests(val.data, val.pageType, key);
-          // kick off first scrape and
-          await scrapeNext(nitterUrl);
-          // exit without looping further
-          return;
-        }
-      }
+    chrome.action.setBadgeBackgroundColor({color: "#216CB1" });
+  }
+  _lastSetBadgeText = Date.now();
+}
+
+const getStorageValue = async function(key) {
+  const setting = await chrome.storage.local.get(key);
+  if (!setting) { return null; }
+  return setting[key];
+}
+
+// ensure badge clears out 
+const checkIfShouldAssumeDone = function() {
+
+  chrome.action.getBadgeText({}, function(result) {
+    if (result && result.startsWith('+') && _lastSetBadgeText && (Date.now() -_lastSetBadgeText) > 8000) {
+      fancySetBadge('DONE');
     }
-  }
-  //console.log('Done queueing background scrape requests');
-}
-
-// for now, the background scrape request always provides a set of handles as its data payload
-// if this changes, we'll build a switch statement on pageType
-const enqueueScrapeRequests = function(handles, pageType, cacheKey) {
-  for (let i = 0; i < handles.length; i++) {
-    _bgScrapeRequests.push({pageType: pageType, handle: handles[i], cacheKey: cacheKey});
-  }
-}
-
-const scrapeNext = async function(nitterUrl) {
-  if (_bgScrapeRequests.length === 0) {
-    //console.log('Done processing scrape queue for now');
-    return;
-  }
-
-  const request = _bgScrapeRequests[0];
-  switch (request.pageType) {
-    case 'nitterProfile':
-      await scrapeNitterProfile(request, nitterUrl);
-      break;
-    default:
-      break;
-  }
-}
-
-const ensureOffscreenDocument = async function() {
-  const hasDoc = await hasDocument();
-  if (hasDoc == true) { return; }
-
-  await chrome.offscreen.createDocument({
-    url: OFFSCREEN_DOCUMENT_PATH,
-    reasons: [chrome.offscreen.Reason.DOM_PARSER],
-    justification: 'Parse requested file in the background'
   });
+
+  // a long enough time period that we can really believe it's done
+  setTimeout(() => {
+    checkIfShouldAssumeDone();
+  }, 10000);  
 }
-
-const navigateOffscreenDocument = async function(url) {
-  
-  await ensureOffscreenDocument();
-
-  // this will help the content.js to know it's a background scrape request
-  chrome.storage.local.set({ ['bgScrapeUrl']: url });
-
-  // send a message to be picked up by offscreen.js
-  // and provided that the url is recognized by the manifest, 
-  // the content script (parser) should get loaded
-  chrome.runtime.sendMessage({
-    actionType: 'navFrameUrl',
-    url: url
-  });
-}
-
-// see notes at offscreen.js
-const scrapeNitterProfile = async function(request, nitterUrl) {
-  const handleOnly = request.handle.substring(1); // sans-@
-  const url = `${nitterUrl}/${handleOnly}`;
-  await navigateOffscreenDocument(url);
-}
+checkIfShouldAssumeDone();

@@ -10,7 +10,7 @@
     <link href='lib/bootstrap-icons/bootstrap-icons.css' rel='stylesheet' >
   </head>
   <body>
-    <div class='main container-fluid'>
+    <div id="mainContainer" class='main container-fluid'>
       <div class="row bg-header inkfree">
         <div class="col">
           <span class="h1"><a href="https://whosum.com" target="_blank">+Σ Whosum</a></span>
@@ -19,6 +19,7 @@
           <span class="h5 inkfree text-right my-auto">Locally Cached Social Database</span>
         </div>
       </div>
+      <div id="logMsgSection" class="d-none"></div>
       <div class="row bg-subheader">
         <div class="col">
           <ul class="nav nav-tabs" style="border-bottom:none;">
@@ -32,128 +33,302 @@
                 <i class="bi-mastodon"></i>
                 Mastodon</a>
             </li>
+            <li class="nav-item">
+              <a id="githubLensBtn" class="nav-link" href="#" data-toggle='tooltip' title='Backup and restore your Whosum data'>
+                <i class="bi-github"></i>
+                Backups</a>
+            </li>
           </ul>
         </div>
         <div class="col-sm-auto text-right">
           <span id='transferringMsg' style="display:none;">
-            Copying recent recordings to local database...  | 
-          </span>
-          <span>
-            <a href="#" id="showExportUiBtn" role="button" data-toggle='tooltip' title='export backup files'>Export</a>
-            <a href="#" id="stopExportBtn" role="button" data-toggle='tooltip' title='stop file backup' style="display:none;">Cancel Export</a>
-            <span>&nbsp;|&nbsp;</span>
-            <a href="#" id="startImportBtn" role="button" data-toggle='tooltip' title='import to restore'>Import</a>
-            <a href="#" id="stopImportBtn" role="button" data-toggle='tooltip' title='stop import' style="display:none;">Cancel Import</a>
+            <span id="transferringMsgPages">Copying recent recordings to local database...  | </span>
+            <span id="transferringMsgDetails"></span>
           </span>
         </div>
       </div>
-      <div id="exportui" class="row pb-2" style="display:none;">
-        <h3>Customize the Export</h3>
-        <p class="text-secondary">This will download a set of plain-text files (could be many). To later import, browse to your PC's Downloads folder and you can import in batch.</p>
-        <div id="exportOpts" class="row">
-          <div class="col">
-            <p class="h5 mt-3">For Whom</p>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomAll">
-              <label class="form-check-label" for="optExportWhomAll">All networks</label>
+      <div id="syncUi" class="row" style="display:none;padding:10px 20px;">
+        <ul class="nav nav-tabs" style="border-bottom:none;">
+          <li class="nav-item">
+            <a id="ghConfigureTab" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Configure a GitHub connection to support Backup/Restore'>
+              <i class="bi-github"></i>
+              Configure</a>
+          </li>
+          <li class="nav-item">
+            <a id="ghBackupTab" class="nav-link" aria-current="page" href="#" data-toggle='tooltip' title='Backup this database'>
+              <i class="bi-arrow-up-circle"></i>
+              Backup</a>
+          </li>
+          <li class="nav-item">
+            <a id="ghRestoreTab" class="nav-link" href="#" data-toggle='tooltip' title='Restore data into this database from a backup'>
+              <i class="bi-arrow-down-circle"></i>
+              Restore</a>
+          </li>
+        </ul>
+        <div id="githubConnFailureMsg" class="pt-2 text-danger d-none">Paste a token in the textbox before continuing.</div>
+        <div id="configureSyncUi" class="row pb-2" style="display:none;">
+          <div id="ghFirstTime">
+            <h3 class="pt-4">Configure a <a href="https://github.com" target="_blank"><i class="bi-github"></i> GitHub</a> account for backups and more</h3>
+            <div id="aWhyGitHub">
+              <p>
+                This application holds data locally on your PC in the browser's cache. 
+                It also supports a more permanent secure backup of your social data using 
+                <a href="https://github.com" target="_blank"><i class="bi-github"></i> GitHub</a>. 
+                GitHub is trusted by over 100 million programmers. 
+                While it's owned by Microsoft, your private repository remains private. 
+                It's therefore a great place to avoid <a href="https://scafaria.com/planning-the-human-centric-web-1bcd2b275a81" target="_blank">surveillance capitalism</a> while enjoying robust security at no charge. 
+                Don't worry, you will <b>not</b> need technical skills to set up an account. 
+              </p>
+              <p>
+                Once you <a href="https://github.com" target="_blank">create an account</a>, you'll be able to:
+              </p>
+              <ol>
+                <li>Backup and restore your data across devices</li>
+                <li>Upload extracted videos</li>
+                <li>Create a <a href="https://whosum.com/prove" target="_blank">portable identity</a></li>
+                <li><a href="https://scafaria.com/prosocial-micro-blogging-at-scale-7c4d45c063fd" target="_blank">More</a> coming soon!</li>
+              </ol>
             </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveSiteOnly">
-              <label class="form-check-label" id="optExportWhomActiveSiteOnlyLabel" for="optExportWhomActiveSiteOnly">This account type only</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveAccountFollowingOnly">
-              <label class="form-check-label" id="optExportWhomActiveAccountFollowingOnlyLabel" for="optExportWhomActiveAccountFollowingOnly">Followed by this account only</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhom" id="optExportWhomActiveAccountFollowersOnly">
-              <label class="form-check-label" id="optExportWhomActiveAccountFollowersOnlyLabel" for="optExportWhomActiveAccountFollowersOnly">Followers of this account only</label>
+            <div class="pt-2 ps-4">
+              <a href="#" id="btnDismissGithubFaq" role="button" class="btn btn-primary">I made my <i class="bi-github"></i> account. Let's go!</a>
             </div>
           </div>
-          <div class="col">
-            <p class="h5 mt-3">If Modified When</p>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenAll">
-              <label class="form-check-label" for="optExportWhenAll">All date ranges</label>
+          <div id="ghConfigureSection" style="display: none;">
+            <div id="ghConfiguredUi" style="display: none;">
+              <h3 class="pt-4"><i class="bi-github"></i> GitHub connectivity</h3>
+              <ul class="nav nav-tabs" style="border-bottom:none;">
+                <li class="nav-item">
+                  <a id="ghConfigDataTab" class="nav-link active" aria-current="page" href="#" data-toggle='tooltip' title='Configure the primary connection (used for data)'>
+                    <i class="bi-file-richtext"></i>
+                    Data</a>
+                </li>
+                <li class="nav-item">
+                  <a id="ghConfigVideosTab" class="nav-link" href="#" data-toggle='tooltip' title='Configure a connection for sync of videos'>
+                    <i class="bi-camera-video"></i>
+                    Videos</a>
+                </li>
+              </ul>
+              <div class="h5 p-1">
+                <img id="ghUserAvatar" src="/images/noprofilepic.png" alt="User" style="width: 50px; height: 50px;">
+                &nbsp;
+                <a id="ghUsername">--not connected--</a>
+              </div>
+              <div class="p-1">
+                <span>Connected </span>
+                <i id="ghConnCheck" class="bi-check-circle-fill text-success d-none"></i> 
+                <span id="ghLastConnOk">N/A</span>
+              </div>
+              <div class="p-1">
+                <label for="txtGithubRepoName">Repository </label>
+                <input type="text" name="txtGithubRepoName" id="txtGithubRepoName" style="width: 300px; text-align: left;">
+                <span id="ghPublicMsg" class="d-none">
+                  <span id="ghRepoIsPublic" class="d-none fw-bold">
+                    <i class="bi-unlock-fill"></i> Public!
+                  </span>
+                  <span id="ghRepoIsPrivate" class="d-none">
+                    <i class="bi-lock-fill"></i> Private
+                  </span>
+                </span>
+              </div>
+              <div class="pb-1 pt-4">
+                <a href="#" id="btnRetestGithubConn" role="button" class="btn btn-success">Test Connection</a>
+                <a href="#" id="btnResetGithubConn" role="button" class="btn btn-outline-danger ms-2">Reset Connection</a>
+              </div>
             </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastWeek">
-              <label class="form-check-label" for="optExportWhenLastWeek">In the last week</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastDay">
-              <label class="form-check-label" for="optExportWhenLastDay">In the last day</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optExportWhen" id="optExportWhenLastHour">
-              <label class="form-check-label" for="optExportWhenLastHour">In the last hour</label>
-            </div>
-          </div>
-          <div class="col">
-            <p class="h5 mt-3">Which Aspects</p>
-            <div class="ms-2" id="exportWhatDetail">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optExportWhatFollowers">
-                <label class="form-check-label" for="optExportWhatFollowers">Followers</label>
+            <div id="ghConfigurationUi">
+              <h3 id="ghConfigStartHeadline" class="pt-4">Connect this app to <a href="https://github.com" target="_blank"><i class="bi-github"></i> your GitHub account</a></h3>
+              <p id="ghConfigOneLiner">
+                Follow the steps below to connect this app with a sync repository that you own and control. 
+              </p>
+              <div id="ghConfigVideoBanner" class="alert alert-primary d-none" role="alert">
+                <i class="bi-camera-video"></i> 
+                Configure a second repository to hold <b class="repoType">Videos</b>. 
+                Give it a name like <code class="repoName">MyWhosumVideos</code> and create a separate token for it.
               </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optExportWhatFollowing">
-                <label class="form-check-label" for="optExportWhatFollowing">Following</label>
+              <ol>
+                <li>Ensure that you've finished account setup by <a href="https://docs.github.com/en/get-started/signing-up-for-github/verifying-your-email-address" target="_blank">verifying your email address</a>.</li>
+                <li id="ghCreateRepoBtn"><a href="https://github.com/new?name=MyWhosum&visibility=private" target="_blank">Click here</a> to create a new <code>private</code> repository. Give it a name like <code class="repoName">MyWhosum</code> (the actual name is up to you).</li>
+                <li>Remember to scroll down on that page and click <span class="text-success fw-bold">Create repository</span>. 😉 Then ignore the techie talk on the "Quick setup" screen; instead...</li>
+                <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Click here</a> to launch the page for a token that you'll configure <b>per Figure 1 below</b> <i class="bi-arrow-down-left"></i>.</li>
+                <li>After you click <span class="text-success fw-bold">Generate token</span>, click the clipboard icon to <b>copy</b> it and then <b>paste</b> it below <i class="bi-arrow-down-left"></i>.</li>
+                <li>Treat your token with care, as you would a password... except you don't need to remember it. Just create an additional token at any time (e.g. if you switch devices).</li>
+              </ol>
+              <div id="submitGhTokenSection">
+                <label for="txtGithubToken" class="text-muted">Paste code</label>
+                <input type="password" name="txtGithubToken" id="txtGithubToken" placeholder="github_pat_123456" style="width: 300px; border-right: 1px solid #ced4da; text-align: left;">
+                <a href="#" id="btnSubmitGithubToken" role="button" class="btn btn-primary">Connect!</a>
+                <a href="#" id="btnCancelGithubToken" role="button" class="btn btn-outline-secondary">Cancel</a>
               </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optExportDisplayNames">
-                <label class="form-check-label" for="optExportDisplayNames">Profile names</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optExportProfileDescriptions">
-                <label class="form-check-label" for="optExportProfileDescriptions">Profile descriptions</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optExportProfileLinks">
-                <label class="form-check-label" for="optExportProfileLinks">Profile links</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optExportPhotos">
-                <label class="form-check-label" for="optExportPhotos" data-toggle='tooltip' title='These files are relatively large'>Profile photos (big files)</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="optFollowerCounts">
-                <label class="form-check-label" for="optExportPhotos">Follower counts</label>
+              <br>
+              <div class="mt-4 p-2" style="border-top: solid 3px #ced4da; background-color: #ececec;">
+                <h3 class="inkfree">Figure 1</h3>
+                <p id="makeTokenTip">
+                  How to create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">token</a> with permission of <code>Contents: Read and write</code> for the <code class="repoName">MyWhosum</code> repository only:
+                </p>
+                <img id="ghTokenHelpImg" src="/images/ghpathelp.png" alt="Token generation screenshot" class="center">
               </div>
             </div>
           </div>
         </div>
-        <div class="p-4">
-          <a href="#" id="btnConfirmExport" role="button" class="btn btn-primary">Start Export</a>
-          <a href="#" id="btnCancelExport" role="button" class="btn btn-secondary ms-2">Cancel</a>
-        </div>
-      </div>
-      <div id="uploadui" class="row pb-2" style="display:none;">
-        <div id="powerUserImport" style="display:none;" class="ps-4">
-          <p class="h5">Context</p>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="optImportContext" id="optImportContextEntities">
-            <label class="form-check-label" for="optImportContextEntities">Simple import</label>
+        <div id="backupUi" class="row pb-2" style="display:none;">
+          <h3 class="pt-4">Backup Your Data</h3>
+          <div id="ghMfaSection" class="alert alert-primary alert-dismissible fade show d-none" role="alert" style="max-width: 50%;">
+            <a href="https://github.com/settings/two_factor_authentication/setup/intro" target="_blank">A friendly reminder to set up multi-factor authentication if you haven't already.</a>
+            <button id="btnDismissGhMfaTip" type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="optImportContext" id="optImportContextTwitterProfilesToScrape">
-            <label class="form-check-label" for="optImportContextTwitterProfilesToScrape">(advanced) Twitter profiles to scrape and save</label>
+          <div class="pb-1">
+            <span>Status: </span>
+            <i id="ghBackupStatusCheck" class="bi-check-circle-fill text-success d-none"></i> 
+            <i id="ghBackupStatusFail" class="bi-exclamation-circle-fill text-danger d-none"></i> 
+            <span id="ghBackupStatusMsg">ready</span><span class="priorSkipped text-secondary small d-none"> (prior step skipped; identical)</span>
+          </div>
+          <div id="exportFilterSection">
+            <div class="pt-2 pb-1 text-muted">
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithFavorites" id="optExportWithFavorites">
+                <label class="form-check-label" id="optExportWithFavoritesLabel" for="optExportWithFavorites">Favorites</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithProfiles" id="optExportWithProfiles">
+                <label class="form-check-label" id="optExportWithProfilesLabel" for="optExportWithProfiles">Profiles</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithAvatars" id="optExportWithAvatars">
+                <label class="form-check-label" id="optExportWithAvatarsLabel" for="optExportWithAvatars">Avatars</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithNetworks" id="optExportWithNetworks">
+                <label class="form-check-label" id="optExportWithNetworksLabel" for="optExportWithNetworks">Networks</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithTopics" id="optExportWithTopics">
+                <label class="form-check-label" id="optExportWithTopicsLabel" for="optExportWithTopics">Topics</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithPosts" id="optExportWithPosts">
+                <label class="form-check-label" id="optExportWithPostsLabel" for="optExportWithPosts">Posts</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportWithPostImages" id="optExportWithPostImages">
+                <label class="form-check-label" id="optExportWithPostImagesLabel" for="optExportWithPostImages">Images</label>
+              </span>
+            </div>
+            <div class="pb-3 text-muted">
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportTwitter" id="optExportTwitter">
+                <label class="form-check-label" id="optExportTwitterLabel" for="optExportTwitter">Twitter/X</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optExportMastodon" id="optExportMastodon">
+                <label class="form-check-label" id="optExportMastodonLabel" for="optExportMastodon">Mastodon</label>
+              </span>
+              <span class="ps-2" data-toggle='tooltip' title='optional author filter'>
+                <input type="text" name="optExportForAuthor" id="optExportForAuthor" placeholder="@optional_author_filter">
+              </span>
+              <span class="ps-2" data-toggle='tooltip' title='optional filter for date of posts'>
+                <input type="text" id="optExportPostsFrom" placeholder="mm/dd/yyyy" style="width: 100px;">
+                <span> - </span>
+                <input type="text" id="optExportPostsUntil" placeholder="mm/dd/yyyy" style="width: 100px;">
+              </span>
+            </div>
+          </div>
+          <div class="pb-1">
+            <a href="#" id="btnGhBkpStart" role="button" class="btn btn-primary">Start</a>
+            <a href="#" id="btnGhBkpPause" role="button" class="btn btn-secondary ms-2">Pause</a>
+            <a href="#" id="btnGhBkpRestart" role="button" class="btn btn-outline-secondary ms-2">Start Over</a>
+          </div>
+          <h3 class="pt-4">Upload Extracted Videos</h3>
+          <div id="needVideoConn" class="row pb-2 d-none">
+            <p>You can also back up videos that you've downloaded using our tool. 
+              But first, you'll need to configure a separate Videos repository.
+            </p>
+            <p>
+              <a href="#" id="btnSwitchToConfigVideos" role="button" class="btn btn-primary">Configure</a>
+            </p>
+          </div>
+          <div id="uploadui" class="row pb-2">
+            <div id="uploadPending" class="d-none">Processing...</div>
+            <div id="uploadSuccess" class="text-success d-none"><i class="bi-patch-check"></i> <span></span></div>
+            <div id="uploadError" class="text-danger d-none"><i class="bi-patch-exclamation"></i> <span></span></div>
+            <div id="drop-area">
+              <form>
+                <p>Upload one or more videos (click or drag & drop)</p>
+                <input type="file" id="fileElem" multiple accept="video/mp4">
+                <label class="upload-button" for="fileElem">Choose video files</label>
+              </form>
+            </div>
+            <div class="pt-3 ps-4">
+              <span>Received: </span><span id="uploadedCnt">0</span> | 
+              <span>Pushed to GitHub: </span><span id="uploadProcessedCnt">0</span>
+            </div>
+            <div class="pt-2 ps-4">
+              <a href="#" id="uploadDone" role="button" class="btn btn-primary">Done</a>
+            </div>
           </div>
         </div>
-        <br/>
-        <div id="drop-area">
-          <form class="my-form">
-            <p>Upload multiple files (click or drag & drop)</p>
-            <input type="file" id="fileElem" multiple accept="application/JSON">
-            <label class="upload-button" for="fileElem">Choose files</label>
-          </form>
-        </div>
-        <div class="pt-3 ps-4">
-          <span>Uploaded: </span><span id="uploadedCnt">0</span> | 
-          <span>Processed: </span><span id="uploadProcessedCnt">0</span>
-        </div>
-        <div class="pt-2 ps-4">
-          <a href="#" id="uploadDone" role="button" class="btn btn-primary">Done</a>
+        <div id="restoreUi" class="row pb-2" style="display:none;">
+          <h3 class="pt-4">Restore Your Data</h3>
+          <div class="pb-1">
+            <span>Status: </span>
+            <i id="ghRestoreStatusCheck" class="bi-check-circle-fill text-success d-none"></i> 
+            <i id="ghRestoreStatusFail" class="bi-exclamation-circle-fill text-danger d-none"></i> 
+            <span id="ghRestoreStatusMsg">ready</span><span class="priorSkipped text-secondary small d-none"> (prior step skipped; identical)</span>
+          </div>
+          <div id="importFilterSection">
+            <div class="pt-2 pb-1 text-muted">
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithFavorites" id="optImportWithFavorites">
+                <label class="form-check-label" id="optImportWithFavoritesLabel" for="optImportWithFavorites">Favorites</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithProfiles" id="optImportWithProfiles">
+                <label class="form-check-label" id="optImportWithProfilesLabel" for="optImportWithProfiles">Profiles</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithAvatars" id="optImportWithAvatars">
+                <label class="form-check-label" id="optImportWithAvatarsLabel" for="optImportWithAvatars">Avatars</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithNetworks" id="optImportWithNetworks">
+                <label class="form-check-label" id="optImportWithNetworksLabel" for="optImportWithNetworks">Networks</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithTopics" id="optImportWithTopics">
+                <label class="form-check-label" id="optImportWithTopicsLabel" for="optImportWithTopics">Topics</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithPosts" id="optImportWithPosts">
+                <label class="form-check-label" id="optImportWithPostsLabel" for="optImportWithPosts">Posts</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportWithPostImages" id="optImportWithPostImages">
+                <label class="form-check-label" id="optImportWithPostImagesLabel" for="optImportWithPostImages">Images</label>
+              </span>
+            </div>
+            <div class="pb-3 text-muted">
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportTwitter" id="optImportTwitter">
+                <label class="form-check-label" id="optImportTwitterLabel" for="optImportTwitter">Twitter/X</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="checkbox" name="optImportMastodon" id="optImportMastodon">
+                <label class="form-check-label" id="optImportMastodonLabel" for="optImportMastodon">Mastodon</label>
+              </span>
+              <span class="ps-2" data-toggle='tooltip' title='optional author filter'>
+                <input type="text" name="optImportForAuthor" id="optImportForAuthor" placeholder="@optional_author_filter">
+              </span>
+              <span class="ps-2" data-toggle='tooltip' title='optional filter for date of posts'>
+                <input type="text" id="optImportPostsFrom" placeholder="mm/dd/yyyy" style="width: 100px;">
+                <span> - </span>
+                <input type="text" id="optImportPostsUntil" placeholder="mm/dd/yyyy" style="width: 100px;">
+              </span>
+            </div>
+          </div>
+          <div class="pb-1">
+            <a href="#" id="btnGhRestoreStart" role="button" class="btn btn-primary">Start</a>
+            <a href="#" id="btnGhRestorePause" role="button" class="btn btn-secondary ms-2">Pause</a>
+            <a href="#" id="btnGhRestoreRestart" role="button" class="btn btn-outline-secondary ms-2">Start Over</a>
+          </div>
         </div>
       </div>
       <div id='mdonApiUi' class='row' style="display:none;padding:10px 20px;">
@@ -225,34 +400,40 @@
         <div id='mdonRemoteOwnerPivotPicker' class='pt-2' style="display:none;"></div>
       </div>
       <div id="dbui" class="row pb-2 container-fluid">
-        <div id="listFilterSet" class='row'>
+        <div id="listFilterSet" class='row row-tight'>
+          <div id='followDirection' class='col-sm-auto pt-2'>
+            <select id="cmbType" class="form-select">
+              <option id="optFollowedByWhom" value="following">Followed by</option>
+              <option id="optFollowersOfWhom" value="followers">Followers of</option>
+              <option id="optPosts" value="posts">Posts</option>
+            </select>
+          </div>
           <div class='pt-2 col-2'>
             <div class='input-group' style="margin-bottom:20px;">
               <label for='txtOwnerHandle' class='text-muted input-group-text'>@</label>
               <input id='txtOwnerHandle' type='text' placeholder='account' class='form-control' >
             </div>
           </div>
-          <div id='followDirection' class='col-sm-auto'>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowing">
-              <label class="form-check-label" id="optFollowingLabel" for="optFollowing">following&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="optFollowDirection" id="optFollowers">
-              <label class="form-check-label" id="optFollowersLabel" for="optFollowers">followers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-            </div>
-          </div>
           <div class='pt-2 col-2'>
-            <input id='txtConnSearch' type='text' class='form-control' placeholder='search...' >
+            <input id='txtSearch' type='text' class='form-control' placeholder='search...' >
           </div>
-          <div id="paging" class='pt-2 col-2' style="white-space:nowrap!important;">
+          <div id="paging" class='pt-2 col-sm-auto'>
             <label for='txtPageNum' class='text-muted'>pg</label>
             <input id='txtPageNum' type='text' style='border-right:none;' value='1' >
             <a data-toggle='tooltip' title='prior page' href='#' id='priorPage' role='button'><i class="bi-chevron-double-left"></i></a>
             <a data-toggle='tooltip' title='next page' href='#' id='nextPage' role='button'><i class="bi-chevron-double-right"></i></a>
             <a data-toggle='tooltip' title='set page size' href='#' id='pageGear' role='button'><i class="bi-gear"></i></a>
           </div>
-          <div id='queryOptions' class='col-4' style="margin-left:25px;display:block;float:right;">
+          <div id="postQueryOptions" class="col-5 pt-2 position-relative" style="display:none;">
+            <span id="topicFilterCtrl">
+              <input id="txtTopicFilter" type="text" class="form-control topicFilterWidth" placeholder="filter by topic or subtopic" style="display:inline;" data-toggle='tooltip' title='Tag and rate posts, then filter them here.'>
+              <span id='listTopicPicker' class="position-absolute start-0 ms-2 topicFilterWidth"></span>
+            </span>
+            <a class="optToggle" href="#" id="optGuessTopics" data-toggle='tooltip' title='Guess topics'><i class='bi-magic'></i></a>
+            <a class="optToggle" href="#" id="optWithRetweets" data-toggle='tooltip' title='Toggle whether to include retweets for selected account'><i class='bi-repeat'></i></a>
+            <a class="optToggle" href="#" id="optSortByStars" data-toggle='tooltip' title='Toggle whether to sort by star rating'><i class='bi-star'></i></a>
+          </div>
+          <div id='connQueryOptions' class='col-4' style="display:none;">
             <table>
               <tr>
                 <td>
@@ -309,10 +490,23 @@
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>
         <div id='listOwnerPivotPicker' class='row pt-2'></div>
+        <div id="filteredThreadSection" class="row">
+          <div>
+            <a href="#" id="btnClearThreadFilter"><i class="bi-x-circle"></i> Filtered by thread. Click to clear.</a>
+          </div>
+        </div>
         <div class='listMain row' id='connListMain'>
           <div id='paginated-list' aria-live='polite'>
           </div>
+          <a id='continuePaging' href="#" data-toggle='tooltip' title='You can also use the paging buttons at the top' style="display:none;">
+            <i class="bi-arrow-down-square"></i>
+            More
+            <i class="bi-arrow-down-square"></i>
+          </a>
         </div>
+      </div>
+      <div id="syncFooter" class="mt-3">
+        <div id="ghRateLimit" class="small mt-2"></div>
       </div>
     </div>
     <div class="fixed-bottom row">
@@ -325,6 +519,7 @@
         <a href='https://whosum.com/terms' target='_blank'>Terms</a> |
         <a href='https://github.com/positivesumnet/socialassistant' target='_blank'>Code</a> |
         <a href='https://whosum.com/assistant' target='_blank'>Videos</a> |
+        <a href='#' id="btnClearCache" target='_blank'>Clear Cache</a> |
         <a href='https://whosum.com/faq' target='_blank'>Help</a>
       </div>
       <div id="bgStatusMsg" class="col-sm-auto text-right me-4">
@@ -337,15 +532,31 @@
     <script src='lib/shared/settingslib.js'></script>
     <script src='lib/shared/es6lib.js'></script>
     <script src='lib/shared/strlib.js'></script>
+    <script src='lib/shared/cryptolib.js'></script>
     <script src='lib/shared/imagelib.js'></script>
     <script src='lib/shared/emojilib.js'></script>
     <script src='lib/shared/datatypes.js'></script>
     <script src='lib/shared/appgraphs.js'></script>
-    <script src='lib/shared/bgfetchlib.js'></script>
     <script src='lib/shared/appschema.js'></script>
+    <script src="lib/shared/urlparsing.js"></script>
+    <script src="lib/shared/githublib.js"></script>
+    <script src="lib/shared/syncflow.js"></script>
+    <script src="lib/dbui/topiclib.js"></script>
     <script src='lib/dbui/renderlib.js'></script>
-    <script src='lib/dbui/connexportlib.js'></script>
+    <script src='lib/dbui/tagginglib.js'></script>
     <script src='lib/apis/mastodonlib.js'></script>
+    <script src='lib/dbui/favoritingui.js'></script>
+    <script src='lib/dbui/ghbackupui.js'></script>
+    <script src='lib/dbui/ghrestoreui.js'></script>
+    <script src='lib/dbui/ghconfigui.js'></script>
+    <script src='lib/dbui/ghvideoupui.js'></script>
+    <script src='lib/dbui/mdonui.js'></script>
+    <script src='lib/dbui/queryingui.js'></script>
+    <script src='lib/dbui/tabsui.js'></script>
+    <script src='lib/dbui/logui.js'></script>
+    <script src='lib/dbui/queryworkui.js'></script>
+    <script src='lib/dbui/settingsui.js'></script>
+    <script src='lib/dbui/renderbindui.js'></script>
     <script src='index.js'></script>
   </body>
 </html>

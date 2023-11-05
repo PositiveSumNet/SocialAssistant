@@ -35,6 +35,9 @@
 
   https://developer.chrome.com/blog/sync-methods-for-accesshandles/
 
+  Firefox v111 and Safari 16.4, both released in March 2023, also
+  include this.
+
   We cannot change to the sync forms at this point without breaking
   clients who use Chrome v104-ish or higher. truncate(), getSize(),
   flush(), and close() are now (as of v108) synchronous. Calling them
@@ -50,10 +53,10 @@
 const wPost = (type,...args)=>postMessage({type, payload:args});
 const installAsyncProxy = function(self){
   const toss = function(...args){throw new Error(args.join(' '))};
-  if(self.window === self){
+  if(globalThis.window === globalThis){
     toss("This code cannot run from the main thread.",
          "Load it as a Worker from a separate Worker.");
-  }else if(!navigator.storage.getDirectory){
+  }else if(!navigator?.storage?.getDirectory){
     toss("This API requires navigator.storage.getDirectory.");
   }
 
@@ -106,8 +109,8 @@ const installAsyncProxy = function(self){
       w += m.wait;
       m.avgTime = (m.count && m.time) ? (m.time / m.count) : 0;
     }
-    console.log(self.location.href,
-                "metrics for",self.location.href,":\n",
+    console.log(globalThis?.location?.href,
+                "metrics for",globalThis?.location?.href,":\n",
                 metrics,
                 "\nTotal of",n,"op(s) for",t,"ms",
                 "approx",w,"ms spent waiting on OPFS APIs.");
@@ -818,9 +821,24 @@ const installAsyncProxy = function(self){
     }
     while(!flagAsyncShutdown){
       try {
-        if('timed-out'===Atomics.wait(
+        if('not-equal'!==Atomics.wait(
           state.sabOPView, state.opIds.whichOp, 0, state.asyncIdleWaitTime
         )){
+          /* Maintenance note: we compare against 'not-equal' because
+
+             https://github.com/tomayac/sqlite-wasm/issues/12
+
+             is reporting that this occassionally, under high loads,
+             returns 'ok', which leads to the whichOp being 0 (which
+             isn't a valid operation ID and leads to an exception,
+             along with a corresponding ugly console log
+             message). Unfortunately, the conditions for that cannot
+             be reliably reproduced. The only place in our code which
+             writes a 0 to the state.opIds.whichOp SharedArrayBuffer
+             index is a few lines down from here, and that instance
+             is required in order for clear communication between
+             the sync half of this proxy and this half.
+          */
           await releaseImplicitLocks();
           continue;
         }
@@ -843,7 +861,7 @@ const installAsyncProxy = function(self){
 
   navigator.storage.getDirectory().then(function(d){
     state.rootDir = d;
-    self.onmessage = function({data}){
+    globalThis.onmessage = function({data}){
       switch(data.type){
           case 'opfs-async-init':{
             /* Receive shared state from synchronous partner */
@@ -880,17 +898,17 @@ const installAsyncProxy = function(self){
     wPost('opfs-async-loaded');
   }).catch((e)=>error("error initializing OPFS asyncer:",e));
 }/*installAsyncProxy()*/;
-if(!self.SharedArrayBuffer){
+if(!globalThis.SharedArrayBuffer){
   wPost('opfs-unavailable', "Missing SharedArrayBuffer API.",
         "The server must emit the COOP/COEP response headers to enable that.");
-}else if(!self.Atomics){
+}else if(!globalThis.Atomics){
   wPost('opfs-unavailable', "Missing Atomics API.",
         "The server must emit the COOP/COEP response headers to enable that.");
-}else if(!self.FileSystemHandle ||
-         !self.FileSystemDirectoryHandle ||
-         !self.FileSystemFileHandle ||
-         !self.FileSystemFileHandle.prototype.createSyncAccessHandle ||
-         !navigator.storage.getDirectory){
+}else if(!globalThis.FileSystemHandle ||
+         !globalThis.FileSystemDirectoryHandle ||
+         !globalThis.FileSystemFileHandle ||
+         !globalThis.FileSystemFileHandle.prototype.createSyncAccessHandle ||
+         !navigator?.storage?.getDirectory){
   wPost('opfs-unavailable',"Missing required OPFS APIs.");
 }else{
   installAsyncProxy(self);
