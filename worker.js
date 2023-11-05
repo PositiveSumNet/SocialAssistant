@@ -279,9 +279,6 @@ onmessage = (evt) => {
     case MSGTYPE.TODB.EXECUTE_SAVE_AND_DELETE:
       DBORM.SAVING.executeSaveAndDelete(evt.data);
       break;
-    case MSGTYPE.TODB.GET_INUSE_TOPICS:
-      POSTFETCHER.ensureInUseTopicsFilter();
-      break;
     case MSGTYPE.TODB.SEARCH_INUSE_TOPICS:
       POSTFETCHER.searchInUseTopics(evt.data);
       break;
