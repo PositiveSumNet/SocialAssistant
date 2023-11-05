@@ -353,7 +353,7 @@ input.textinput:focus {
 }
 
 .postTagText {
-  width: 33%;
+  width: 30%;
 }
 
 .postScoredTagger>input[type=text] {
@@ -718,6 +718,7 @@ ul.subtopicsUl {
   opacity: 100%;
   background-color: #216CB1;
   color: white;
+  display: block;
 }
 
 .topicFilterWidth {
