@@ -144,9 +144,24 @@ var NEETSREC = {
     NEETSREC.processTweets(node, parsedUrl);
   },
 
+  // ensures that mutation callback wasn't triggered after an ajax call changed the de-facto page type
+  // caller should ensure that it's finalized
+  isCompatibleUrl: function(parsedUrl) {
+    if (!parsedUrl) { return false; }
+    // see RECORDERFACTORY.getRecorder
+    switch(parsedUrl.pageType) {
+      case PAGETYPE.TWITTER.HOME:
+      case PAGETYPE.TWITTER.SEARCH:
+      case PAGETYPE.TWITTER.TWEETS:
+        return true;
+      default:
+        return false;
+    }
+  },
+
   tweetMutationCallback: function(mutations) {
     const parsedUrl = URLPARSE.parseUrl(document.location.href);
-    if (parsedUrl) {
+    if (NEETSREC.isCompatibleUrl(parsedUrl)) {
       const mainColumn = TPARSE.getMainColumn();
       for (let mutation of mutations) {
         if (mutation.type === 'childList') {
