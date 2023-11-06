@@ -282,10 +282,17 @@ var QUERYWORK_UI = {
           await QUERYWORK_UI.onCopiedToDb(data.cacheKeys);
           break;
         case MSGTYPE.FROMDB.SAVE_AND_DELETE_DONE:
+          QUERYWORK_UI.hideDbProcessingMsg();
           QUERYWORK_UI.onCompletedSaveAndDelete(data.payload);
           break;
+        case MSGTYPE.FROMDB.LOG.DB_DONE_MIGRATING:
+          QUERYWORK_UI.hideDbProcessingMsg();
+          break;
+        case MSGTYPE.FROMDB.LOG.DB_IS_MIGRATING:
+          QUERYWORK_UI.showDbProcessingMainMsg(data.msg);
+          break;
         case MSGTYPE.FROMDB.SAVE_STEP_STATUS_MSG:
-          QUERYWORK_UI.showSaveStatusMsg(data.msg);
+          QUERYWORK_UI.showDbProcessingDetailMsg(data.msg);
           break;
         case MSGTYPE.FROMDB.DELETED_BY_SUBJECT:
           QUERYWORK_UI.onDeletedBySubject(data.request);
@@ -341,14 +348,11 @@ var QUERYWORK_UI = {
   ensureCopiedToDb: async function() {
     const kvps = await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
   
-    const xferring = document.getElementById('transferringMsg');
-    const mainMsgElm = document.getElementById('transferringMsgPages');
-    // if concurrent access becomes a problem, we can revert to hiding the list while importing (for now commented out)
-    const filterSet = document.getElementById('listFilterSet');
+    const xferring = document.getElementById('dbProcessingMsg');
+    const mainMsgElm = document.getElementById('dbProcessingMainMsg');
     mainMsgElm.textContent = 'Copying ' + kvps.length + ' pages to local database...';
     if (kvps.length > 0) {
       xferring.style.display = 'inline-block';
-      filterSet.style.display = 'none';
     }
     
     // allow sqlite to do process in larger batches than what was cached
@@ -380,16 +384,45 @@ var QUERYWORK_UI = {
       if (xferring.style.display == 'inline-block') {
         // this means we showed it; so let them know it's ready
         // the reason we nudge toward a Refresh is because if the user is busy a page refresh would be jarring.
-        mainMsgElm.textContent = 'Please refresh the page.';
+        QUERYWORK_UI.showDbProcessingMainMsg('Please refresh the page.');
         xferring.classList.add('completed');
+        if (QUERYWORK_UI.isListEmpty() == true) {
+          document.location.reload();
+        }
       }
-      filterSet.style.display = 'flex';
     }
   },
 
+  hideDbProcessingMsg: function() {
+    document.getElementById('dbProcessingMsg').style.display = 'none';
+    document.getElementById('dbProcessingMainMsg').textContent = '';
+    document.getElementById('dbProcessingMsgDetails').textContent = '';
+    QUERYWORK_UI.displayMsgAtMainListIfEmpty(EMPTY_LIST_MSG);
+  },
+
+  showDbProcessingMainMsg: function(msg) {
+    document.getElementById('dbProcessingMsg').style.display = 'inline-block';
+    document.getElementById('dbProcessingMainMsg').textContent = msg;
+    QUERYWORK_UI.displayMsgAtMainListIfEmpty(msg);
+  },
+
   // note: visibility is based on ensureCopiedToDb because other types of processing (like favoriting) are handled in real time without need to refresh etc.
-  showSaveStatusMsg: function(msg) {
-    document.getElementById('transferringMsgDetails').textContent = msg;
+  showDbProcessingDetailMsg: function(msg) {
+    document.getElementById('dbProcessingMsg').style.display = 'inline-block';
+    document.getElementById('dbProcessingMsgDetails').textContent = msg;
+    QUERYWORK_UI.displayMsgAtMainListIfEmpty(msg);
+  },
+
+  isListEmpty: function() {
+    const listElm = document.getElementById('paginated-list');
+    return !listElm.children || listElm.children.length == 0;
+  },
+
+  displayMsgAtMainListIfEmpty: function(msg) {
+    if (QUERYWORK_UI.isListEmpty() == true) {
+      // list is empty; clone the message there so it's easy to see
+      document.getElementById('paginated-list').textContent = msg;
+    }
   },
 
   // returns back a copy of the saved data

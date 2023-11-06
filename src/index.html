@@ -41,9 +41,9 @@
           </ul>
         </div>
         <div class="col-sm-auto text-right">
-          <span id='transferringMsg' style="display:none;">
-            <span id="transferringMsgPages">Copying recent recordings to local database...  | </span>
-            <span id="transferringMsgDetails"></span>
+          <span id='dbProcessingMsg' style="display:none;">
+            <span id="dbProcessingMainMsg">Copying recent recordings to local database...  | </span>
+            <span id="dbProcessingMsgDetails"></span>
           </span>
         </div>
       </div>
@@ -497,6 +497,7 @@
         </div>
         <div class='listMain row' id='connListMain'>
           <div id='paginated-list' aria-live='polite'>
+            Initializing...
           </div>
           <a id='continuePaging' href="#" data-toggle='tooltip' title='You can also use the paging buttons at the top' style="display:none;">
             <i class="bi-arrow-down-square"></i>

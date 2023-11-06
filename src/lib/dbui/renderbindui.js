@@ -116,7 +116,13 @@ var RENDERBIND_UI = {
         html += RENDERBIND_UI.renderPost(row);
     }
   
-    plist.innerHTML = html;
+    if (!STR.hasLen(html)) {
+      plist.textContent = EMPTY_LIST_MSG;
+    }
+    else {
+      plist.innerHTML = html;
+    }
+
     QUERYING_UI.SEARCH.showSearchProgress(false);
     RENDERBIND_UI.onAddedRows(plist);
   
@@ -141,8 +147,13 @@ var RENDERBIND_UI = {
         // renderPerson uses DOMPurify.sanitize
         html += RENDERBIND_UI.renderPerson(row, 'followResult');
     }
-  
-    plist.innerHTML = html;
+
+    if (!STR.hasLen(html)) {
+      plist.textContent = EMPTY_LIST_MSG;
+    }
+    else {
+      plist.innerHTML = html;
+    }
   
     IMAGE.resolveDeferredLoadImages(plist);
     if (SETTINGS_UI.canRenderMastodonFollowOneButtons() === true) {

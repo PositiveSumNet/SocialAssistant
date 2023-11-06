@@ -84,6 +84,8 @@ const URL_PARM = {
   THREAD: 'thread'
 };
 
+const EMPTY_LIST_MSG = "No matches found. If you recorded data and don't see it here, review the filters or refresh this page.";
+
 // a suffix appended to an urlKey to express the url of its quoted tweet (used because not all quoted tweets provide their url)
 const QUOTED_SUFFIX = '#quoted';
 
@@ -246,7 +248,8 @@ const MSGTYPE = {
     LOG: {
       LEGACY: 'log',
       SQLITE_VERSION: 'logSqliteVersion',
-      DB_SCRIPT_VERSION: 'logDbScriptVersion'
+      DB_SCRIPT_VERSION: 'logDbScriptVersion',
+      DB_IS_MIGRATING: 'logDbMigratingMsg'
     },
     WORKER_READY: 'workerReady',
     COPIED_TODB: 'copiedToDb',
