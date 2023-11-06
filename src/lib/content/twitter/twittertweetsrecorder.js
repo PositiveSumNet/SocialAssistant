@@ -257,10 +257,25 @@ var TWEETSREC = {
     }
   },
 
+  // ensures that mutation callback wasn't triggered after an ajax call changed the de-facto page type
+  // caller should ensure that it's finalized
+  isCompatibleUrl: function(parsedUrl) {
+    if (!parsedUrl) { return false; }
+    // see RECORDERFACTORY.getRecorder
+    switch(parsedUrl.pageType) {
+      case PAGETYPE.TWITTER.HOME:
+      case PAGETYPE.TWITTER.SEARCH:
+      case PAGETYPE.TWITTER.TWEETS:
+        return true;
+      default:
+        return false;
+    }
+  },
+
   tweetMutationCallback: function(mutations) {
     const parsedUrl = RECORDING.getParsedUrl();
     // if e.g. the page context changed to 'notifications' (and had been recording), we will end up with an undefined parsedUrl and should exit
-    if (parsedUrl) {
+    if (TWEETSREC.isCompatibleUrl(parsedUrl)) {
       const mainColumn = TPARSE.getMainColumn();
       for (let mutation of mutations) {
         if (mutation.type === 'childList') {
