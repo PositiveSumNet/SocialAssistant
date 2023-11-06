@@ -60,8 +60,7 @@
   "permissions": [
     "activeTab", 
     "storage", 
-    "unlimitedStorage",
-    "scripting"
+    "unlimitedStorage"
   ],
   "cross_origin_embedder_policy": {
     "value": "require-corp"
