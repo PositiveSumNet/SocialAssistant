@@ -27,6 +27,9 @@ chrome.runtime.onInstalled.addListener((details) => {
         if (previousVersion === "1.0.4") {
           chrome.tabs.create({ url: 'whatsnew105.html' });
         }
+        else if (previousVersion === "1.0.7") {
+          chrome.tabs.create({ url: 'whatsnew108.html' });
+        }
       }
       break;
     case 'chrome_update':
