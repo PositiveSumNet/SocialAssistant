@@ -165,6 +165,7 @@ var DBORM = {
           dbVersion = DBORM.MIGRATION.getDbScriptVersion(db, APPNAME);
           if (dbVersion < codeVersion) {
             // find the next script
+            postMessage({ type: MSGTYPE.FROMDB.LOG.DB_IS_MIGRATING, msg: `Preparing database: script ${dbVersion} of ${codeVersion}`} );
             let script = scripts.find(function(s) { return s.number === dbVersion + 1; });
             DBORM.dbExec(db, script.sql, true);
           }
@@ -173,6 +174,7 @@ var DBORM = {
 
       // report status
       dbVersion = DBORM.MIGRATION.getDbScriptVersion(db, APPNAME);
+      postMessage({ type: MSGTYPE.FROMDB.LOG.DB_DONE_MIGRATING });
       postMessage({ type: MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION, payload: {version: dbVersion} });
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB

@@ -606,11 +606,11 @@ a.postAnotherTag {
   display: inline;
 }
 
-#transferringMsg {
+#dbProcessingMsg {
   color: #ddd;
 }
 
-#transferringMsg.completed {
+#dbProcessingMsg.completed {
   color: #ffe34c;
 }
 
