@@ -371,7 +371,7 @@ var SYNCFLOW = {
     const lastNetwork = SETTINGS.SYNCFLOW.getLastNetwork(direction);
     const marker = SETTINGS.SYNCFLOW.getMarker(direction);
     const step = SYNCFLOW.getStepToRun(lastType, lastNetwork, marker, config);
-
+    
     if (step == null) {
       // DONE!
       SETTINGS.SYNCFLOW.setCompletedStepOk(direction);
@@ -944,7 +944,7 @@ var SYNCFLOW = {
     },
 
     getPostImgsMarker: function(fileName) {
-      return SYNCFLOW.FILE_NAMER.gegetPostMarkerWorker(fileName);
+      return SYNCFLOW.FILE_NAMER.getPostMarkerWorker(fileName);
     },
 
     getPostImgsFilePath: function(step, relevantMarker) {
