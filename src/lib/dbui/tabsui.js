@@ -44,7 +44,7 @@ var TABS_UI = {
     
       if (site != SITE.TWITTER) {
         SETTINGS.cacheSite(SITE.TWITTER);
-        QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
+        QUERYING_UI.PAGE_TYPE.updateUiForCachedSite(true);
         QUERYWORK_UI.executeSearch();
       }
     
@@ -68,7 +68,7 @@ var TABS_UI = {
 
     if (site != SITE.MASTODON) {
       SETTINGS.cacheSite(SITE.MASTODON);
-      QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
+      QUERYING_UI.PAGE_TYPE.updateUiForCachedSite(true);
       QUERYWORK_UI.executeSearch();
     }
   },
@@ -79,7 +79,7 @@ var TABS_UI = {
       const site = SETTINGS.getCachedSite();
       if (site != SITE.GITHUB) {
         SETTINGS.cacheSite(SITE.GITHUB);
-        QUERYING_UI.PAGE_TYPE.updateUiForCachedSite();
+        QUERYING_UI.PAGE_TYPE.updateUiForCachedSite(true);
       }
     
       await TABS_UI.SYNC.unveilGithubUi(pageType);

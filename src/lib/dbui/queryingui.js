@@ -99,12 +99,13 @@ var QUERYING_UI = {
   },
 
   PAGE_TYPE: {
-    updateUiForCachedSite: function() {
+    updateUiForCachedSite: function(switching) {
       const site = SETTINGS.getCachedSite();
       QUERYING_UI.initMainListUiElms();
       _lastRenderedRequest = '';
       
-      const owner = SETTINGS.getCachedOwner(site);
+      // don't accept cached value on a switch (can lead to odd results)
+      const owner = (switching) ? '' : SETTINGS.getCachedOwner(site);
       txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
       
       const twitterBtn = document.getElementById('twitterLensBtn');
@@ -217,7 +218,7 @@ var QUERYING_UI = {
       const personElm = ES6.findUpClass(event.target, 'person');
       if (!personElm) {
         console.log('Errant owner click');
-        return;
+        return '';
       }
       const handleElm = personElm.querySelector('.personLabel .personHandle');
       let handleText = handleElm.innerText;

@@ -22,7 +22,7 @@ var GHBACKUP_UI = {
     const btnSwitchToConfigVideos = document.getElementById('btnSwitchToConfigVideos');
     btnSwitchToConfigVideos.onclick = async function(event) {
       GHCONFIG_UI.setGithubConfigRepoTypeTab(GITHUB.REPO_TYPE.VIDEOS);
-      await activateGhConfigureTab();
+      await TABS_UI.SYNC.activateGhConfigureTab();
       return false;
     }
     
