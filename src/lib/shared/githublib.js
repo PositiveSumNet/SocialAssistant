@@ -397,6 +397,7 @@ var GITHUB = {
       upsertPushable: async function(syncable, onSuccess, onFailure) {
         const repoType = syncable[SYNCFLOW.SYNCABLE.repoType] || GITHUB.REPO_TYPE.DATA;
         const repoConnInfo = await GITHUB.SYNC.getRepoConnInfo(onFailure, repoType);
+
         if (!repoConnInfo) { return; }
 
         // check accessibility

@@ -159,7 +159,19 @@ var NEETSREC = {
     }
   },
 
+  // in case page type changes during processing, we don't want the page to stay "stuck" until next refresh
   tweetMutationCallback: function(mutations) {
+    try {
+      NEETSREC.mutationCallbackWorker(mutations);
+    }
+    catch (ex) {
+      console.log('Nitter recorder error');
+      console.log(ex);
+      console.trace();
+    }
+  },
+
+  mutationCallbackWorker: function(mutations) {
     const parsedUrl = URLPARSE.parseUrl(document.location.href);
     if (NEETSREC.isCompatibleUrl(parsedUrl)) {
       const mainColumn = TPARSE.getMainColumn();

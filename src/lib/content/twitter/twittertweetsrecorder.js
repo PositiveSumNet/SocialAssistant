@@ -273,6 +273,17 @@ var TWEETSREC = {
   },
 
   tweetMutationCallback: function(mutations) {
+    try {
+      TWEETSREC.mutationCallbackWorker(mutations);
+    }
+    catch (ex) {
+      console.log('Tweets recorder error');
+      console.log(ex);
+      console.trace();
+    }
+  },
+
+  mutationCallbackWorker: function(mutations) {
     const parsedUrl = RECORDING.getParsedUrl();
     // if e.g. the page context changed to 'notifications' (and had been recording), we will end up with an undefined parsedUrl and should exit
     if (TWEETSREC.isCompatibleUrl(parsedUrl)) {

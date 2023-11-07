@@ -314,7 +314,7 @@ const fetchForRestore = function(request) {
 const fetchForBackup = function(request) {
   const step = request.step;
   const syncable = SYNCFLOW.PUSH_EXEC.buildPushable(step);
-
+  
   postMessage({ 
     type: MSGTYPE.FROMDB.ON_FETCHED_FOR_BACKUP, 
     syncable: syncable });

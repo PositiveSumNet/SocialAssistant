@@ -265,6 +265,7 @@ const MSGTYPE = {
       NETWORK_SIZE: 'renderNetworkSize',
       SEARCHED_INUSE_TOPICS: 'searchedInUseTopics'
     },
+    ON_FETCHED_FOR_BACKUP: 'fetchedForBackup',
     CONTINUE_RESTORE: 'continueRestore',
     SAVED_FOR_RESTORE: 'savedForRestore',
     ON_SUCCESS: {

@@ -134,6 +134,18 @@ var TFOLLOWREC = {
   },
 
   twitterFollowMutationCallback: function(mutations) {
+    try {
+      TFOLLOWREC.mutationCallbackWorker(mutations);
+    }
+    catch (ex) {
+      console.log('Twitter follow recorder error');
+      console.log(ex);
+      console.trace();
+    }
+  },
+
+
+  mutationCallbackWorker: function(mutations) {
     const parsedUrl = RECORDING.getParsedUrl();
     // if e.g. the page context changed to 'notifications' (and had been recording), we will end up with an undefined parsedUrl and should exit
     if (TFOLLOWREC.isCompatibleUrl(parsedUrl)) {
