@@ -1,6 +1,6 @@
 var NETWORK_IMPORT_MAPPER = {
   mapSavableSet: function(data) {
-    const connEntDefn = NETWORK_FOLLOWING_IMPORT_MAPPER.getConnEntity(data);
+    const connEntDefn = NETWORK_IMPORT_MAPPER.getConnEntity(data);
     const entDefns = [connEntDefn];
 
     // passing true for onlyIfNewer because this is a sync context
