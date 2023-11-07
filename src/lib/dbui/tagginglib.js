@@ -13,7 +13,7 @@ var TAGGING = {
       const postScoredTaggerElm = RENDER.getElmByEditingId(saveTagMsg.editingId);
       let hasTag = false;
       // tag name is via concatSubtopicRatingTag
-      let concatSubtopic;
+      let concatSubtopic = '';
       let rating;
       const sogs = APPSCHEMA.SAVING.getSogs(saveTagMsg.savableSet, APPSCHEMA.SocialPostSubtopicRating.Name);
       if (sogs.length == 1) {
@@ -65,6 +65,7 @@ var TAGGING = {
         }
       }
       else {
+        postScoredTaggerElm.removeAttribute('data-testid');
         // if there's another tagging element in place, we don't need this one
         const familyElms = Array.from(container.querySelectorAll('.postScoredTagger'));
         if (familyElms.length > 1) {
@@ -74,9 +75,10 @@ var TAGGING = {
       }
 
       // now visually update the tagger ui
+      const displayTopic = STR.hasLen(concatSubtopic) ? concatSubtopic : TAGGING.CONSTANTS.TAG_RATE;
       const txtBox = postScoredTaggerElm.querySelector('.postTagText');
-      txtBox.value = concatSubtopic;
-      txtBox.setAttribute('title', concatSubtopic); // in case it's too big to see the whole thing
+      txtBox.value = displayTopic;
+      txtBox.setAttribute('title', displayTopic); // in case it's too big to see the whole thing
       RENDER.POST.TAGGING.finishTagEdits(postScoredTaggerElm);
     },
     
