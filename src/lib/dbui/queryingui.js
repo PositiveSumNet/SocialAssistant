@@ -613,10 +613,28 @@ var QUERYING_UI = {
         }
       },
 
+      showTaggingTips: function() {
+        document.getElementById('dbui').classList.add('showTaggingTips');
+        document.getElementById('txtTopicFilter').setAttribute('placeholder', 'First, tag posts via the highlighted tools');
+      },
+
+      hideTaggingTips: function() {
+        document.getElementById('dbui').classList.remove('showTaggingTips');
+        // revert to default text
+        document.getElementById('txtTopicFilter').setAttribute('placeholder', 'filter by topic or subtopic');
+      },
+
       renderFilteredTopics: function(concatNames) {
         const listTopicPicker = document.getElementById('listTopicPicker');
         listTopicPicker.replaceChildren();
         const topics = TOPICS.fromConcatNames(concatNames);
+
+        if (!topics || topics.length == 0) {
+          QUERYING_UI.FILTERS.TOPICS.showTaggingTips();
+          return;
+        }
+        QUERYING_UI.FILTERS.TOPICS.hideTaggingTips();
+
         const topicsUlElm = document.createElement('ul');
         topicsUlElm.classList.add('biLevelMenu');
         topicsUlElm.classList.add('list-group');

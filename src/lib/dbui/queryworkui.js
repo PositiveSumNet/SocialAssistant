@@ -105,10 +105,12 @@ var QUERYWORK_UI = {
     };
     txtTopicFilter.onblur = function () {
       postQueryOptions.classList.remove('editingTopicFilter');
+      QUERYING_UI.FILTERS.TOPICS.hideTaggingTips();
     };
     txtTopicFilter.addEventListener('keyup', function(e) {
       if (e.key == "Escape") {
         postQueryOptions.classList.remove('editingTopicFilter');
+        QUERYING_UI.FILTERS.TOPICS.hideTaggingTips();
       }
     });
 

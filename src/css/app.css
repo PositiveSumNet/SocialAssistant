@@ -767,3 +767,7 @@ ul.biLevelMenu>li:hover>ul, ul.biLevelMenu>li:hover>.menuBottomSpacer {
 .menuBottomSpacer {
   height: 5rem;
 }
+
+.showTaggingTips #optGuessTopics, .showTaggingTips .postTagText {
+  border-color: red;
+}
