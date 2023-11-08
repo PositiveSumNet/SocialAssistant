@@ -625,7 +625,7 @@ var STR = {
 
   // lower-case
   nextAlphaMarker: function(prior) {
-    if (!STR.hasLen(prior) || prior == FIRST_TEXT) {
+    if (!STR.hasLen(prior) || prior == FIRST_TEXT_START || prior == FIRST_TEXT_END) {
       return 'a';
     }
     const priorCode = prior.toLowerCase().charCodeAt(0);

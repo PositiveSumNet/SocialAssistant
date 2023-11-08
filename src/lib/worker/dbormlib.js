@@ -179,7 +179,7 @@ var DBORM = {
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB
       // const debugRows = DBORM.QUERYING.fetch(`
-      // SELECT * FROM SocialTopicSubtopic WHERE sTopic LIKE '%junk%';
+      // SELECT * FROM SocialProfileDescription;
       // `, []);
 
       // console.log(debugRows);

@@ -343,7 +343,7 @@ var SETTINGS = {
       const settingName = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.MARKER : SETTINGS.SYNCFLOW.RESTORE.MARKER;
       let marker = localStorage.getItem(settingName);
       if (!STR.hasLen(marker)) {
-        marker = FIRST_TEXT;
+        marker = FIRST_TEXT_START;
       }
       return marker;
     },

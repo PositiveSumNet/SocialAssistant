@@ -277,11 +277,11 @@ var SYNCFLOW = {
     let step = {};
     step[SYNCFLOW.STEP.config] = config;
 
-    if (!STR.hasLen(lastType) || lastType == FIRST_TEXT) {
+    if (!STR.hasLen(lastType)) {
       // at the beginning
       step[SYNCFLOW.STEP.type] = syncStepTypes[0];
       step[SYNCFLOW.STEP.network] = syncNetworks[0];
-      step[SYNCFLOW.STEP.marker] = FIRST_TEXT;
+      step[SYNCFLOW.STEP.marker] = FIRST_TEXT_START;
       return step;
     }
     else if (lastType == finalStepType && marker == LAST_TEXT) {
@@ -293,7 +293,7 @@ var SYNCFLOW = {
         // start of next network
         step[SYNCFLOW.STEP.type] = syncStepTypes[0];
         step[SYNCFLOW.STEP.network] = ES6.getNext(syncNetworks, lastNetwork);
-        step[SYNCFLOW.STEP.marker] = FIRST_TEXT;
+        step[SYNCFLOW.STEP.marker] = FIRST_TEXT_START;
         return step;
       }
     }
@@ -308,7 +308,7 @@ var SYNCFLOW = {
       // increment the step and reset the marker
       step[SYNCFLOW.STEP.type] = ES6.getNext(syncStepTypes, lastType);
       step[SYNCFLOW.STEP.network] = lastNetwork;
-      step[SYNCFLOW.STEP.marker] = FIRST_TEXT;
+      step[SYNCFLOW.STEP.marker] = FIRST_TEXT_START;
       return step;
     }
   },
@@ -751,9 +751,9 @@ var SYNCFLOW = {
         case SYNCFLOW.STEP_TYPE.profileFavorites:
           return SYNCFLOW.FILE_NAMER.getProfileFavoritesFileName(step);
         case SYNCFLOW.STEP_TYPE.profiles:
-          return SYNCFLOW.FILE_NAMER.getProfilesFileName(step);
+          return SYNCFLOW.FILE_NAMER.getProfilesFileName(step, relevantMarker);
         case SYNCFLOW.STEP_TYPE.profileImgs:
-          return SYNCFLOW.FILE_NAMER.getProfileImgsFileName(step);
+          return SYNCFLOW.FILE_NAMER.getProfileImgsFileName(step, relevantMarker);
         case SYNCFLOW.STEP_TYPE.networkFollowings:
         case SYNCFLOW.STEP_TYPE.networkFollowers:
           return SYNCFLOW.FILE_NAMER.getNetworkConnsFileName(step, relevantMarker);
@@ -818,7 +818,7 @@ var SYNCFLOW = {
     getProfilesFileName: function(step) {
       const network = step.network;
       const delim = SYNCFLOW.FILE_NAMER.DELIM;
-      const marker = (STR.hasLen(step.marker) && step.marker != FIRST_TEXT) ? step.marker : FIRST_TEXT;
+      const marker = (step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker;
       return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}${delim}${marker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
     },
 
@@ -840,7 +840,7 @@ var SYNCFLOW = {
     getProfileImgsFileName: function(step) {
       const network = step.network;
       const delim = SYNCFLOW.FILE_NAMER.DELIM;
-      const marker = STR.hasLen(step.marker) ? step.marker : FIRST_TEXT;
+      const marker = (step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker;
       return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.avatars}${delim}${marker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
     },
 
@@ -1077,7 +1077,7 @@ var SYNCFLOW = {
     },
 
     calcNextAlpha: function(step) {
-      return STR.hasLen(step.marker) ? STR.nextAlphaMarker(step.marker).toLowerCase() : FIRST_TEXT;
+      return STR.nextAlphaMarker(step.marker).toLowerCase();
     },
 
     calcViaLastRow: function(step, rows, col) {

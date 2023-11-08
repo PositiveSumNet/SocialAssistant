@@ -806,7 +806,7 @@ var POSTFETCHER = {
       }
 
       let subtopic = '';
-      if (!STR.hasLen(marker) || marker == FIRST_TEXT) {
+      if (!STR.hasLen(marker) || marker == FIRST_TEXT_START || marker == FIRST_TEXT_END) {
         subtopic = subtopics[0];
       }
       else if (step[SYNCFLOW.STEP.exact] == true) {
@@ -1078,7 +1078,7 @@ var POSTFETCHER = {
 
       let markerFilter = '';
       const marker = step[SYNCFLOW.STEP.marker];
-      if (STR.hasLen(marker) && marker != FIRST_TEXT) {
+      if (STR.hasLen(marker) && marker != FIRST_TEXT_START) {
         let parm = {key: '$marker', value: marker};
         markerBind.push(parm);
         const oper = step[SYNCFLOW.STEP.exact] == true ? '=' : '>';
