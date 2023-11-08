@@ -393,15 +393,23 @@ a.postTagCancel:hover {
   display: none;
 }
 
+.postScoredTaggers.pickingTag .postScoredTagger {
+  display: none;
+}
+
+.postScoredTaggers.pickingTag .postScoredTagger.pickingTag {
+  display: inline;
+}
+
 .postScoredTaggers.pickingTag .postTagCancel {
   display: inline-block;
 }
 
-.postScoredTaggers.pickingTag .topicsPicker {
+.postScoredTagger.pickingTag .topicsPicker {
   display: block;
 }
 
-.postScoredTaggers.pickingTag .postTagStars, .postScoredTaggers.pickingTag .postScoredTagger.noneSelected:hover .postTagStars {
+.postScoredTagger.pickingTag .postTagStars, .postScoredTagger.pickingTag .postScoredTagger.noneSelected:hover .postTagStars {
   display: none;
 }
 

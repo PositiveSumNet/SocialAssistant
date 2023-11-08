@@ -95,11 +95,12 @@ var RENDER = {
 
         // clear out any superfluous taggers (if they had clicked "+" and then canceled)
         const taggers = Array.from(container.querySelectorAll('.postScoredTagger'));
-        // starting at 1 (not 0) because we need at least the first one
-        for (let i = 1; i < taggers.length; i++) {
+        for (let i = 0; i < taggers.length; i++) {
           let postScoredTaggerElm = taggers[i];
+          postScoredTaggerElm.classList.remove('pickingTag');
           let concatSubtopic = RENDER.POST.TAGGING.getConcatSubtopic(postScoredTaggerElm);
-          if (!STR.hasLen(concatSubtopic)) {
+          // starting at 1 (not 0) because we need at least the first one
+          if (i > 0 && !STR.hasLen(concatSubtopic)) {
             postScoredTaggerElm.remove();
           }
         }
@@ -478,6 +479,7 @@ var RENDER = {
           txtElm.disabled = true;
           const container = ES6.findUpClass(txtElm, 'postScoredTaggers');
           container.classList.add('pickingTag');
+          postScoredTaggerElm.classList.add('pickingTag');
           RENDER.POST.TAGGING.renderTopicChoices(postScoredTaggerElm);
         });
 
