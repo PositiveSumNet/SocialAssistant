@@ -86,9 +86,12 @@ var RENDER = {
       finishTagEdits: function(elm) {
         const container = ES6.findUpClass(elm, 'postScoredTaggers');
         container.classList.remove('pickingTag');
-        // re-enable the textbox
-        const txtElm = container.querySelector('input[type="text"]');
-        txtElm.disabled = false;
+        // re-enable the textboxes
+        const txtElms = Array.from(container.querySelectorAll('input[type="text"]'));
+        for (let i = 0; i < txtElms.length; i++) {
+          let txtElm = txtElms[i];
+          txtElm.disabled = false;
+        }
 
         // clear out any superfluous taggers (if they had clicked "+" and then canceled)
         const taggers = Array.from(container.querySelectorAll('.postScoredTagger'));

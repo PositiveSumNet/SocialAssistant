@@ -105,6 +105,9 @@ var TOPICS = {
         const topicSubtopicSet = deprecated == true ? deletableSet : savableSet;
         APPSCHEMA.SAVING.getSubset(topicSubtopicSet, APPSCHEMA.SocialTopicSubtopic.Name).sogs.push(topicSubtopicRecord);
 
+        if (!subtopic.Keywords) {
+          subtopic.Keywords = [];
+        }
         for (let w = 0; w < subtopic.Keywords.length; w++) {
           let word = subtopic.Keywords[w];
           let wordDep = deprecated;
