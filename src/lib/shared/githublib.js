@@ -50,7 +50,7 @@ var GITHUB = {
         return '';
       }
 
-      const json = STR.fromBase64(data.content);
+      const json = STR.fromBase64(data.content, true);
       return json;
     }
     else {
