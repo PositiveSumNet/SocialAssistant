@@ -176,11 +176,11 @@ a {
   white-space:nowrap!important;
 }
 
-#paging input, #submitGhTokenSection input {
+#paging input, #submitGhTokenSection input, #confirmRepoNameSection input {
   border: none;
 }
 
-#paging label, #paging input, #paging a, #submitGhTokenSection label, #submitGhTokenSection input {
+#paging label, #paging input, #paging a, #submitGhTokenSection label, #submitGhTokenSection input, #confirmRepoNameSection label, #confirmRepoNameSection input {
   display: inline-block;
   align-items: center;
   text-align: center;
@@ -203,7 +203,7 @@ a.optToggle {
   color: #216CB1;
 }
 
-#paging label #submitGhTokenSection label {
+#paging label, #submitGhTokenSection label, #confirmRepoNameSection label {
   border-left: 1px solid #ced4da;
 }
 
@@ -225,7 +225,7 @@ a.optToggle.toggledOn:hover {
   width: 50px;
 }
 
-#paging label, #submitGhTokenSection label {
+#paging label, #submitGhTokenSection label, #confirmRepoNameSection label {
   background-color: #e9ecef;
 }
 
