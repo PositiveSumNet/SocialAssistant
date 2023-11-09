@@ -59,7 +59,7 @@ var TOPICS = {
     const shouldPull = TOPICS.shouldPullRemoteTopics();
     if (!shouldPull) { return; }
     console.log('pulling remote server topics');
-    localStorage.setItem(SETTINGS.REMOTE.LAST_TOPICS_PULL_TRY, Date.now());
+    SETTINGS.localSet(SETTINGS.REMOTE.LAST_TOPICS_PULL_TRY, Date.now());
     GITHUB.getRawContent(rawContentCallback, GITHUB.PUBLISHER_ORG, GITHUB.TOPICS_REPO, GITHUB.TOPICS_FILE);
   },
 

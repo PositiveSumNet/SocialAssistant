@@ -42,11 +42,11 @@ var SETTINGS_UI = {
     const input = prompt("First, please input the Mastodon server where you have an account (e.g. 'toad.social').", mdonServer);
     
     if (input != null) {
-      localStorage.setItem(SETTINGS.MDON_SERVER, input);
+      SETTINGS.localSet(SETTINGS.MDON_SERVER, input);
     }
     
     // even if they cancelled, we'll avoid showing again (they can click the gear if desired)
-    localStorage.setItem(SETTINGS.ASKED.MDON_SERVER, true);
+    SETTINGS.localSet(SETTINGS.ASKED.MDON_SERVER, true);
     return input;
   }
 };

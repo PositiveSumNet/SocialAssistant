@@ -15,6 +15,17 @@ var SETTINGS = {
   PAGING: {
     PAGE_SIZE: 'pageSize'
   },
+
+  // this wrapper is helpful because localStorage.setItem('foo', undefined) yields 'undefined' (as a string)
+  localSet: function(key, value) {
+    if (!STR.hasLen(value)) {
+      localStorage.removeItem(key);
+    }
+    else {
+      localStorage.setItem(key, value);
+    }
+  },
+
   TOPICS: {
     TOPICS: 'topics',
     HIDDEN_TOPIC_NAMES: 'hiddenTopicNames',
@@ -55,7 +66,7 @@ var SETTINGS = {
     },
 
     saveTopicsToLocalCache: function(topics) {
-      localStorage.setItem(SETTINGS.TOPICS.TOPICS, JSON.stringify(topics));
+      SETTINGS.localSet(SETTINGS.TOPICS.TOPICS, JSON.stringify(topics));
     },
 
     getLocalCacheTopics: function(includeHiddens) {
@@ -143,7 +154,7 @@ var SETTINGS = {
     saveHiddenTopicName: function(topicName) {
       const hiddens = SETTINGS.TOPICS.getHiddenTopicNames();
       hiddens.push(topicName);
-      localStorage.setItem(SETTINGS.TOPICS.HIDDEN_TOPIC_NAMES, JSON.stringify(hiddens));
+      SETTINGS.localSet(SETTINGS.TOPICS.HIDDEN_TOPIC_NAMES, JSON.stringify(hiddens));
     },
 
     unhideTopicName: function(topicName) {
@@ -159,7 +170,7 @@ var SETTINGS = {
     },
 
     saveHiddenTopicNames: function(topicNames) {
-      localStorage.setItem(SETTINGS.TOPICS.HIDDEN_TOPIC_NAMES, JSON.stringify(topicNames));
+      SETTINGS.localSet(SETTINGS.TOPICS.HIDDEN_TOPIC_NAMES, JSON.stringify(topicNames));
     },
 
     getHiddenConcatNames: function() {
@@ -172,7 +183,7 @@ var SETTINGS = {
     saveHiddenConcatName: function(concatName) {
       const hiddens = SETTINGS.TOPICS.getHiddenConcatNames();
       hiddens.push(concatName);
-      localStorage.setItem(SETTINGS.TOPICS.HIDDEN_CONCAT_TOPIC_NAMES, JSON.stringify(hiddens));
+      SETTINGS.localSet(SETTINGS.TOPICS.HIDDEN_CONCAT_TOPIC_NAMES, JSON.stringify(hiddens));
     },
 
     unhideConcatName: function(concatName) {
@@ -188,7 +199,7 @@ var SETTINGS = {
     },
 
     saveHiddenConcatNames: function(concatNames) {
-      localStorage.setItem(SETTINGS.TOPICS.HIDDEN_CONCAT_TOPIC_NAMES, JSON.stringify(concatNames));
+      SETTINGS.localSet(SETTINGS.TOPICS.HIDDEN_CONCAT_TOPIC_NAMES, JSON.stringify(concatNames));
     }
   },
   PAGE_CONTEXT: {
@@ -266,7 +277,7 @@ var SETTINGS = {
 
       saveExportConfig: function(config) {
         const json = JSON.stringify(config);
-        localStorage.setItem(SETTINGS.SYNCFLOW.BACKUP.SETTING_NAME, json);
+        SETTINGS.localSet(SETTINGS.SYNCFLOW.BACKUP.SETTING_NAME, json);
       },
 
       getExportConfig: function() {
@@ -294,7 +305,7 @@ var SETTINGS = {
 
       saveImportConfig: function(config) {
         const json = JSON.stringify(config);
-        localStorage.setItem(SETTINGS.SYNCFLOW.RESTORE.SETTING_NAME, json);
+        SETTINGS.localSet(SETTINGS.SYNCFLOW.RESTORE.SETTING_NAME, json);
       },
 
       getImportConfig: function() {
@@ -316,7 +327,7 @@ var SETTINGS = {
 
     setShouldRun: function(direction, should) {
       const settingName = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.SHOULD_RUN : SETTINGS.SYNCFLOW.RESTORE.SHOULD_RUN;
-      localStorage.setItem(settingName, should);
+      SETTINGS.localSet(settingName, should);
     },
 
     getLastStepType: function(direction) {
@@ -326,7 +337,7 @@ var SETTINGS = {
 
     setLastStepType: function(direction, stepType) {
       const settingName = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.LAST_STEP_TYPE : SETTINGS.SYNCFLOW.RESTORE.LAST_STEP_TYPE;
-      localStorage.setItem(settingName, stepType);
+      SETTINGS.localSet(settingName, stepType);
     },
 
     getLastNetwork: function(direction) {
@@ -336,7 +347,7 @@ var SETTINGS = {
 
     setLastNetwork: function(direction, network) {
       const settingName = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.LAST_NETWORK : SETTINGS.SYNCFLOW.RESTORE.LAST_NETWORK;
-      localStorage.setItem(settingName, network);
+      SETTINGS.localSet(settingName, network);
     },
 
     getMarker: function(direction) {
@@ -351,7 +362,7 @@ var SETTINGS = {
     setMarker: function(direction, marker) {
       const settingName = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.MARKER : SETTINGS.SYNCFLOW.RESTORE.MARKER;
       if (STR.hasLen(marker)) {
-        localStorage.setItem(settingName, marker);
+        SETTINGS.localSet(settingName, marker);
       }
       else {
         localStorage.removeItem(settingName);
@@ -365,7 +376,7 @@ var SETTINGS = {
 
     setDidNoop: function(direction, noop) {
       const settingName = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.NOOP : SETTINGS.SYNCFLOW.RESTORE.NOOP;
-      localStorage.setItem(settingName, noop);
+      SETTINGS.localSet(settingName, noop);
     },
 
     getCompletedStepOk: function(direction) {
@@ -380,7 +391,7 @@ var SETTINGS = {
       const lastErrorWhenSetting = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.STUCK_LAST_ERROR_WHEN : SETTINGS.SYNCFLOW.RESTORE.STUCK_LAST_ERROR_WHEN;
       const lastErrorMsgSetting = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.STUCK_LAST_ERROR_MSG : SETTINGS.SYNCFLOW.RESTORE.STUCK_LAST_ERROR_MSG;
 
-      localStorage.setItem(completedOkSetting, Date.now());
+      SETTINGS.localSet(completedOkSetting, Date.now());
       localStorage.removeItem(lastErrorWhenSetting);
       localStorage.removeItem(lastErrorMsgSetting);
     },
@@ -397,7 +408,7 @@ var SETTINGS = {
       const lastErrorWhenSetting = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.STUCK_LAST_ERROR_WHEN : SETTINGS.SYNCFLOW.RESTORE.STUCK_LAST_ERROR_WHEN;
       const lastErrorMsgSetting = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.STUCK_LAST_ERROR_MSG : SETTINGS.SYNCFLOW.RESTORE.STUCK_LAST_ERROR_MSG;
 
-      localStorage.setItem(completedOkSetting, Date.now());
+      SETTINGS.localSet(completedOkSetting, Date.now());
       localStorage.removeItem(lastErrorWhenSetting);
       localStorage.removeItem(lastErrorMsgSetting);
     },
@@ -431,8 +442,8 @@ var SETTINGS = {
       const lastErrorWhenSetting = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.STUCK_LAST_ERROR_WHEN : SETTINGS.SYNCFLOW.RESTORE.STUCK_LAST_ERROR_WHEN;
       const lastErrorMsgSetting = (direction == SYNCFLOW.DIRECTION.BACKUP) ? SETTINGS.SYNCFLOW.BACKUP.STUCK_LAST_ERROR_MSG : SETTINGS.SYNCFLOW.RESTORE.STUCK_LAST_ERROR_MSG;
 
-      localStorage.setItem(lastErrorWhenSetting, Date.now());
-      localStorage.setItem(lastErrorMsgSetting, msg);
+      SETTINGS.localSet(lastErrorWhenSetting, Date.now());
+      SETTINGS.localSet(lastErrorMsgSetting, msg);
       localStorage.removeItem(completedStepOkSetting);
       localStorage.removeItem(completedRunOkSetting);
     },
@@ -460,7 +471,7 @@ var SETTINGS = {
     DISMISSED_MFA_NOTE: 'githubDismissedMfaNote',
 
     setDismissedMfaNote: function() {
-      localStorage.setItem(SETTINGS.GITHUB.DISMISSED_MFA_NOTE, true);
+      SETTINGS.localSet(SETTINGS.GITHUB.DISMISSED_MFA_NOTE, true);
     },
 
     getDismissedMfaNote: function() {
@@ -615,7 +626,7 @@ var SETTINGS = {
     setAuthorFilter: function(author) {
       if (STR.hasLen) {
         author = STR.stripPrefix(author, '@');
-        localStorage.setItem(SETTINGS.RECORDING.AUTHOR_FILTER, author);
+        SETTINGS.localSet(SETTINGS.RECORDING.AUTHOR_FILTER, author);
       }
       else {
         localStorage.removeItem(SETTINGS.RECORDING.AUTHOR_FILTER);
@@ -658,7 +669,7 @@ var SETTINGS = {
       },
   
       setPreferredVideoRes: function(res) {
-        localStorage.setItem('videores', res);
+        SETTINGS.localSet('videores', res);
       }  
     },
 
@@ -727,7 +738,7 @@ var SETTINGS = {
     },
 
     setNavxPreferredDomain: function(domain) {
-      localStorage.setItem('xthreadsite', domain);
+      SETTINGS.localSet('xthreadsite', domain);
     },
   
     getLastParsedUrl: async function() {
@@ -885,7 +896,7 @@ var SETTINGS = {
   },
   
   setExplainedMdonOauth: function() {
-    localStorage.setItem(SETTINGS.ASKED.MDON_EXPLAINED_OAUTH, true);
+    SETTINGS.localSet(SETTINGS.ASKED.MDON_EXPLAINED_OAUTH, true);
   },
   
   clearExplainedMdonOauth: function() {
@@ -897,7 +908,7 @@ var SETTINGS = {
   },
 
   markMdonDownloadSuccess: function() {
-    localStorage.setItem(SETTINGS.DOWNLOADED_OK.MASTODON, true);
+    SETTINGS.localSet(SETTINGS.DOWNLOADED_OK.MASTODON, true);
   },
 
   getPageSize: function() {
@@ -963,13 +974,13 @@ var SETTINGS = {
 
   cacheSite: function(site) {
     if (site && site.length > 0) {
-      localStorage.setItem(SETTINGS.PAGE_CONTEXT.SITE, site);
+      SETTINGS.localSet(SETTINGS.PAGE_CONTEXT.SITE, site);
     }
   },
 
   cacheOwner: function(site, owner) {
     const cacheKey = SETTINGS.ownerCacheKey(site);
-    localStorage.setItem(cacheKey, owner);
+    SETTINGS.localSet(cacheKey, owner);
   },
 
   cachePageState: function(msg) {
@@ -981,12 +992,12 @@ var SETTINGS = {
     
     if (msg.networkOwner) {
       const cacheKey = SETTINGS.ownerCacheKey(msg.site);
-      localStorage.setItem(cacheKey, msg.networkOwner);
+      SETTINGS.localSet(cacheKey, msg.networkOwner);
     }
     
     if (msg.pageType) {
       const cacheKey = SETTINGS.pageTypeCacheKey(msg.site);
-      localStorage.setItem(cacheKey, msg.pageType);
+      SETTINGS.localSet(cacheKey, msg.pageType);
     }
   },
 
@@ -1013,7 +1024,7 @@ var SETTINGS = {
     if (!site || !handle) { return; }
     const cacheKey = SETTINGS.getFollowRequestedCacheKey(site, handle);
     // set a boolean value for whether the follow request appears accepted
-    localStorage.setItem(cacheKey, appearsAccepted);
+    SETTINGS.localSet(cacheKey, appearsAccepted);
   },
 
   clearFollowRequestedsCache: function(site) {
@@ -1060,7 +1071,7 @@ var SETTINGS = {
 
   setSortByStars: function(boolVal) {
     if (STR.isTruthy(boolVal)) {
-      localStorage.setItem(SETTINGS.SORT_BY_STARS, true);
+      SETTINGS.localSet(SETTINGS.SORT_BY_STARS, true);
     }
     else {
       localStorage.removeItem(SETTINGS.SORT_BY_STARS);

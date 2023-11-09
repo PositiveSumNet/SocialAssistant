@@ -163,7 +163,7 @@ var TABS_UI = {
     
       QUERYING_UI.QUERY_STRING.conformAddressBarUrlQueryParmsToUi(false);
       const cacheKey = SETTINGS.pageTypeCacheKey(SITE.GITHUB);
-      localStorage.setItem(cacheKey, pageType);
+      SETTINGS.localSet(cacheKey, pageType);
     },
     
     activateGhConfigureTab: async function() {

@@ -42,7 +42,7 @@ var QUERYWORK_UI = {
           alert("Max suggested page size is 100; leaving unchanged");
         }
         else {
-          localStorage.setItem('pageSize', intVal);
+          SETTINGS.localSet('pageSize', intVal);
           QUERYING_UI.PAGING.resetPage();
           QUERYWORK_UI.executeSearch();
         }
@@ -431,7 +431,7 @@ var QUERYWORK_UI = {
   onCompletedSaveAndDelete: function(payload) {
     switch (payload.onSuccessType) {
       case SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS:
-        localStorage.setItem(SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS, Date.now());
+        SETTINGS.localSet(SETTINGS.REMOTE.LAST_TOPICS_PULL_SUCCESS, Date.now());
         break;
       case MSGTYPE.FROMDB.ON_SUCCESS.SAVED_POST_TAG:
         TAGGING.POSTS.onTaggingSuccess(payload);
