@@ -112,6 +112,7 @@ var DBORM = {
       console.log('I/O writing: ' + writing);
       console.log('Busy writes: ' + _dbBusyWrites);
       console.log('Busy reads: ' + _dbBusyReads);
+      console.log(args);
       DBORM.LOGGING.logHtml('text-danger', ['Sorry, we hit an error. Try refreshing this page.']);
       console.trace();
     }
