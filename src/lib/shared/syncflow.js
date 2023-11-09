@@ -564,6 +564,36 @@ var SYNCFLOW = {
   },
 
   PULL_EXEC: {
+    // This is tricky; the gist is whether we need to look for the next file past prior marker
+    // or whether we want the one specified by the marker (as with alphabetical).
+    // Posts don't use a "known" marker; need to look for the next one after prior marker (based on what is at Github)
+    getCursorComparer: function(step) {
+      if (step.marker == FIRST_TEXT_START) {
+        return CURSOR_COMPARER.NEXT_AFTER;
+      }
+      
+      switch (step.type) {
+        case SYNCFLOW.STEP_TYPE.profileFavorites:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.profiles:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.profileImgs:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.networkFollowings:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        case SYNCFLOW.STEP_TYPE.networkFollowers:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        case SYNCFLOW.STEP_TYPE.postTopicRatings:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.posts:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        case SYNCFLOW.STEP_TYPE.postImgs:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        default:
+          return '';
+      }
+    },
+    
     kickoffRestoreStep: async function(step) {
       const repoType = GITHUB.REPO_TYPE.DATA;
       const repoConnInfo = await GITHUB.SYNC.getRepoConnInfo(GHCONFIG_UI.onGithubFailure, repoType);
@@ -576,9 +606,19 @@ var SYNCFLOW = {
 
       const remoteDir = SYNCFLOW.FILE_NAMER.getRemoteDir(step);
 
-      const marker = STR.hasLen(step.marker) ? step.marker : LAST_TEXT;
-      const fileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
-      const nextRemoteFile = await GITHUB.TREES.getNextFile(remoteDir, repoConnInfo, repoType, fileName);
+      // console.log('RESTORE:');
+      // console.log(step);
+      const marker = STR.hasLen(step.marker) ? step.marker : FIRST_TEXT_START;
+      // console.log('with marker:');
+      // console.log(marker);
+      const cursorFileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
+      // console.log('cursor file name');
+      // console.log(cursorFileName);
+      const cursorComparer = SYNCFLOW.PULL_EXEC.getCursorComparer(step);
+      // console.log(cursorComparer);
+      const nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
+      // console.log('fetch next at:');
+      // console.log(nextRemoteFile);
 
       if (!nextRemoteFile) {
         const result = SYNCFLOW.PULL_EXEC.buildNoMoreRemoteFilesResult(step, rateLimit);
@@ -815,11 +855,11 @@ var SYNCFLOW = {
       return `${SYNCFLOW.FILE_NAMER.PATH_PART.sync}/${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}/${network}/${SYNCFLOW.FILE_NAMER.PATH_PART.content}`.toLowerCase();
     },
 
-    getProfilesFileName: function(step) {
+    getProfilesFileName: function(step, relevantMarker) {
       const network = step.network;
       const delim = SYNCFLOW.FILE_NAMER.DELIM;
-      const marker = (step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker;
-      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}${delim}${marker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
+      relevantMarker = relevantMarker || ((step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker);
+      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}${delim}${relevantMarker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
     },
 
     getProfilesMarker: function(fileName) {
@@ -837,11 +877,11 @@ var SYNCFLOW = {
       return `${SYNCFLOW.FILE_NAMER.PATH_PART.sync}/${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}/${network}/${SYNCFLOW.FILE_NAMER.PATH_PART.images}`.toLowerCase();
     },
 
-    getProfileImgsFileName: function(step) {
+    getProfileImgsFileName: function(step, relevantMarker) {
       const network = step.network;
       const delim = SYNCFLOW.FILE_NAMER.DELIM;
-      const marker = (step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker;
-      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.avatars}${delim}${marker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
+      relevantMarker = relevantMarker || ((step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker);
+      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.avatars}${delim}${relevantMarker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
     },
 
     getProfileImgsMarker: function(fileName) {

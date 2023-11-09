@@ -99,6 +99,11 @@ const CONN_DIRECTION = {
   FOLLOWERS: 'followers'
 };
 
+const CURSOR_COMPARER = {
+  EXACT_MATCH: 'exactMatch',
+  NEXT_AFTER: 'nextAfter',
+}
+
 // site enums
 const SITE = {
   TWITTER: 'twitter',
