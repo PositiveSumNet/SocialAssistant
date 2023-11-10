@@ -277,11 +277,11 @@ var SYNCFLOW = {
     let step = {};
     step[SYNCFLOW.STEP.config] = config;
 
-    if (!STR.hasLen(lastType) || lastType == FIRST_TEXT) {
+    if (!STR.hasLen(lastType)) {
       // at the beginning
       step[SYNCFLOW.STEP.type] = syncStepTypes[0];
       step[SYNCFLOW.STEP.network] = syncNetworks[0];
-      step[SYNCFLOW.STEP.marker] = FIRST_TEXT;
+      step[SYNCFLOW.STEP.marker] = FIRST_TEXT_START;
       return step;
     }
     else if (lastType == finalStepType && marker == LAST_TEXT) {
@@ -293,7 +293,7 @@ var SYNCFLOW = {
         // start of next network
         step[SYNCFLOW.STEP.type] = syncStepTypes[0];
         step[SYNCFLOW.STEP.network] = ES6.getNext(syncNetworks, lastNetwork);
-        step[SYNCFLOW.STEP.marker] = FIRST_TEXT;
+        step[SYNCFLOW.STEP.marker] = FIRST_TEXT_START;
         return step;
       }
     }
@@ -308,7 +308,7 @@ var SYNCFLOW = {
       // increment the step and reset the marker
       step[SYNCFLOW.STEP.type] = ES6.getNext(syncStepTypes, lastType);
       step[SYNCFLOW.STEP.network] = lastNetwork;
-      step[SYNCFLOW.STEP.marker] = FIRST_TEXT;
+      step[SYNCFLOW.STEP.marker] = FIRST_TEXT_START;
       return step;
     }
   },
@@ -564,6 +564,36 @@ var SYNCFLOW = {
   },
 
   PULL_EXEC: {
+    // This is tricky; the gist is whether we need to look for the next file past prior marker
+    // or whether we want the one specified by the marker (as with alphabetical).
+    // Posts don't use a "known" marker; need to look for the next one after prior marker (based on what is at Github)
+    getCursorComparer: function(step) {
+      if (step.marker == FIRST_TEXT_START) {
+        return CURSOR_COMPARER.NEXT_AFTER;
+      }
+      
+      switch (step.type) {
+        case SYNCFLOW.STEP_TYPE.profileFavorites:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.profiles:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.profileImgs:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.networkFollowings:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        case SYNCFLOW.STEP_TYPE.networkFollowers:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        case SYNCFLOW.STEP_TYPE.postTopicRatings:
+          return CURSOR_COMPARER.EXACT_MATCH;
+        case SYNCFLOW.STEP_TYPE.posts:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        case SYNCFLOW.STEP_TYPE.postImgs:
+          return CURSOR_COMPARER.NEXT_AFTER;
+        default:
+          return '';
+      }
+    },
+    
     kickoffRestoreStep: async function(step) {
       const repoType = GITHUB.REPO_TYPE.DATA;
       const repoConnInfo = await GITHUB.SYNC.getRepoConnInfo(GHCONFIG_UI.onGithubFailure, repoType);
@@ -576,9 +606,10 @@ var SYNCFLOW = {
 
       const remoteDir = SYNCFLOW.FILE_NAMER.getRemoteDir(step);
 
-      const marker = STR.hasLen(step.marker) ? step.marker : LAST_TEXT;
-      const fileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
-      const nextRemoteFile = await GITHUB.TREES.getNextFile(remoteDir, repoConnInfo, repoType, fileName);
+      const marker = STR.hasLen(step.marker) ? step.marker : FIRST_TEXT_START;
+      const cursorFileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
+      const cursorComparer = SYNCFLOW.PULL_EXEC.getCursorComparer(step);
+      const nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
 
       if (!nextRemoteFile) {
         const result = SYNCFLOW.PULL_EXEC.buildNoMoreRemoteFilesResult(step, rateLimit);
@@ -751,9 +782,9 @@ var SYNCFLOW = {
         case SYNCFLOW.STEP_TYPE.profileFavorites:
           return SYNCFLOW.FILE_NAMER.getProfileFavoritesFileName(step);
         case SYNCFLOW.STEP_TYPE.profiles:
-          return SYNCFLOW.FILE_NAMER.getProfilesFileName(step);
+          return SYNCFLOW.FILE_NAMER.getProfilesFileName(step, relevantMarker);
         case SYNCFLOW.STEP_TYPE.profileImgs:
-          return SYNCFLOW.FILE_NAMER.getProfileImgsFileName(step);
+          return SYNCFLOW.FILE_NAMER.getProfileImgsFileName(step, relevantMarker);
         case SYNCFLOW.STEP_TYPE.networkFollowings:
         case SYNCFLOW.STEP_TYPE.networkFollowers:
           return SYNCFLOW.FILE_NAMER.getNetworkConnsFileName(step, relevantMarker);
@@ -815,11 +846,11 @@ var SYNCFLOW = {
       return `${SYNCFLOW.FILE_NAMER.PATH_PART.sync}/${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}/${network}/${SYNCFLOW.FILE_NAMER.PATH_PART.content}`.toLowerCase();
     },
 
-    getProfilesFileName: function(step) {
+    getProfilesFileName: function(step, relevantMarker) {
       const network = step.network;
       const delim = SYNCFLOW.FILE_NAMER.DELIM;
-      const marker = (STR.hasLen(step.marker) && step.marker != FIRST_TEXT) ? step.marker : FIRST_TEXT;
-      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}${delim}${marker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
+      relevantMarker = relevantMarker || ((step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker);
+      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}${delim}${relevantMarker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
     },
 
     getProfilesMarker: function(fileName) {
@@ -837,11 +868,11 @@ var SYNCFLOW = {
       return `${SYNCFLOW.FILE_NAMER.PATH_PART.sync}/${SYNCFLOW.FILE_NAMER.PATH_PART.profiles}/${network}/${SYNCFLOW.FILE_NAMER.PATH_PART.images}`.toLowerCase();
     },
 
-    getProfileImgsFileName: function(step) {
+    getProfileImgsFileName: function(step, relevantMarker) {
       const network = step.network;
       const delim = SYNCFLOW.FILE_NAMER.DELIM;
-      const marker = STR.hasLen(step.marker) ? step.marker : FIRST_TEXT;
-      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.avatars}${delim}${marker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
+      relevantMarker = relevantMarker || ((step.marker == FIRST_TEXT_START) ? FIRST_TEXT_END : step.marker);
+      return `${network}${delim}${SYNCFLOW.FILE_NAMER.PATH_PART.avatars}${delim}${relevantMarker}.${SYNCFLOW.FILE_NAMER.EXT.json}`.toLowerCase();
     },
 
     getProfileImgsMarker: function(fileName) {
@@ -1077,7 +1108,7 @@ var SYNCFLOW = {
     },
 
     calcNextAlpha: function(step) {
-      return STR.hasLen(step.marker) ? STR.nextAlphaMarker(step.marker).toLowerCase() : FIRST_TEXT;
+      return STR.nextAlphaMarker(step.marker).toLowerCase();
     },
 
     calcViaLastRow: function(step, rows, col) {

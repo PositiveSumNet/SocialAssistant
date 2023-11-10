@@ -204,8 +204,8 @@ var MASTODON = {
       return;
     }
 
-    localStorage.setItem(SETTINGS.MDON_SERVER, server);
-    localStorage.setItem(SETTINGS.ASKED.MDON_SERVER, true);
+    SETTINGS.localSet(SETTINGS.MDON_SERVER, server);
+    SETTINGS.localSet(SETTINGS.ASKED.MDON_SERVER, true);
 
     // ensure the app is registered
     if (_mdonClientId.length === 0 || _mdonClientSecret.length === 0) {

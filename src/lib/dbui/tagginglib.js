@@ -1,5 +1,3 @@
-var _inUseTags = new Set();
-
 var TAGGING = {
   CONSTANTS: {
     TAG_RATE: '-- Set topic & rate --',
@@ -57,12 +55,6 @@ var TAGGING = {
 
       if (STR.hasLen(concatSubtopic)) {
         postScoredTaggerElm.setAttribute('data-testid', concatSubtopic);
-        const found = _inUseTags.has(concatSubtopic);
-        if (!STR.hasLen(found)) {
-          _inUseTags.add(concatSubtopic);
-          // call out to index.js
-          adjustTopicFilterVisibility();
-        }
       }
       else {
         postScoredTaggerElm.removeAttribute('data-testid');

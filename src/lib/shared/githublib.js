@@ -50,7 +50,7 @@ var GITHUB = {
         return '';
       }
 
-      const json = STR.fromBase64(data.content);
+      const json = STR.fromBase64(data.content, true);
       return json;
     }
     else {
@@ -133,18 +133,32 @@ var GITHUB = {
       return await response.json();
     },
 
-    getNextFile: async function(directory, repoConnInfo, repoType, fileName) {
+    getNextPullableFile: async function(directory, repoConnInfo, repoType, fileNameCursor, cursorComparer) {
       let files = await GITHUB.TREES.getFiles(directory, repoConnInfo, repoType);
       if (!files || files.length == 0) { return null; }
       files = ES6.sortBy(files, 'path');
-      if (!STR.hasLen(fileName)) {
+      if (!STR.hasLen(fileNameCursor)) {
+        console.log('a');
         return files[0];
       }
       else
       for (let i = 0; i < files.length; i++) {
         let file = files[i];
-        if (file.path > fileName) {
-          return file;
+        let exceeds = file.path.toLowerCase() > fileNameCursor.toLowerCase();
+        let equals = STR.sameText(file.path, fileNameCursor);
+        switch (cursorComparer) {
+          case CURSOR_COMPARER.EXACT_MATCH:
+            if (equals == true) {
+              return file;
+            }
+            break;
+          case CURSOR_COMPARER.NEXT_AFTER:
+            if (exceeds == true) {
+              return file;
+            }
+            break;
+          default:
+            throw('not implemented');
         }
       }
 

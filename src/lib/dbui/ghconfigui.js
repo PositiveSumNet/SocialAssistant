@@ -6,6 +6,11 @@ var GHCONFIG_UI = {
       const txtGithubToken = document.getElementById('txtGithubToken');
       const tokenVal = txtGithubToken.value;
       const repoType = GHCONFIG_UI.getGithubConfigRepoType();
+      const txtConfirmRepo = document.getElementById('txtConfirmRepoName');
+      const confirmedRepoName = txtConfirmRepo.value;
+      if (STR.hasLen(confirmedRepoName)) {
+        SETTINGS.GITHUB.saveSyncRepoName(confirmedRepoName, repoType);
+      }
       const conflictMsg = await SETTINGS.GITHUB.getTokenAlreadyInUseForOtherRepoMsg(tokenVal, repoType);
       if (STR.hasLen(conflictMsg)) {
         GHCONFIG_UI.setGithubConnFailureMsg(conflictMsg);
@@ -72,7 +77,9 @@ var GHCONFIG_UI = {
     lastOkElm.classList.remove('text-success');
     lastOkElm.textContent = 'N/A';
     ghCheckElm.classList.add('d-none');
-  
+    
+    document.getElementById('confirmRepoNameSection').classList.remove('d-none');
+
     switch (result.reason) {
       case GITHUB.SYNC.ERROR_CODE.lacksToken:
       case GITHUB.SYNC.ERROR_CODE.tokenFailed:

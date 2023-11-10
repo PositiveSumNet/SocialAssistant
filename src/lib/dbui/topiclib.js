@@ -59,7 +59,7 @@ var TOPICS = {
     const shouldPull = TOPICS.shouldPullRemoteTopics();
     if (!shouldPull) { return; }
     console.log('pulling remote server topics');
-    localStorage.setItem(SETTINGS.REMOTE.LAST_TOPICS_PULL_TRY, Date.now());
+    SETTINGS.localSet(SETTINGS.REMOTE.LAST_TOPICS_PULL_TRY, Date.now());
     GITHUB.getRawContent(rawContentCallback, GITHUB.PUBLISHER_ORG, GITHUB.TOPICS_REPO, GITHUB.TOPICS_FILE);
   },
 
@@ -105,6 +105,9 @@ var TOPICS = {
         const topicSubtopicSet = deprecated == true ? deletableSet : savableSet;
         APPSCHEMA.SAVING.getSubset(topicSubtopicSet, APPSCHEMA.SocialTopicSubtopic.Name).sogs.push(topicSubtopicRecord);
 
+        if (!subtopic.Keywords) {
+          subtopic.Keywords = [];
+        }
         for (let w = 0; w < subtopic.Keywords.length; w++) {
           let word = subtopic.Keywords[w];
           let wordDep = deprecated;

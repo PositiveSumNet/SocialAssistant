@@ -90,13 +90,19 @@ const EMPTY_LIST_MSG = "No matches found. If you recorded data and don't see it 
 const QUOTED_SUFFIX = '#quoted';
 
 // hit end of text (ascending order)
-const FIRST_TEXT = '000';
+const FIRST_TEXT_START = '000';
+const FIRST_TEXT_END = '999';
 const LAST_TEXT = '~~~';
 
 const CONN_DIRECTION = {
   FOLLOWING: 'following',
   FOLLOWERS: 'followers'
 };
+
+const CURSOR_COMPARER = {
+  EXACT_MATCH: 'exactMatch',
+  NEXT_AFTER: 'nextAfter',
+}
 
 // site enums
 const SITE = {

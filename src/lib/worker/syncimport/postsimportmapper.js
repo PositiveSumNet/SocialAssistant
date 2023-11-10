@@ -36,42 +36,42 @@ var POSTS_IMPORT_MAPPER = {
       mapper.mapPostWorker(set, record);
       // quote tweet
       if (record[POST_SEL.QuoteTweet]) {
-        mapper.mapPostWorker(set, record[POST_SEL.QuoteTweet]);
+        mapper.mapPostWorker(set, record[POST_SEL.QuoteTweet], record);
       }
       // reply tweet
       if (record[POST_SEL.ReplyToTweet]) {
-        mapper.mapPostWorker(set, record[POST_SEL.ReplyToTweet]);
+        mapper.mapPostWorker(set, record[POST_SEL.ReplyToTweet], record);
       }
     }
     
     return set;
   },
 
-  mapPostWorker: function(set, record) {
+  mapPostWorker: function(set, record, parentRecord) {
     const mapper = POSTS_IMPORT_MAPPER; // just to abbreviate
       // the select columns of SYNC.getPosts
-      mapper.attachPostAttr(POST_SEL.PostTime, APPSCHEMA.SocialPostTime, set, record);
-      mapper.attachPostAttr(POST_SEL.AuthorHandle, APPSCHEMA.SocialPostAuthorHandle, set, record);
-      mapper.attachAuthorName(set, record);
-      mapper.attachPostAttr(POST_SEL.PostText, APPSCHEMA.SocialPostText, set, record);
-      mapper.attachPostAttr(POST_SEL.ReplyToUrlKey, APPSCHEMA.SocialPostReplyToUrlKey, set, record);
-      mapper.attachPostAttr(POST_SEL.ReposterHandle, APPSCHEMA.SocialPostReposter, set, record);
-      mapper.attachReposterName(set, record);
-      mapper.attachPostAttr(POST_SEL.QuoteOfUrlKey, APPSCHEMA.SocialPostQuoteOf, set, record);
-      mapper.attachPostAttr(POST_SEL.ThreadUrlKey, APPSCHEMA.SocialPostThreadUrlKey, set, record);
-      mapper.attachPostAttr(POST_SEL.EmbedsVideo, APPSCHEMA.SocialPostEmbedsVideo, set, record);
-      mapper.attachPostAttr(POST_SEL.CardText, APPSCHEMA.SocialPostCardText, set, record);
-      mapper.attachPostAttr(POST_SEL.ReplyCount, APPSCHEMA.SocialPostReplyCount, set, record);
-      mapper.attachPostAttr(POST_SEL.LikeCount, APPSCHEMA.SocialPostLikeCount, set, record);
-      mapper.attachPostAttr(POST_SEL.ReshareCount, APPSCHEMA.SocialPostReshareCount, set, record);
-      mapper.attachPostAttr(POST_SEL.CardShortUrl, APPSCHEMA.SocialPostCardShortUrl, set, record);
-      mapper.attachPostAttr(POST_SEL.CardFullUrl, APPSCHEMA.SocialPostCardFullUrl, set, record);
+      mapper.attachPostAttr(POST_SEL.PostTime, APPSCHEMA.SocialPostTime, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.AuthorHandle, APPSCHEMA.SocialPostAuthorHandle, set, record, parentRecord);
+      mapper.attachAuthorName(set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.PostText, APPSCHEMA.SocialPostText, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.ReplyToUrlKey, APPSCHEMA.SocialPostReplyToUrlKey, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.ReposterHandle, APPSCHEMA.SocialPostReposter, set, record, parentRecord);
+      mapper.attachReposterName(set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.QuoteOfUrlKey, APPSCHEMA.SocialPostQuoteOf, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.ThreadUrlKey, APPSCHEMA.SocialPostThreadUrlKey, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.EmbedsVideo, APPSCHEMA.SocialPostEmbedsVideo, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.CardText, APPSCHEMA.SocialPostCardText, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.ReplyCount, APPSCHEMA.SocialPostReplyCount, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.LikeCount, APPSCHEMA.SocialPostLikeCount, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.ReshareCount, APPSCHEMA.SocialPostReshareCount, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.CardShortUrl, APPSCHEMA.SocialPostCardShortUrl, set, record, parentRecord);
+      mapper.attachPostAttr(POST_SEL.CardFullUrl, APPSCHEMA.SocialPostCardFullUrl, set, record, parentRecord);
       // the more interesting mappings
-      mapper.attachSearchBlob(set, record);
-      mapper.attachCardSearchBlob(set, record);
+      mapper.attachSearchBlob(set, record, parentRecord);
+      mapper.attachCardSearchBlob(set, record, parentRecord);
   },
 
-  attachSearchBlob: function(set, record) {
+  attachSearchBlob: function(set, record, parentRecord) {
     const urlKey = record[POST_SEL.PostUrlKey];
     const authorHandle = record[POST_SEL.AuthorHandle];
     const authorName = record[POST_SEL.AuthorName];
@@ -92,14 +92,14 @@ var POSTS_IMPORT_MAPPER = {
     const mapped = {
       s: record[POST_SEL.PostUrlKey],
       o: searchBlob,
-      g: POSTS_IMPORT_MAPPER.getGraph(record),
+      g: POSTS_IMPORT_MAPPER.getGraph(record, parentRecord),
       t: POSTS_IMPORT_MAPPER.getTimestamp(record)
     };
 
     APPSCHEMA.SAVING.getSubset(set, APPSCHEMA.SocialPostSearchBlob.Name).sogs.push(mapped);
   },
 
-  attachCardSearchBlob: function(set, record) {
+  attachCardSearchBlob: function(set, record, parentRecord) {
     const urlKey = record[POST_SEL.PostUrlKey];
     
     const cardText = record[POST_SEL.CardText];
@@ -114,14 +114,14 @@ var POSTS_IMPORT_MAPPER = {
     const mapped = {
       s: record[POST_SEL.PostUrlKey],
       o: searchBlob,
-      g: POSTS_IMPORT_MAPPER.getGraph(record),
+      g: POSTS_IMPORT_MAPPER.getGraph(record, parentRecord),
       t: POSTS_IMPORT_MAPPER.getTimestamp(record)
     };
 
     APPSCHEMA.SAVING.getSubset(set, APPSCHEMA.SocialPostCardSearchBlob.Name).sogs.push(mapped);
   },
 
-  attachAuthorName: function(set, record) {
+  attachAuthorName: function(set, record, parentRecord) {
     const sHandle = record[POST_SEL.AuthorHandle]; 
     const oValue = record[POST_SEL.AuthorName];
     if (!sHandle || !oValue) { return; }
@@ -129,14 +129,14 @@ var POSTS_IMPORT_MAPPER = {
     const mapped = {
       s: sHandle,
       o: oValue,
-      g: POSTS_IMPORT_MAPPER.getGraph(record),
+      g: POSTS_IMPORT_MAPPER.getGraph(record, parentRecord),
       t: POSTS_IMPORT_MAPPER.getTimestamp(record)
     };
 
     APPSCHEMA.SAVING.getSubset(set, APPSCHEMA.SocialProfileDisplayName.Name).sogs.push(mapped);
   },
 
-  attachReposterName: function(set, record) {
+  attachReposterName: function(set, record, parentRecord) {
     const sHandle = record[POST_SEL.ReposterHandle]; 
     const oValue = record[POST_SEL.ReposterName];
     if (!sHandle || !oValue) { return; }
@@ -144,7 +144,7 @@ var POSTS_IMPORT_MAPPER = {
     const mapped = {
       s: sHandle,
       o: oValue,
-      g: POSTS_IMPORT_MAPPER.getGraph(record),
+      g: POSTS_IMPORT_MAPPER.getGraph(record, parentRecord),
       t: POSTS_IMPORT_MAPPER.getTimestamp(record)
     };
 
@@ -152,19 +152,19 @@ var POSTS_IMPORT_MAPPER = {
   },
 
   // where PostUrlKey is the subject
-  attachPostAttr: function(column, entDefn, set, record) {
-    const mapped = POSTS_IMPORT_MAPPER.buildPostSog(record, column);
+  attachPostAttr: function(column, entDefn, set, record, parentRecord) {
+    const mapped = POSTS_IMPORT_MAPPER.buildPostSog(record, column, parentRecord);
     if (!mapped) { return; }
     APPSCHEMA.SAVING.getSubset(set, entDefn.Name).sogs.push(mapped);
   },
 
-  buildPostSog: function(record, column) {
+  buildPostSog: function(record, column, parentRecord) {
     const oValue = record[column];
     if (!oValue) { return null; }
     return {
       s: record[POST_SEL.PostUrlKey],
       o: oValue,
-      g: POSTS_IMPORT_MAPPER.getGraph(record),
+      g: POSTS_IMPORT_MAPPER.getGraph(record, parentRecord),
       t: POSTS_IMPORT_MAPPER.getTimestamp(record)
     };
   },
@@ -175,7 +175,11 @@ var POSTS_IMPORT_MAPPER = {
   },
 
   // we aren't bothering with a separate graph per component entity
-  getGraph: function(record) {
-    return record[SCHEMA_CONSTANTS.COLUMNS.NamedGraph];
+  getGraph: function(record, parentRecord) {
+    let graph = record[SCHEMA_CONSTANTS.COLUMNS.NamedGraph];
+    if (!STR.hasLen(graph) && parentRecord) {
+      graph = parentRecord[SCHEMA_CONSTANTS.COLUMNS.NamedGraph];
+    }
+    return graph;
   }
 };

@@ -112,6 +112,7 @@ var DBORM = {
       console.log('I/O writing: ' + writing);
       console.log('Busy writes: ' + _dbBusyWrites);
       console.log('Busy reads: ' + _dbBusyReads);
+      console.log(args);
       DBORM.LOGGING.logHtml('text-danger', ['Sorry, we hit an error. Try refreshing this page.']);
       console.trace();
     }
@@ -179,7 +180,7 @@ var DBORM = {
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB
       // const debugRows = DBORM.QUERYING.fetch(`
-      // SELECT * FROM SocialTopicSubtopic WHERE sTopic LIKE '%junk%';
+      // SELECT * FROM SocialProfileDescription;
       // `, []);
 
       // console.log(debugRows);
@@ -673,7 +674,7 @@ var DBORM = {
 
     saveSet: function(db, savableSet) {
       const qMark = `?`;
-
+      let didSave = false;
       // bulk import
       for (let i = 0; i < savableSet.subsets.length; i++) {
         let subset = savableSet.subsets[i];
@@ -681,6 +682,7 @@ var DBORM = {
           let entityDefn = subset.entityDefn;
           DBORM.SAVING.execBulkImport(db, entityDefn.OneToOne, subset.uid, qMark, qMark, qMark, subset.sogs);
           DBORM.SAVING.postSaveStatusMsg(`Importing ${subset.sogs.length} ${entityDefn.Friendly}`);
+          didSave = true;
         }
       }
       
@@ -692,9 +694,13 @@ var DBORM = {
           let tableName = entityDefn.Name;
           DBORM.SAVING.execUpsert(db, savableSet, subset, tableName, entityDefn.OneToOne, entityDefn.SubjectCol, entityDefn.ObjectCol);
           DBORM.SAVING.postSaveStatusMsg(`Processing ${subset.sogs.length} ${entityDefn.Friendly}`);
+          didSave = true;
         }
       }
-      DBORM.SAVING.postSaveStatusMsg(`Done saving!`);
+
+      if (didSave) {
+        DBORM.SAVING.postSaveStatusMsg(`Saved batch.`);
+      }
       // note: we can wait for next on-startup to batch-clear (truncate) import tables; faster
     },
 

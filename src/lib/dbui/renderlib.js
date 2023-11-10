@@ -86,17 +86,21 @@ var RENDER = {
       finishTagEdits: function(elm) {
         const container = ES6.findUpClass(elm, 'postScoredTaggers');
         container.classList.remove('pickingTag');
-        // re-enable the textbox
-        const txtElm = container.querySelector('input[type="text"]');
-        txtElm.disabled = false;
+        // re-enable the textboxes
+        const txtElms = Array.from(container.querySelectorAll('input[type="text"]'));
+        for (let i = 0; i < txtElms.length; i++) {
+          let txtElm = txtElms[i];
+          txtElm.disabled = false;
+        }
 
         // clear out any superfluous taggers (if they had clicked "+" and then canceled)
         const taggers = Array.from(container.querySelectorAll('.postScoredTagger'));
-        // starting at 1 (not 0) because we need at least the first one
-        for (let i = 1; i < taggers.length; i++) {
+        for (let i = 0; i < taggers.length; i++) {
           let postScoredTaggerElm = taggers[i];
+          postScoredTaggerElm.classList.remove('pickingTag');
           let concatSubtopic = RENDER.POST.TAGGING.getConcatSubtopic(postScoredTaggerElm);
-          if (!STR.hasLen(concatSubtopic)) {
+          // starting at 1 (not 0) because we need at least the first one
+          if (i > 0 && !STR.hasLen(concatSubtopic)) {
             postScoredTaggerElm.remove();
           }
         }
@@ -475,6 +479,7 @@ var RENDER = {
           txtElm.disabled = true;
           const container = ES6.findUpClass(txtElm, 'postScoredTaggers');
           container.classList.add('pickingTag');
+          postScoredTaggerElm.classList.add('pickingTag');
           RENDER.POST.TAGGING.renderTopicChoices(postScoredTaggerElm);
         });
 
@@ -719,7 +724,7 @@ var RENDER = {
         <div class='videoHeader'>
           <a href='#' class='fw-bold'><i class='bi-play-btn'></i> <i class='bi-info-circle-fill'></i> <span>VIDEO</span></a>
         </div>
-        <div class='mediaContainer'><img alt='src-img' src='${imgSrc}' style='max-width:400px;max-height:400px;'/></div>
+        <div class='mediaContainer'><img alt='src-img' src='${imgSrc}' style='max-width:600px;max-height:600px;'/></div>
       </div>`;
     },
 

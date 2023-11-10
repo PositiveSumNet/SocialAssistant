@@ -648,8 +648,9 @@ var CONNFETCHER = {
           break;
       }
 
-      const isStart = !STR.hasLen(step.marker) || step.marker == FIRST_TEXT;
-      const markerChar = (isStart) ? '' : step.marker.substring(0, 1);
+      // console.log(step.marker);
+      const isStart = !STR.hasLen(step.marker) || step.marker == FIRST_TEXT_START;
+      let markerChar = (isStart) ? '' : step.marker.substring(0, 1);
       let markerFilterPredicate;
       switch (markerChar) {
         case '':
@@ -741,7 +742,7 @@ var CONNFETCHER = {
       const bind = [];
 
       let markerFilter = '';
-      const isStart = !STR.hasLen(step.marker) || step.marker == FIRST_TEXT;
+      const isStart = !STR.hasLen(step.marker) || step.marker == FIRST_TEXT_START || step.marker == FIRST_TEXT_END;
       if (!isStart) {
         let parm = {key: '$marker', value: step.marker};
         bind.push(parm);

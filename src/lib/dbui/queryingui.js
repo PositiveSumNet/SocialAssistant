@@ -99,12 +99,13 @@ var QUERYING_UI = {
   },
 
   PAGE_TYPE: {
-    updateUiForCachedSite: function() {
+    updateUiForCachedSite: function(switching) {
       const site = SETTINGS.getCachedSite();
       QUERYING_UI.initMainListUiElms();
       _lastRenderedRequest = '';
       
-      const owner = SETTINGS.getCachedOwner(site);
+      // don't accept cached value on a switch (can lead to odd results)
+      const owner = (switching) ? '' : SETTINGS.getCachedOwner(site);
       txtOwnerHandle.value = STR.stripPrefix(owner, '@') || '';
       
       const twitterBtn = document.getElementById('twitterLensBtn');
@@ -217,7 +218,7 @@ var QUERYING_UI = {
       const personElm = ES6.findUpClass(event.target, 'person');
       if (!personElm) {
         console.log('Errant owner click');
-        return;
+        return '';
       }
       const handleElm = personElm.querySelector('.personLabel .personHandle');
       let handleText = handleElm.innerText;
@@ -612,10 +613,28 @@ var QUERYING_UI = {
         }
       },
 
+      showTaggingTips: function() {
+        document.getElementById('dbui').classList.add('showTaggingTips');
+        document.getElementById('txtTopicFilter').setAttribute('placeholder', 'First, tag posts via the highlighted tools');
+      },
+
+      hideTaggingTips: function() {
+        document.getElementById('dbui').classList.remove('showTaggingTips');
+        // revert to default text
+        document.getElementById('txtTopicFilter').setAttribute('placeholder', 'filter by topic or subtopic');
+      },
+
       renderFilteredTopics: function(concatNames) {
         const listTopicPicker = document.getElementById('listTopicPicker');
         listTopicPicker.replaceChildren();
         const topics = TOPICS.fromConcatNames(concatNames);
+
+        if (!topics || topics.length == 0) {
+          QUERYING_UI.FILTERS.TOPICS.showTaggingTips();
+          return;
+        }
+        QUERYING_UI.FILTERS.TOPICS.hideTaggingTips();
+
         const topicsUlElm = document.createElement('ul');
         topicsUlElm.classList.add('biLevelMenu');
         topicsUlElm.classList.add('list-group');
