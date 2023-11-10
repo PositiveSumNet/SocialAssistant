@@ -351,10 +351,10 @@ var QUERYWORK_UI = {
     const kvps = await SETTINGS.getCacheKvps(STORAGE_PREFIX.FOR_DB);
   
     const xferring = document.getElementById('dbProcessingMsg');
-    const mainMsgElm = document.getElementById('dbProcessingMainMsg');
-    mainMsgElm.textContent = 'Copying ' + kvps.length + ' pages to local database...';
     if (kvps.length > 0) {
       xferring.style.display = 'inline-block';
+      const mainMsgElm = document.getElementById('dbProcessingMainMsg');
+      mainMsgElm.textContent = 'Copying ' + kvps.length + ' pages to local database...';
     }
     
     // allow sqlite to do process in larger batches than what was cached
@@ -386,7 +386,7 @@ var QUERYWORK_UI = {
       if (xferring.style.display == 'inline-block') {
         // this means we showed it; so let them know it's ready
         // the reason we nudge toward a Refresh is because if the user is busy a page refresh would be jarring.
-        QUERYWORK_UI.showDbProcessingMainMsg('Please refresh the page.');
+        QUERYWORK_UI.showDbProcessingMainMsg('Saved! Please refresh the page.', true);
         xferring.classList.add('completed');
         if (QUERYWORK_UI.isListEmpty() == true) {
           document.location.reload();
@@ -402,10 +402,13 @@ var QUERYWORK_UI = {
     QUERYWORK_UI.displayMsgAtMainListIfEmpty(EMPTY_LIST_MSG);
   },
 
-  showDbProcessingMainMsg: function(msg) {
+  showDbProcessingMainMsg: function(msg, clearDetail) {
     document.getElementById('dbProcessingMsg').style.display = 'inline-block';
     document.getElementById('dbProcessingMainMsg').textContent = msg;
     QUERYWORK_UI.displayMsgAtMainListIfEmpty(msg);
+    if (clearDetail == true) {
+      document.getElementById('dbProcessingMsgDetails').textContent = '';
+    }
   },
 
   // note: visibility is based on ensureCopiedToDb because other types of processing (like favoriting) are handled in real time without need to refresh etc.
