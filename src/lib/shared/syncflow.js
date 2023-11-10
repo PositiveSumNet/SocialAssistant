@@ -584,7 +584,7 @@ var SYNCFLOW = {
         case SYNCFLOW.STEP_TYPE.networkFollowers:
           return CURSOR_COMPARER.NEXT_AFTER;
         case SYNCFLOW.STEP_TYPE.postTopicRatings:
-          return CURSOR_COMPARER.EXACT_MATCH;
+          return CURSOR_COMPARER.NEXT_AFTER;
         case SYNCFLOW.STEP_TYPE.posts:
           return CURSOR_COMPARER.NEXT_AFTER;
         case SYNCFLOW.STEP_TYPE.postImgs:
