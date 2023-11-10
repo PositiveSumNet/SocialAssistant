@@ -606,19 +606,10 @@ var SYNCFLOW = {
 
       const remoteDir = SYNCFLOW.FILE_NAMER.getRemoteDir(step);
 
-      // console.log('RESTORE:');
-      // console.log(step);
       const marker = STR.hasLen(step.marker) ? step.marker : FIRST_TEXT_START;
-      // console.log('with marker:');
-      // console.log(marker);
       const cursorFileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
-      // console.log('cursor file name');
-      // console.log(cursorFileName);
       const cursorComparer = SYNCFLOW.PULL_EXEC.getCursorComparer(step);
-      // console.log(cursorComparer);
       const nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
-      // console.log('fetch next at:');
-      // console.log(nextRemoteFile);
 
       if (!nextRemoteFile) {
         const result = SYNCFLOW.PULL_EXEC.buildNoMoreRemoteFilesResult(step, rateLimit);
