@@ -1070,7 +1070,7 @@ var POSTFETCHER = {
 
       let markerUrlKey;
       if (markerViaThread == true) {
-        markerUrlKey = `COALESCE(${pthread}.${entThreadUrlKey.ObjectCol}, ${ptime}.${entPostTime.SubjectCol})`;
+        markerUrlKey = `COALESCE(${pthread}.${entThreadUrlKey.ObjectCol} COLLATE NOCASE, ${ptime}.${entPostTime.SubjectCol} COLLATE NOCASE)`;
       }
       else {
         markerUrlKey = `${ptime}.${entPostTime.SubjectCol}`;
