@@ -271,7 +271,7 @@ var POSTFETCHER = {
     ];
 
     const bind = [];
-    let urlKeyCondition = '';
+    let urlKeyCondition = `AND ${ptime}.${entPostTime.SubjectCol} NOT LIKE '%${QUOTED_SUFFIX}'`;
     let authorCondition = '';
     let searchClauseSql = '';
     let topicCondition = '';
