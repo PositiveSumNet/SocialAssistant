@@ -106,14 +106,21 @@ const injectImageBase64s = async function(records) {
         item.img64Url = await getImageBase64(item.imgCdnUrl);
       }
 
-      // b) the other way we can inject is setting the img64Url companion property from RECORDING.infuseImgCdns
-      // (so that background.js can avoid knowledge of specific savable entities... especially since we don't yet use 'module' approach)
+      // b1) though I'd rather not have knowledge here of quoteTweet.postImgs (domain-specific), 
+      // background.js isn't using modules yet, so...
+      let imgInfos = [];
+      if (item.quoteTweet && item.quoteTweet.postImgs && item.quoteTweet.postImgs.length > 0) {
+        imgInfos.push(...item.quoteTweet.postImgs);
+      }
+      // b2) the other way we can inject is setting the img64Url companion property from RECORDING.infuseImgCdns
       if (item.imgInfos && item.imgInfos.length > 0) {
-        for (let j = 0; j < item.imgInfos.length; j++) {
-          let imgInfo = item.imgInfos[j];
-          if (imgInfo.imgCdnUrl) {
-            imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
-          }
+        imgInfos.push(...item.imgInfos);
+      }
+
+      for (let j = 0; j < imgInfos.length; j++) {
+        let imgInfo = imgInfos[j];
+        if (imgInfo.imgCdnUrl) {
+          imgInfo.img64Url = await getImageBase64(imgInfo.imgCdnUrl);
         }
       }
     }
