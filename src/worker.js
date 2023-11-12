@@ -41,6 +41,16 @@ importScripts('/lib/worker/syncimport/posttopicratingsimportmapper.js');
 importScripts('/lib/worker/syncimport/profilefavoritesimportmapper.js');
 importScripts('/lib/worker/syncimport/profileimgsimportmapper.js');
 importScripts('/lib/worker/syncimport/profilesimportmapper.js');
+importScripts('/lib/worker/syncimport/pushmergerfactory.js');
+importScripts('/lib/worker/syncimport/networkfollowerspushmerger.js');
+importScripts('/lib/worker/syncimport/networkfollowingspushmerger.js');
+importScripts('/lib/worker/syncimport/postimgspushmerger.js');
+importScripts('/lib/worker/syncimport/postspushmerger.js');
+importScripts('/lib/worker/syncimport/posttopicratingspushmerger.js');
+importScripts('/lib/worker/syncimport/profilefavoritespushmerger.js');
+importScripts('/lib/worker/syncimport/profileimgspushmerger.js');
+importScripts('/lib/worker/syncimport/profilespushmerger.js');
+importScripts('/lib/worker/syncimport/pushmergehelper.js');
 
 self
   .sqlite3InitModule({

@@ -295,7 +295,8 @@ var APPSCHEMA = {
     ObjectCol: SCHEMA_CONSTANTS.COLUMNS.oValue,
     SubjectType: DATATYPES.POST_URL_KEY,
     ObjectType: DATATYPES.EXTERNAL_URL,
-    OneToOne: true
+    OneToOne: true,
+    Friendly: 'card short URLs'
   },
   
   SocialPostCardFullUrl: {

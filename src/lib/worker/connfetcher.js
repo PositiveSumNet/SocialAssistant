@@ -615,7 +615,8 @@ var CONNFETCHER = {
       FROM ${entList.Name} ${lst}
       WHERE ${lst}.${entList.SubjectCol} = '${LIST_FAVORITES}'
         AND ${lst}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'
-        AND ${DBORM.QUERYING.existsAndNotDeleted(lst)};
+        AND ${DBORM.QUERYING.existsAndNotDeleted(lst)}
+      ORDER BY ${lst}.${entList.ObjectCol};
       `;
 
       const bind = [];
@@ -694,7 +695,8 @@ var CONNFETCHER = {
       LEFT JOIN ${entDescription.Name} ${desc} ON ${desc}.${entDescription.SubjectCol} = ${disp}.${entDisplay.SubjectCol}
         ${andGraphMatch}
       WHERE ${disp}.${entDisplay.SubjectCol} ${markerFilterPredicate}
-        AND ${disp}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}';
+        AND ${disp}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'
+      ORDER BY ${disp}.${entDisplay.SubjectCol};
       `;
 
       const bound = DBORM.QUERYING.bindConsol(bind);
@@ -721,7 +723,8 @@ var CONNFETCHER = {
         ${img}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph}
       FROM ${entImg.Name} ${img}
       WHERE ${img}.${entImg.SubjectCol} ${markerFilterPredicate}
-        AND ${img}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}';
+        AND ${img}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'
+      ORDER BY ${img}.${entImg.SubjectCol};
       `;
 
       const bound = DBORM.QUERYING.bindConsol(bind);
@@ -764,7 +767,8 @@ var CONNFETCHER = {
         ${conn}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph}
       FROM ${entConn.Name} ${conn}
       JOIN cte c ON c.${entConn.SubjectCol} = ${conn}.${entConn.SubjectCol}
-      WHERE ${conn}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}';
+      WHERE ${conn}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'
+      ORDER BY ${conn}.${entConn.ObjectCol};
       `;
 
       const bound = DBORM.QUERYING.bindConsol(bind);

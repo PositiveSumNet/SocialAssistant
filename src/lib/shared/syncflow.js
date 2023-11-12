@@ -482,8 +482,9 @@ var SYNCFLOW = {
   PUSH_EXEC: {
     // called back by _worker with content needed for backup
     onFetchedForBackup: async function(syncable) {
+      const asUpsert = true;  // TODO: setting for whether to treat upload as an upsert
       // now actually push it!
-      await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure);
+      await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
     },
   
     buildPushable: function(step) {

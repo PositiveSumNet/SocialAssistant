@@ -829,8 +829,7 @@ var POSTFETCHER = {
       let parm = {key: '$marker', value: pattern};
       bind.push(parm);
       const markerFilter = `  AND ${ptr}.${entTopicRating.ObjectCol} LIKE ${parm.key}`;
-
-      // order by desc puts higher-rated posts first
+      
       const sql = `
       SELECT ${ptr}.${entTopicRating.SubjectCol} AS ${SYNC_COL.RATED_POST.PostUrlKey},
         ${ptr}.${entTopicRating.ObjectCol} AS ${SYNC_COL.RATED_POST.Concat},
@@ -839,7 +838,7 @@ var POSTFETCHER = {
       FROM ${entTopicRating.Name} ${ptr}
       WHERE ${ptr}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'
       ${markerFilter}
-      ORDER BY ${ptr}.${entTopicRating.ObjectCol} DESC;
+      ORDER BY ${ptr}.${entTopicRating.SubjectCol};
       `;
 
       const bound = DBORM.QUERYING.bindConsol(bind);
