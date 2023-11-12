@@ -25,14 +25,33 @@ var POSTS_PUSH_MERGER = {
     return merged;
   },
 
+  // the thread key is "interesting" when it's not identical to the post key
+  // and in a merge scenario we prefer the "earliest" post id number
   adoptThreadKeyAsNeeded: function(merged, adoptFrom) {
-    if (STR.hasLen(merged[POST_SEL.ThreadUrlKey]) && merged[POST_SEL.ThreadUrlKey] != merged[POST_SEL.PostUrlKey]) {
-      // we already have a thread (that isn't simply the post url key)
+    const mThreadKey = merged[POST_SEL.ThreadUrlKey];
+    const aThreadKey = adoptFrom[POST_SEL.ThreadUrlKey];
+
+    const mPostKey = merged[POST_SEL.PostUrlKey];
+    const aPostKey = adoptFrom[POST_SEL.PostUrlKey];
+
+    if (!STR.hasLen(aThreadKey) || aThreadKey == aPostKey) {
+      // these are scenarios where we don't have anything to gain from the other post info
       return;
     }
 
-    if (STR.hasLen(adoptFrom[POST_SEL.ThreadUrlKey]) && adoptFrom[POST_SEL.ThreadUrlKey] != adoptFrom[POST_SEL.PostUrlKey]) {
-      merged[POST_SEL.ThreadUrlKey] = adoptFrom[POST_SEL.ThreadUrlKey];
+    if (!STR.hasLen(mThreadKey)) {
+      merged[POST_SEL.ThreadUrlKey] = aThreadKey;
+    }
+    else if (mThreadKey == mPostKey) {
+      merged[POST_SEL.ThreadUrlKey] = aThreadKey;
+    }
+    else {
+      const mId = parseInt(STR.getTweetIdFromUrlKey(mThreadKey));
+      const aId = parseInt(STR.getTweetIdFromUrlKey(aThreadKey));
+
+      if (!isNaN(mId) && !isNaN(aId) && aId < mId) {
+        merged[POST_SEL.ThreadUrlKey] = aThreadKey;
+      }
     }
   }
 };
