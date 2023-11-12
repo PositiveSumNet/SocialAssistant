@@ -42,7 +42,7 @@ var GITHUB = {
   getFileJson: async function(remoteDir, remoteFileName, repoConnInfo, onErrorFn) {
     remoteDir = STR.hasLen(remoteDir) ? STR.ensureSuffix(remoteDir, '/') : '';
     const fullName = `${remoteDir}${remoteFileName}`;
-    return GITHUB.getFileJsonWorker(fullName, repoConnInfo, onErrorFn);
+    return await GITHUB.getFileJsonWorker(fullName, repoConnInfo, onErrorFn);
   },
 
   getFileJsonWorker: async function(remoteFullName, repoConnInfo, onErrorFn) {
