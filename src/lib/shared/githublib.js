@@ -143,7 +143,6 @@ var GITHUB = {
       if (!files || files.length == 0) { return null; }
       files = ES6.sortBy(files, 'path');
       if (!STR.hasLen(fileNameCursor)) {
-        console.log('a');
         return files[0];
       }
       else
