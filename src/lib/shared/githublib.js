@@ -498,7 +498,7 @@ var GITHUB = {
 
         if (STR.hasLen(existingSha) && asUpsert == true) {
           // a merge scenario
-          plainTextContent = GITHUB.SYNC.BACKUP.mergeAsNeeded(syncable, relPath, repoConnInfo, plainTextContent);
+          plainTextContent = await GITHUB.SYNC.BACKUP.mergeAsNeeded(syncable, relPath, repoConnInfo, plainTextContent);
         }
         
         const encodedContent = STR.hasLen(plainTextContent) ? STR.toBase64(plainTextContent, true) : '';
