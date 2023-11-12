@@ -41,16 +41,16 @@ importScripts('/lib/worker/syncimport/posttopicratingsimportmapper.js');
 importScripts('/lib/worker/syncimport/profilefavoritesimportmapper.js');
 importScripts('/lib/worker/syncimport/profileimgsimportmapper.js');
 importScripts('/lib/worker/syncimport/profilesimportmapper.js');
-importScripts('/lib/worker/syncimport/pushmergerfactory.js');
-importScripts('/lib/worker/syncimport/networkfollowerspushmerger.js');
-importScripts('/lib/worker/syncimport/networkfollowingspushmerger.js');
-importScripts('/lib/worker/syncimport/postimgspushmerger.js');
-importScripts('/lib/worker/syncimport/postspushmerger.js');
-importScripts('/lib/worker/syncimport/posttopicratingspushmerger.js');
-importScripts('/lib/worker/syncimport/profilefavoritespushmerger.js');
-importScripts('/lib/worker/syncimport/profileimgspushmerger.js');
-importScripts('/lib/worker/syncimport/profilespushmerger.js');
-importScripts('/lib/worker/syncimport/pushmergehelper.js');
+importScripts('/lib/worker/pushmerge/pushmergerfactory.js');
+importScripts('/lib/worker/pushmerge/networkfollowerspushmerger.js');
+importScripts('/lib/worker/pushmerge/networkfollowingspushmerger.js');
+importScripts('/lib/worker/pushmerge/postimgspushmerger.js');
+importScripts('/lib/worker/pushmerge/postspushmerger.js');
+importScripts('/lib/worker/pushmerge/posttopicratingspushmerger.js');
+importScripts('/lib/worker/pushmerge/profilefavoritespushmerger.js');
+importScripts('/lib/worker/pushmerge/profileimgspushmerger.js');
+importScripts('/lib/worker/pushmerge/profilespushmerger.js');
+importScripts('/lib/worker/pushmerge/pushmergehelper.js');
 
 self
   .sqlite3InitModule({
