@@ -12,7 +12,7 @@ var PROFILE_FAVORITES_IMPORT_MAPPER = {
       return {
         s: LIST_FAVORITES, 
         o: x[SYNC_COL.FAVORITES.Handle], 
-        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] || APPGRAPHS.MYSELF,
+        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph],
         t: x[SCHEMA_CONSTANTS.COLUMNS.Timestamp]
       };
     });

@@ -24,7 +24,7 @@ var POST_IMGS_PUSH_MERGER = {
       }
     }
 
-    aggRows = ES6.sortBy(SYNC_COL.POST_IMGS.PostUrlKey);
+    aggRows = ES6.sortBy(aggRows, SYNC_COL.POST_IMGS.PostUrlKey);
     const json = SYNCFLOW.PUSH_WRITER.asJson(aggRows, stepType);
     return json;
   },

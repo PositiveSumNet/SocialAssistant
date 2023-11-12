@@ -4,7 +4,7 @@ var PUSH_MERGE_HELPER = {
     const localRows = PUSH_MERGE_HELPER.getRows(localJson);
     const remoteRows = PUSH_MERGE_HELPER.getRows(remoteJson);
 
-    const aggRows = [];
+    let aggRows = [];
     aggRows.push(...localRows);
     const keys = new Set(aggRows.map(function(r) { return r[distinctBy]; }));
     for (let i = 0; i < remoteRows.length; i++) {
@@ -16,7 +16,7 @@ var PUSH_MERGE_HELPER = {
       }
     }
 
-    aggRows = ES6.sortBy(sortBy);
+    aggRows = ES6.sortBy(aggRows, sortBy);
     const json = SYNCFLOW.PUSH_WRITER.asJson(aggRows, stepType);
     return json;
   },
@@ -28,7 +28,7 @@ var PUSH_MERGE_HELPER = {
     if (PUSH_MERGE_HELPER.isRemoteOldVersion(localObj, remoteObj)) { return localJson; }
     const localRows = localObj[SYNCFLOW.DATA_PART.data];
     const remoteRows = remoteObj[SYNCFLOW.DATA_PART.data];
-    const aggRows = [];
+    let aggRows = [];
 
     const localKeys = new Set(localRows.map(function(r) { return PUSH_MERGE_HELPER.getSubjectGraphKey(r, sProp); }));
     const remoteKeys = new Set(localRows.map(function(r) { return PUSH_MERGE_HELPER.getSubjectGraphKey(r, sProp); }));
@@ -56,7 +56,7 @@ var PUSH_MERGE_HELPER = {
       }
     }
 
-    aggRows = ES6.sortBy(sortBy);
+    aggRows = ES6.sortBy(aggRows, sortBy);
     const json = SYNCFLOW.PUSH_WRITER.asJson(aggRows, stepType);
     return json;
   },

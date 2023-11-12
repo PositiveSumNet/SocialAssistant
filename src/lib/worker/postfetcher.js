@@ -607,7 +607,7 @@ var POSTFETCHER = {
       AND ${ptag}.${graphMatchRhs}
     WHERE ${ptime}.${entPostTime.SubjectCol} IN ( ${delimParms} );
     `;
-
+    
     let bound = DBORM.QUERYING.bindConsol(bind);
     let tagRows = DBORM.QUERYING.fetch(sql, bound);
 
@@ -855,6 +855,7 @@ var POSTFETCHER = {
         row[SYNC_COL.RATED_POST.Subtopic] = parsedTopic[1];
         row[SYNC_COL.RATED_POST.Rating] = splat.rating;
         row[SCHEMA_CONSTANTS.COLUMNS.Timestamp] = r[SCHEMA_CONSTANTS.COLUMNS.Timestamp];
+        row[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] = r[SCHEMA_CONSTANTS.COLUMNS.NamedGraph];
         return row;
       });
 

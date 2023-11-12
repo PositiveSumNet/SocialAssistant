@@ -12,7 +12,7 @@ var NETWORK_IMPORT_MAPPER = {
       return {
         s: x[SYNC_COL.NETWORK.Handle], 
         o: x[SYNC_COL.NETWORK.Connection], 
-        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] || APPGRAPHS.MYSELF,
+        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph],
         t: x[SCHEMA_CONSTANTS.COLUMNS.Timestamp]
       };
     });

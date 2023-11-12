@@ -13,7 +13,7 @@ var PROFILES_IMPORT_MAPPER = {
       return {
         s: x[SYNC_COL.PROFILES.Handle], 
         o: x[SYNC_COL.PROFILES.Display], 
-        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] || APPGRAPHS.MYSELF,
+        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph],
         t: x[SCHEMA_CONSTANTS.COLUMNS.Timestamp]
       };
     });
@@ -26,7 +26,7 @@ var PROFILES_IMPORT_MAPPER = {
       return {
         s: x[SYNC_COL.PROFILES.Handle], 
         o: x[SYNC_COL.PROFILES.Detail], 
-        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] || APPGRAPHS.MYSELF,
+        g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph],
         t: x[SYNC_COL.PROFILES.DetailTimestamp]
       };
     });
