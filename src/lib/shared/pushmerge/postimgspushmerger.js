@@ -5,7 +5,9 @@ var POST_IMGS_PUSH_MERGER = {
     const localRows = PUSH_MERGE_HELPER.getRows(localJson);
     const remoteRows = PUSH_MERGE_HELPER.getRows(remoteJson);
 
-    const aggRows = [];
+    const stepType = SYNCFLOW.STEP_TYPE.postImgs;
+
+    let aggRows = [];
     const keys = new Set();
 
     for (let i = 0; i < localRows.length; i++) {

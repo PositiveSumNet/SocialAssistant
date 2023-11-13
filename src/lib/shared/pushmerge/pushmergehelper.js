@@ -42,8 +42,14 @@ var PUSH_MERGE_HELPER = {
       }
       else {
         let remoteRow = remoteRows.find(function(r) { return PUSH_MERGE_HELPER.getSubjectGraphKey(r, sProp) == key; });
-        let mergedRow = fnMergeWorker(localRow, remoteRow);
-        aggRows.push(mergedRow);
+        if (remoteRow) {
+          let mergedRow = fnMergeWorker(localRow, remoteRow);
+          aggRows.push(mergedRow);
+        }
+        else {
+          // no corresponding remote row
+          aggRows.push(localRow);
+        }
       }
     }
 
