@@ -217,7 +217,7 @@
                 <label class="form-check-label" id="optExportWithPostImagesLabel" for="optExportWithPostImages">Images</label>
               </span>
             </div>
-            <div class="pb-3 text-muted">
+            <div class="pt-2 pb-1 text-muted">
               <span class="ps-2">
                 <input class="form-check-input" type="checkbox" name="optExportTwitter" id="optExportTwitter">
                 <label class="form-check-label" id="optExportTwitterLabel" for="optExportTwitter">Twitter/X</label>
@@ -233,6 +233,19 @@
                 <input type="text" id="optExportPostsFrom" placeholder="mm/dd/yyyy" style="width: 100px;">
                 <span> - </span>
                 <input type="text" id="optExportPostsUntil" placeholder="mm/dd/yyyy" style="width: 100px;">
+              </span>
+            </div>
+            <div class="pb-3 text-muted" data-toggle="tooltip" title="Whether to perform a smart merge when a corresponding file already exists ">
+              <span class="ps-2">
+                <span>If corresponding data already exists</span>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="radio" name="optExportMergeRule" id="optExportWithMerge">
+                <label class="form-check-label" id="optExportWithMergeLabel" for="optExportWithMerge">Merge</label>
+              </span>
+              <span class="ps-2">
+                <input class="form-check-input" type="radio" name="optExportMergeRule" id="optExportWithOverwrite">
+                <label class="form-check-label" id="optExportWithOverwriteLabel" for="optExportWithOverwrite">Overwrite</label>
               </span>
             </div>
           </div>
@@ -309,7 +322,7 @@
                 <label class="form-check-label" id="optImportWithPostImagesLabel" for="optImportWithPostImages">Images</label>
               </span>
             </div>
-            <div class="pb-3 text-muted">
+            <div class="pt-2 pb-1 text-muted">
               <span class="ps-2">
                 <input class="form-check-input" type="checkbox" name="optImportTwitter" id="optImportTwitter">
                 <label class="form-check-label" id="optImportTwitterLabel" for="optImportTwitter">Twitter/X</label>
@@ -328,7 +341,20 @@
               </span>
             </div>
           </div>
-          <div class="pb-1">
+          <div class="pb-3 text-muted" data-toggle="tooltip" title="Restore local data from remote GitHub files is always done as a merge operation.">
+            <span class="ps-2">
+              <span>If corresponding data already exists</span>
+            </span>
+            <span class="ps-2">
+              <input class="form-check-input" type="radio" name="optImportMergeRule" id="optImportWithMerge" checked disabled>
+              <label class="form-check-label" id="optImportWithMergeLabel" for="optImportWithMerge">Merge</label>
+            </span>
+            <span class="ps-2">
+              <input class="form-check-input" type="radio" name="optImportMergeRule" id="optImportWithOverwrite" disabled>
+              <label class="form-check-label" id="optImportWithOverwriteLabel" for="optImportWithOverwrite">Overwrite</label>
+            </span>
+          </div>
+        <div class="pb-1">
             <a href="#" id="btnGhRestoreStart" role="button" class="btn btn-primary">Start</a>
             <a href="#" id="btnGhRestorePause" role="button" class="btn btn-secondary ms-2">Pause</a>
             <a href="#" id="btnGhRestoreRestart" role="button" class="btn btn-outline-secondary ms-2">Start Over</a>

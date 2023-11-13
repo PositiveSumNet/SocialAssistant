@@ -480,9 +480,21 @@ var SYNCFLOW = {
   },
 
   PUSH_EXEC: {
+    shouldUpsert: function(syncable) {
+      const step = syncable[SYNCFLOW.SYNCABLE.step];
+      const config = step[SYNCFLOW.STEP.config];
+      if (!config) { return true; }
+      const overwrite = config[SETTINGS.SYNCFLOW.CONFIG.OVERWRITE];
+      if (STR.isTruthy(overwrite)) {
+        return false;
+      }
+      return true;
+    },
+    
     // called back by _worker with content needed for backup
     onFetchedForBackup: async function(syncable) {
-      const asUpsert = true;  // TODO: setting for whether to treat upload as an upsert
+      
+      const asUpsert = SYNCFLOW.PUSH_EXEC.shouldUpsert(syncable);
       // now actually push it!
       await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
     },

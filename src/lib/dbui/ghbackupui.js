@@ -146,6 +146,8 @@ var GHBACKUP_UI = {
     config[ns.AUTHOR_FILTER] = GHBACKUP_UI.getBackupSettingFromUi(ns.AUTHOR_FILTER, 'optExportForAuthor') || '';
     config[ns.POSTED_FROM] = GHBACKUP_UI.getBackupSettingFromUi(ns.POSTED_FROM, 'optExportPostsFrom') || '';
     config[ns.POSTED_UNTIL] = GHBACKUP_UI.getBackupSettingFromUi(ns.POSTED_UNTIL, 'optExportPostsUntil') || '';
+    // radio button
+    config[ns.OVERWRITE] = GHBACKUP_UI.getBackupSettingFromUi(ns.OVERWRITE);
     SETTINGS.SYNCFLOW.BACKUP.saveExportConfig(config);
   },
   
@@ -164,9 +166,15 @@ var GHBACKUP_UI = {
     GHBACKUP_UI.reflectBackupSettingInUi(config, ns.AUTHOR_FILTER, 'optExportForAuthor');
     GHBACKUP_UI.reflectBackupSettingInUi(config, ns.POSTED_FROM, 'optExportPostsFrom');
     GHBACKUP_UI.reflectBackupSettingInUi(config, ns.POSTED_UNTIL, 'optExportPostsUntil');
+    GHBACKUP_UI.reflectBackupSettingInUi(config, ns.OVERWRITE);
   },
   
   getBackupSettingFromUi: function(setting, elmId) {
+    // radio button handled separately
+    if (setting == SETTINGS.SYNCFLOW.CONFIG.OVERWRITE) {
+      return document.getElementById('optExportWithOverwrite').checked;
+    }
+    
     const elm = document.getElementById(elmId);
     if (elm.type == 'checkbox') {
       return elm.checked;
@@ -185,6 +193,13 @@ var GHBACKUP_UI = {
   },
 
   reflectBackupSettingInUi: function(config, setting, elmId) {
+    if (setting == SETTINGS.SYNCFLOW.CONFIG.OVERWRITE) {
+      const shouldOverwrite = STR.isTruthy(config[setting]);
+      document.getElementById('optExportWithOverwrite').checked = shouldOverwrite;
+      document.getElementById('optExportWithMerge').checked = !shouldOverwrite;
+      return;
+    }
+    
     const elm = document.getElementById(elmId);
     if (elm.type == 'checkbox') {
       elm.checked = STR.isTruthy(config[setting]);

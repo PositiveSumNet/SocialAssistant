@@ -235,6 +235,7 @@ var SETTINGS = {
       AUTHOR_FILTER: 'authorFilter',
       POSTED_FROM: 'postedFrom',
       POSTED_UNTIL: 'postedUntil',
+      OVERWRITE: 'overwrite',
     
       getConfig: function(direction) {
         switch (direction) {
@@ -259,6 +260,7 @@ var SETTINGS = {
         config[ns.WITH_POST_IMAGES] = true;
         config[ns.DO_TWITTER] = true;
         config[ns.DO_MASTODON] = true;
+        config[ns.OVERWRITE] = false;
         return config;
       }
     },
