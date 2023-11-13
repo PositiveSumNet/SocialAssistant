@@ -41,7 +41,12 @@ var GITHUB = {
 
   getFileJson: async function(remoteDir, remoteFileName, repoConnInfo, onErrorFn) {
     remoteDir = STR.hasLen(remoteDir) ? STR.ensureSuffix(remoteDir, '/') : '';
-    const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/contents/${remoteDir}${remoteFileName}`;
+    const fullName = `${remoteDir}${remoteFileName}`;
+    return await GITHUB.getFileJsonWorker(fullName, repoConnInfo, onErrorFn);
+  },
+
+  getFileJsonWorker: async function(remoteFullName, repoConnInfo, onErrorFn) {
+    const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/contents/${remoteFullName}`;
     const response = await GITHUB.tryGetFileResponse(fileUrl, repoConnInfo.headers);
     if (response && STR.isTruthy(response.ok)) {
       // this returns the entire file object; what we want out of it is the 'content' node, which is base 64 encoded
@@ -53,8 +58,8 @@ var GITHUB = {
       const json = STR.fromBase64(data.content, true);
       return json;
     }
-    else {
-      onErrorFn({ msg: `Cannot access ${remoteDir}/${remoteFileName}` });
+    else if (onErrorFn) {
+      onErrorFn({ msg: `Cannot access ${remoteFullName}` });
     }
   },
 
@@ -138,7 +143,6 @@ var GITHUB = {
       if (!files || files.length == 0) { return null; }
       files = ES6.sortBy(files, 'path');
       if (!STR.hasLen(fileNameCursor)) {
-        console.log('a');
         return files[0];
       }
       else
@@ -408,7 +412,7 @@ var GITHUB = {
     },
 
     BACKUP: {
-      upsertPushable: async function(syncable, onSuccess, onFailure) {
+      upsertPushable: async function(syncable, onSuccess, onFailure, asUpsert) {
         const repoType = syncable[SYNCFLOW.SYNCABLE.repoType] || GITHUB.REPO_TYPE.DATA;
         const repoConnInfo = await GITHUB.SYNC.getRepoConnInfo(onFailure, repoType);
 
@@ -423,7 +427,7 @@ var GITHUB = {
         if (syncable[SYNCFLOW.SYNCABLE.dontSync] != true) {
           
           const relPath = syncable[SYNCFLOW.SYNCABLE.filePath];
-          let pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo);
+          let pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo, asUpsert);
           pushResult.rateLimit = rateLimit;
           if (pushResult.success != true) {
             // clear blob sha cache and try once more
@@ -431,7 +435,7 @@ var GITHUB = {
             GITHUB.TREES.clearInMemoryCache();
             // sleep a couple seconds before retrying
             await ES6.sleep(2000);
-            pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo);
+            pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo, asUpsert);
             pushResult.rateLimit = rateLimit;
             if (pushResult.success != true) {
               if (onFailure) {
@@ -450,18 +454,39 @@ var GITHUB = {
         onSuccess({ rateLimit: rateLimit, syncable: syncable }, SYNCFLOW.DIRECTION.BACKUP);
       },
 
-      pushWorker: async function(syncable, relPath, repoConnInfo) {
+      // return merged content
+      mergeAsNeeded: async function(syncable, relPath, repoConnInfo, plainTextContent) {
+        const step = syncable[SYNCFLOW.SYNCABLE.step];
+        const stepType = step[SYNCFLOW.STEP.type];
+        const remoteJson = await GITHUB.getFileJsonWorker(relPath, repoConnInfo);
+        if (!STR.hasLen(remoteJson)) {
+          return plainTextContent;
+        }
+        // ok, merge scenario
+        const pushMerger = PUSH_MERGER_FACTORY.getPushMerger(stepType);
+        plainTextContent = pushMerger.mergeForPush(plainTextContent, remoteJson);
+        return plainTextContent;
+      },
+
+      pushWorker: async function(syncable, relPath, repoConnInfo, asUpsert) {
         const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/contents/${relPath}`;
-        const plainTextContent = syncable[SYNCFLOW.SYNCABLE.content];
+        let plainTextContent = syncable[SYNCFLOW.SYNCABLE.content];
         const repoType = GITHUB.REPO_TYPE.DATA;
 
-        // first test for existing file and grab its sha (required for updates)
-        const existingSha = await GITHUB.SHAS.getBlobSha(relPath, repoConnInfo, repoType);
         let canSkip = false;
-        if (STR.hasLen(existingSha)) {
-          const uploadableSha = await GITHUB.SHAS.calcTextContentSha(plainTextContent);
-          if (existingSha == uploadableSha) {
-            canSkip = true;
+        let existingSha = null;
+        if (!STR.hasLen(plainTextContent) && asUpsert == true) {
+          // empty file not worth uploading at all if we're in an upsert case (preserve existing)
+          canSkip = true;
+        }
+        else {
+          // first test for existing file and grab its sha (required for updates)
+          existingSha = await GITHUB.SHAS.getBlobSha(relPath, repoConnInfo, repoType);
+          if (STR.hasLen(existingSha)) {
+            const uploadableSha = await GITHUB.SHAS.calcTextContentSha(plainTextContent);
+            if (existingSha == uploadableSha) {
+              canSkip = true;
+            }
           }
         }
 
@@ -470,6 +495,11 @@ var GITHUB = {
           return { success: true, canSkip: true };
         }
 
+        if (STR.hasLen(existingSha) && asUpsert == true) {
+          // a merge scenario
+          plainTextContent = await GITHUB.SYNC.BACKUP.mergeAsNeeded(syncable, relPath, repoConnInfo, plainTextContent);
+        }
+        
         const encodedContent = STR.hasLen(plainTextContent) ? STR.toBase64(plainTextContent, true) : '';
         const putResultOk = await GITHUB.putUpsertFile(fileUrl, encodedContent, relPath, existingSha, repoConnInfo);
         if (!putResultOk) {

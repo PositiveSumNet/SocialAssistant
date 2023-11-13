@@ -11,13 +11,15 @@ var POST_TOPIC_RATINGS_IMPORT_MAPPER = {
     const ratings = records.map(function(x) {
       let topic = x[SYNC_COL.RATED_POST.Topic];
       let subtopic = x[SYNC_COL.RATED_POST.Subtopic];
+      let score = x[SYNC_COL.RATED_POST.Rating];
       if (STR.hasLen(topic) && STR.hasLen(subtopic)) {
-        let concat = TOPICS.concatTopicFullName(topic, subtopic);
+        let concatSubtopic = TOPICS.concatTopicFullName(topic, subtopic);
+        let withRating = STR.concatSubtopicRatingTag(concatSubtopic, score);
 
         return {
           s: x[SYNC_COL.RATED_POST.PostUrlKey], 
-          o: concat, 
-          g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] || APPGRAPHS.MYSELF,
+          o: withRating, 
+          g: x[SCHEMA_CONSTANTS.COLUMNS.NamedGraph],
           t: x[SCHEMA_CONSTANTS.COLUMNS.Timestamp]
         };
       }

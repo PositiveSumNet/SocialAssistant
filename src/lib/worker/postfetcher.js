@@ -607,7 +607,7 @@ var POSTFETCHER = {
       AND ${ptag}.${graphMatchRhs}
     WHERE ${ptime}.${entPostTime.SubjectCol} IN ( ${delimParms} );
     `;
-
+    
     let bound = DBORM.QUERYING.bindConsol(bind);
     let tagRows = DBORM.QUERYING.fetch(sql, bound);
 
@@ -829,8 +829,7 @@ var POSTFETCHER = {
       let parm = {key: '$marker', value: pattern};
       bind.push(parm);
       const markerFilter = `  AND ${ptr}.${entTopicRating.ObjectCol} LIKE ${parm.key}`;
-
-      // order by desc puts higher-rated posts first
+      
       const sql = `
       SELECT ${ptr}.${entTopicRating.SubjectCol} AS ${SYNC_COL.RATED_POST.PostUrlKey},
         ${ptr}.${entTopicRating.ObjectCol} AS ${SYNC_COL.RATED_POST.Concat},
@@ -839,7 +838,7 @@ var POSTFETCHER = {
       FROM ${entTopicRating.Name} ${ptr}
       WHERE ${ptr}.${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'
       ${markerFilter}
-      ORDER BY ${ptr}.${entTopicRating.ObjectCol} DESC;
+      ORDER BY ${ptr}.${entTopicRating.SubjectCol};
       `;
 
       const bound = DBORM.QUERYING.bindConsol(bind);
@@ -856,6 +855,7 @@ var POSTFETCHER = {
         row[SYNC_COL.RATED_POST.Subtopic] = parsedTopic[1];
         row[SYNC_COL.RATED_POST.Rating] = splat.rating;
         row[SCHEMA_CONSTANTS.COLUMNS.Timestamp] = r[SCHEMA_CONSTANTS.COLUMNS.Timestamp];
+        row[SCHEMA_CONSTANTS.COLUMNS.NamedGraph] = r[SCHEMA_CONSTANTS.COLUMNS.NamedGraph];
         return row;
       });
 

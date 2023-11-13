@@ -602,6 +602,10 @@ var MASTODON = {
       SETTINGS.markMdonDownloadSuccess();
       // save is fully complete; a good time to re-render
       MASTODON.renderNetwork(true);
+      QUERYWORK_UI.showDbProcessingMainMsg('Saved! Please refresh the page.', true);
+    }
+    else {
+      QUERYWORK_UI.showDbProcessingMainMsg(`Saved ${msg}`);
     }
   },
 

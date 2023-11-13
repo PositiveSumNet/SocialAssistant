@@ -435,7 +435,7 @@ var NEETPARSE = {
     getPostPageThreadInfo: function(tweetUrlKey) {
       const response = {};
       if (!STR.hasLen(tweetUrlKey)) { return response; }
-      const tweetElms = Array.from(document.querySelectorAll('.timeline-item'));
+      const tweetElms = NPARSE.getTweetElms(document);
       if (tweetElms.length == 0) { return response; }
       const threadUrlKey = NEETPARSE.getTweetRelativeUrl(tweetElms[0]);
       let replyToUrlKey;
@@ -470,52 +470,6 @@ var NEETPARSE = {
 
       response[THREAD_INFO.threadUrlKey] = threadUrlKey;
 
-      return response;
-    },
-
-    getPostPageThreadInfoOld: function(tweetUrlKey) {
-      const tweetElms = Array.from(document.querySelectorAll('.timeline-item'));
-      let threadUrlKey;
-      let priorUrlKey;
-      let priorAuthorHandle;
-      let replyToUrlKey;
-      for (let i = 0; i < tweetElms.length; i++) {
-        let thisElm = tweetElms[i];
-        let thisUrlKey = NEETPARSE.getTweetRelativeUrl(thisElm);
-        
-        if (i == 0) {
-          threadUrlKey = thisUrlKey;
-        }
-        
-        if (tweetUrlKey && thisUrlKey == tweetUrlKey) {
-          // we've come to our subject tweet element, so we're ready to make a determination
-          let replyingToHandle = NEETPARSE.getReplyingToHandle(thisElm);
-          if (STR.hasLen(replyingToHandle)) {
-            // see if we're replying to the prior tweet author
-            if (replyingToHandle == priorAuthorHandle) {
-              replyToUrlKey = priorUrlKey;
-            }
-            else {
-              // else deem it to be a reply to the first tweet of the thread
-              replyToUrlKey = threadUrlKey;
-            }
-          }
-          break;
-        }
-        
-        priorUrlKey = thisUrlKey;
-        priorAuthorHandle = NEETPARSE.getAuthorHandle(thisElm);
-      }
-
-      const response = {};
-      if (STR.hasLen(threadUrlKey)) {
-        response[THREAD_INFO.threadUrlKey] = threadUrlKey;
-      }
-      if (STR.hasLen(replyToUrlKey)) {
-        response[THREAD_INFO.replyToUrlKey] = replyToUrlKey;
-      }
-      // console.log(tweetUrlKey);
-      // console.log(response);
       return response;
     }
   }

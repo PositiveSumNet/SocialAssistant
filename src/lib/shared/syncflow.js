@@ -480,10 +480,23 @@ var SYNCFLOW = {
   },
 
   PUSH_EXEC: {
+    shouldUpsert: function(syncable) {
+      const step = syncable[SYNCFLOW.SYNCABLE.step];
+      const config = step[SYNCFLOW.STEP.config];
+      if (!config) { return true; }
+      const overwrite = config[SETTINGS.SYNCFLOW.CONFIG.OVERWRITE];
+      if (STR.isTruthy(overwrite)) {
+        return false;
+      }
+      return true;
+    },
+    
     // called back by _worker with content needed for backup
     onFetchedForBackup: async function(syncable) {
+      
+      const asUpsert = SYNCFLOW.PUSH_EXEC.shouldUpsert(syncable);
       // now actually push it!
-      await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure);
+      await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
     },
   
     buildPushable: function(step) {
@@ -608,8 +621,14 @@ var SYNCFLOW = {
 
       const marker = STR.hasLen(step.marker) ? step.marker : FIRST_TEXT_START;
       const cursorFileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
-      const cursorComparer = SYNCFLOW.PULL_EXEC.getCursorComparer(step);
-      const nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
+      let cursorComparer = SYNCFLOW.PULL_EXEC.getCursorComparer(step);
+      let nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
+      
+      if (!nextRemoteFile && cursorComparer == CURSOR_COMPARER.EXACT_MATCH) {
+        // e.g. if the 'f' file is missing, we want to find any next file, e.g. 'h'
+        cursorComparer = CURSOR_COMPARER.NEXT_AFTER;
+        nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
+      }
 
       if (!nextRemoteFile) {
         const result = SYNCFLOW.PULL_EXEC.buildNoMoreRemoteFilesResult(step, rateLimit);
@@ -637,7 +656,6 @@ var SYNCFLOW = {
     continueRestore: async function(request, rows) {
       const pullStep = request.pullStep;
       const content = SYNCFLOW.PUSH_WRITER.asJson(rows, pullStep[SYNCFLOW.STEP.type]);
-      
       // and compare its sha vs the file we're asked to pull.
       const dbSha = STR.hasLen(content) ? (await GITHUB.SHAS.calcTextContentSha(content)) : null;
       

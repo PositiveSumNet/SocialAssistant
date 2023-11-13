@@ -179,11 +179,16 @@ var DBORM = {
       postMessage({ type: MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION, payload: {version: dbVersion} });
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB
-      // const debugRows = DBORM.QUERYING.fetch(`
-      // SELECT * FROM SocialProfileDescription;
-      // `, []);
+//       const debugRows = DBORM.QUERYING.fetch(`
+//       SELECT ptime.sPostUrlKey AS PostUrlKey,
+//       ptag.oValue AS SubtopicRating,
+//       ptag.NamedGraph
+// FROM SocialPostTime ptime
+// JOIN SocialPostSubtopicRating ptag ON ptag.sPostUrlKey = ptime.sPostUrlKey
+// ;
+//       `, []);
 
-      // console.log(debugRows);
+//       console.log(debugRows);
     },
     
     getMaxScriptNumber: function(scripts) {

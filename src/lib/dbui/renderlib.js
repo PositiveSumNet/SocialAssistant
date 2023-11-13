@@ -724,7 +724,7 @@ var RENDER = {
         <div class='videoHeader'>
           <a href='#' class='fw-bold'><i class='bi-play-btn'></i> <i class='bi-info-circle-fill'></i> <span>VIDEO</span></a>
         </div>
-        <div class='mediaContainer'><img alt='src-img' src='${imgSrc}' style='max-width:1000px;max-height:500px;'/></div>
+        <div class='mediaContainer'><img alt='src-img' src='${imgSrc}' style='max-width:800px;max-height:400px;'/></div>
       </div>`;
     },
 
