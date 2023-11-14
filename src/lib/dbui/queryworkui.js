@@ -151,6 +151,16 @@ var QUERYWORK_UI = {
       return false;
     };
     
+    const optDemandQualityPosts = document.getElementById('optDemandQualityPosts');
+    optDemandQualityPosts.onclick = function(event) {
+      optDemandQualityPosts.classList.toggle('toggledOn');
+      const shouldDemandQualityPosts = QUERYING_UI.POST_QUALITY.getDemandQualityPostsFromUi();
+      SETTINGS.setDemandQualityPosts(shouldDemandQualityPosts);
+      QUERYING_UI.PAGING.resetPage();
+      QUERYWORK_UI.executeSearch();
+      return false;
+    };
+    
     const optGuessTopics = document.getElementById('optGuessTopics');
     optGuessTopics.onclick = function(event) {
       optGuessTopics.classList.toggle('toggledOn');

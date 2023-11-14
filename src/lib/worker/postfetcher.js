@@ -215,6 +215,8 @@ var POSTFETCHER = {
     const graphFilter = request.graph || APPGRAPHS.getGraphByPageType(request.pageType);
     const graphMatchRhs = `${SCHEMA_CONSTANTS.COLUMNS.NamedGraph} = '${graphFilter}'`;
 
+    const qualityPostsOnly = STR.isTruthy(request.qualityPostsOnly);
+
     // author
     const entAuthorHandle = APPSCHEMA.SocialPostAuthorHandle;
     const entProfileName = APPSCHEMA.SocialProfileDisplayName;
@@ -264,6 +266,8 @@ var POSTFETCHER = {
     const sreplycnt = 'sreplycnt';
     const slikecnt = 'slikecnt';
     const sresharecnt = 'sresharecnt';
+    // quality
+    const tauth = 'tauth';
 
     const searchCols = [
       `${psrch}.${entSearchBlob.ObjectCol}`,
@@ -362,11 +366,26 @@ var POSTFETCHER = {
       }
     }
 
+    let qualityJoin = '';
+    let qualityCondition = '';
+
     let threadUrlKeyJoinWord = 'LEFT JOIN';
     if (STR.hasLen(request.threadUrlKey)) {
       threadUrlKeyJoinWord = 'JOIN';
       bind.push({key: '$thread', value: request.threadUrlKey});
       threadCondition = `  AND ${pthread}.${entThreadUrlKey.ObjectCol} = $thread`;
+    }
+    else if (qualityPostsOnly == true) {
+      // We show all posts of thread regardless of this setting (the if condition above).
+      // Here, we prepare a quality filter
+      qualityJoin = `
+      LEFT JOIN ${entAuthorHandle.Name} ${tauth} ON ${tauth}.${entAuthorHandle.SubjectCol} = ${pthread}.${entThreadUrlKey.ObjectCol}
+        AND ${tauth}.${graphMatchRhs}
+      `;
+
+      qualityCondition = `
+      AND ${ahandle}.${entAuthorHandle.ObjectCol} = COALESCE(${tauth}.${entAuthorHandle.ObjectCol}, ${ahandle}.${entAuthorHandle.ObjectCol})
+      `;
     }
 
     let imgSelect = '';
@@ -419,6 +438,7 @@ var POSTFETCHER = {
       AND ${preplykey}.${graphMatchRhs}
     ${threadUrlKeyJoinWord} ${entThreadUrlKey.Name} ${pthread} ON ${pthread}.${entThreadUrlKey.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
       AND ${pthread}.${graphMatchRhs}
+    ${qualityJoin}
     LEFT JOIN ${entReposter.Name} ${preposter} ON ${preposter}.${entReposter.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
       AND ${preposter}.${graphMatchRhs}
     LEFT JOIN ${entProfileName.Name} ${aname} ON ${aname}.${entProfileName.SubjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
@@ -452,6 +472,7 @@ var POSTFETCHER = {
     ${searchClauseSql}
     ${topicCondition}
     ${threadCondition}
+    ${qualityCondition}
     ${orderBy}
     ${paging};
     `;

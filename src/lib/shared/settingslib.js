@@ -216,6 +216,7 @@ var SETTINGS = {
   },
   FIXED_SETTINGS_PREFIX: 'fixedSettings-',
   SORT_BY_STARS: 'sortByStars',
+  DEMAND_QUALITY_POSTS: 'demandQualityPosts',
 
   SYNCFLOW: {
 
@@ -1077,6 +1078,20 @@ var SETTINGS = {
     }
     else {
       localStorage.removeItem(SETTINGS.SORT_BY_STARS);
+    }
+  },
+
+  getDemandQualityPosts: function() {
+    const setting = localStorage.getItem(SETTINGS.DEMAND_QUALITY_POSTS);
+    return STR.isTruthy(setting);
+  },
+
+  setDemandQualityPosts: function(boolVal) {
+    if (STR.isTruthy(boolVal)) {
+      SETTINGS.localSet(SETTINGS.DEMAND_QUALITY_POSTS, true);
+    }
+    else {
+      localStorage.removeItem(SETTINGS.DEMAND_QUALITY_POSTS);
     }
   }
 };
