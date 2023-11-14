@@ -502,20 +502,25 @@ btnChooseVideoExtracter.addEventListener('click', async () => {
 
 const enterRecordingFinisherMode = async function(videoMode) {
   document.getElementById('txtNavFilterOwner').value = SETTINGS.RECORDING.getAuthorFilter();
-  setVideoMode(videoMode);
+  await setVideoMode(videoMode);
   await loadThreadList();
   cmbNavThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
   cmbVideoRes.value = SETTINGS.RECORDING.VIDEO_EXTRACTION.getPreferredVideoRes();
   showRecordingDiv('navFinisherSection');
 }
 
-const setVideoMode = function(videoMode) {
+const setVideoMode = async function(videoMode) {
   const sectionElm = document.getElementById('navFinisherSection');
   if (videoMode == true) {
     sectionElm.classList.add('videoMode');
   }
   else {
+    // thread-finisher mode
     sectionElm.classList.remove('videoMode');
+    const minReplies = await SETTINGS.RECORDING.THREAD_EXPANSION.getMinReplyRecording();
+    const autoAdvance = await SETTINGS.RECORDING.THREAD_EXPANSION.getAutoAdvance();
+    document.getElementById('chkThreadFinishMinReplies').checked = minReplies;
+    document.getElementById('chkThreadFinishAutoAdvance').checked = autoAdvance;
   }
 }
 
@@ -542,6 +547,16 @@ cmbNavThreadHow.addEventListener('change', (event) => {
   else {
     nitterTip.style.visibility = 'hidden';
   }
+});
+
+const chkThreadFinishMinReplies = document.getElementById('chkThreadFinishMinReplies');
+chkThreadFinishMinReplies.addEventListener('change', async function(event) {
+  await SETTINGS.RECORDING.THREAD_EXPANSION.saveMinReplyRecording(chkThreadFinishMinReplies.checked);
+});
+
+const chkThreadFinishAutoAdvance = document.getElementById('chkThreadFinishAutoAdvance');
+chkThreadFinishAutoAdvance.addEventListener('change', async function(event) {
+  await SETTINGS.RECORDING.THREAD_EXPANSION.saveAutoAdvance(chkThreadFinishAutoAdvance.checked);
 });
 
 const btnNavFilterOwner = document.getElementById('btnNavFilterOwner');

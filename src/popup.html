@@ -77,6 +77,16 @@
           <div id="squidlrTipSection" class="pt-2">
             <span>Uses <a href="https://squidlr.com" target="_blank">Squidlr</a> to get video URLs. We're not affiliated.</span>
           </div>
+          <div id="threadFinishSettings" class="pt-2 threadFinishOption">
+            <div class="form-check form-check-inline form-switch" data-toggle="tooltip" title="Whether to attempt to skip recording replies to the main author of the thread">
+              <input class="form-check-input" type="checkbox" id="chkThreadFinishMinReplies">
+              <label class="form-check-label" for="chkThreadFinishMinReplies">Record minimal replies</label>
+            </div>            
+            <div class="form-check form-check-inline form-switch threadFinishOption" data-toggle="tooltip" title="Whether to automate the process of going from one thread to the next">
+              <input class="form-check-input" type="checkbox" id="chkThreadFinishAutoAdvance">
+              <label class="form-check-label" for="chkThreadFinishAutoAdvance">Auto-advance</label>
+            </div>            
+          </div>
           <div class="row p-3">
             <select id="lstNavFinisher" size="10" class="p-1">
             </select>

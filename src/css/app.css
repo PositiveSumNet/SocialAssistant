@@ -551,7 +551,11 @@ a.postAnotherTag {
   display: flex;
 }
 
-#finishVideosHeader, .videoMode #finishThreadHeader, .videoMode #nitterTipSection, #squidlrTipSection, .videoMode #navThreadHowSection, #videoResSection {
+.threadFinishOption {
+  display: inline-block;
+}
+
+#finishVideosHeader, .videoMode #finishThreadHeader, .videoMode #nitterTipSection, #squidlrTipSection, .videoMode #navThreadHowSection, #videoResSection, .videoMode .threadFinishOption {
   display: none;
 }
 
