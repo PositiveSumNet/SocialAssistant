@@ -32,6 +32,8 @@ var QUERYING_UI = {
       const guessTopics = QUERYING_UI.FILTERS.TOPICS.getGuessTopicsFromUi();
     
       const threadUrlKey = URLPARSE.getQueryParm(URL_PARM.THREAD) || '';
+
+      const qualityPostsOnly = QUERYING_UI.POST_QUALITY.getDemandQualityPostsFromUi();
     
       // conditional filters
       const withUrl = document.getElementById('optWithUrl').checked;
@@ -62,6 +64,7 @@ var QUERYING_UI = {
         guessTopics: guessTopics,
         topic: topic,
         threadUrlKey: threadUrlKey,
+        qualityPostsOnly: qualityPostsOnly,
         // conn filters
         mutual: mutual,
         list: LIST_FAVORITES,
@@ -363,6 +366,23 @@ var QUERYING_UI = {
     
     makeNetworkSizeCounterKey: function(owner, pageType) {
       return `${owner}-${pageType}`;
+    }
+  },
+
+  POST_QUALITY: {
+    getDemandQualityPostsFromUi: function() {
+      return document.getElementById('optDemandQualityPosts').classList.contains('toggledOn');
+    },
+    
+    setDemandQualityPostsInUi: function() {
+      const demandQualityPosts = SETTINGS.getDemandQualityPosts();
+      const optDemandQualityPosts = document.getElementById('optDemandQualityPosts');
+      if (demandQualityPosts == true) {
+        optDemandQualityPosts.classList.add('toggledOn');
+      }
+      else {
+        optDemandQualityPosts.classList.remove('toggledOn');
+      }
     }
   },
 
