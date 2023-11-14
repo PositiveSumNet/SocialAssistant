@@ -349,6 +349,7 @@ var POST_SEL = {
   LikeCount: 'LikeCount',
   ReshareCount: 'ReshareCount',
   ConvoCount: 'ConvoCount', // posts & replies in the conversation (same thread)
+  ImportantAuthor: 'ImportantAuthor', // whether this is someone whose network was recorded
   // for child Images
   CardImgCdnUrl: 'CardImgCdnUrl',
   CardImg64Url: 'CardImg64Url',
@@ -356,7 +357,9 @@ var POST_SEL = {
   QuoteTweet: 'QuoteTweet',
   ReplyToTweet: 'ReplyToTweet',
   Images: 'Images',
-  TopicRatings: 'TopicRatings'
+  TopicRatings: 'TopicRatings',
+  Followers: 'Followers',
+  FollowedBy: 'FollowedBy'
 };
 
 var REG_IMG_SEL = {
