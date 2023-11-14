@@ -769,7 +769,7 @@ var RENDER = {
       `;
     },
     
-    renderPostAuthorImg: function(post, site) {
+    renderPostAuthorImg: function(post, site, authorTip) {
       let handle = DOMPurify.sanitize(post.AuthorHandle);
       handle = STR.ensurePrefix(handle, '@');
 
@@ -784,7 +784,7 @@ var RENDER = {
 
       return `
       <a class='postAuthorLink' href='${profileUrl}' target='_blank'>
-        <img class='postAuthorImg' alt='${handle}' src='${imgSrc}'/>
+        <img class='postAuthorImg' alt='${handle}' src='${imgSrc}' ${authorTip}>
       </a>`;
     },
 
@@ -831,9 +831,21 @@ var RENDER = {
       const contentElm = RENDER.POST.renderPostContent(post);
       const statsElm = RENDER.POST.renderStats(post);
       const tagggingElm = RENDER.POST.TAGGING.renderTagControls(post);
+      
+      let bodyCls = 'container postBody';
+      let authorTip = '';
+      if (post[POST_SEL.ImportantAuthor] == true) {
+        bodyCls = `${bodyCls} importantAuthor`;
+        authorTip = `data-toggle='tooltip' title='Author is in your tracked network'`;
+      }
+      else if (post[POST_SEL.Followers] && post[POST_SEL.Followers].length > 0) {
+        const delimFbys = post[POST_SEL.Followers].join(', ');
+        bodyCls = `${bodyCls} followedBy`;
+        authorTip = `data-toggle='tooltip' title='Followed by ${delimFbys}'`;
+      }
 
       return `
-        <div class='container postBody' data-testid='${post.PostUrlKey}'>
+        <div class='${bodyCls}' data-testid='${post.PostUrlKey}'>
           <div>
             ${reposterElm}
             <div class='floatright text-end'>
@@ -847,7 +859,7 @@ var RENDER = {
           </div>
           <div class='postHeadline row'>
             <div class='col-sm-auto' style='padding-right:0px;'>
-              ${RENDER.POST.renderPostAuthorImg(post, site, 'postAuthorLink', 'postAuthorImg')}
+              ${RENDER.POST.renderPostAuthorImg(post, site, authorTip)}
             </div>
             <div class='col'>
               <div class='row p-1'>
@@ -875,6 +887,7 @@ var RENDER = {
     
     renderPost: function(post, site) {
       const body = RENDER.POST.renderPostBody(post, site);
+
       let qt = '';
       if (post.QuoteTweet) {
         qt = RENDER.POST.renderPostBody(post.QuoteTweet, site);

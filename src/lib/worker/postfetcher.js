@@ -461,10 +461,11 @@ var POSTFETCHER = {
     
     if (minimal != true) {
       POSTFETCHER.infuseRegularImages(rows, graphMatchRhs);
-    }
-    if (minimal != true) {
       POSTFETCHER.infuseTopicRatingTags(rows, graphMatchRhs, guessedTopicParm, request.guessTopics);
     }
+
+    POSTFETCHER.infuseFollowers(rows);
+    POSTFETCHER.infuseAuthorIsTargeted(rows);
     
     return rows;
   },
@@ -577,6 +578,89 @@ var POSTFETCHER = {
     }
 
     return topicCondition;
+  },
+
+  infuseAuthorIsTargeted: function(rows) {
+    if (rows.length == 0) { return; }
+
+    const bind = [];
+    const urlKeys = rows.map(function(r) { return r[POST_SEL.PostUrlKey]; });
+
+    for (let i = 0; i < urlKeys.length; i++) {
+      let parm = {key: `$uk_${i}`, value: urlKeys[i]};
+      bind.push(parm);
+    }
+
+    const delimParms = bind.map(function(p) { return p.key; }).join(', ');
+
+    const entFollowing = APPSCHEMA.SocialConnIsFollowing;
+    const entPostAuthor = APPSCHEMA.SocialPostAuthorHandle;
+
+    const fing = 'fing';
+    const pauth = 'pauth';
+
+    // see if it's someone whose network we recorded
+    const sql = `
+    SELECT DISTINCT ${pauth}.${entPostAuthor.SubjectCol} AS ${POST_SEL.PostUrlKey}
+    FROM ${entPostAuthor.Name} ${pauth}
+    JOIN ${entFollowing.Name} ${fing} ON ${fing}.${entFollowing.SubjectCol} = ${pauth}.${entPostAuthor.ObjectCol}
+    WHERE ${pauth}.${entPostAuthor.SubjectCol} IN ( ${delimParms} );
+    `;
+
+    let bound = DBORM.QUERYING.bindConsol(bind);
+    let matches = DBORM.QUERYING.fetch(sql, bound);
+    
+    for (let i = 0; i < matches.length; i++) {
+      let match = matches[i];
+      let postUrlKey = match[POST_SEL.PostUrlKey];
+      let row = rows.find(function(r) { return STR.sameText(r[POST_SEL.PostUrlKey], postUrlKey); });
+      row[POST_SEL.ImportantAuthor] = true;
+    }
+  },
+
+  infuseFollowers: function(rows) {
+    if (rows.length == 0) { return; }
+
+    const bind = [];
+    const urlKeys = rows.map(function(r) { return r[POST_SEL.PostUrlKey]; });
+
+    for (let i = 0; i < urlKeys.length; i++) {
+      let parm = {key: `$uk_${i}`, value: urlKeys[i]};
+      bind.push(parm);
+    }
+
+    const delimParms = bind.map(function(p) { return p.key; }).join(', ');
+
+    const entFollowing = APPSCHEMA.SocialConnIsFollowing;
+    const entPostAuthor = APPSCHEMA.SocialPostAuthorHandle;
+
+    const fing = 'fing';
+    const pauth = 'pauth';
+
+    const sql = `
+    SELECT DISTINCT ${pauth}.${entPostAuthor.SubjectCol} AS ${POST_SEL.PostUrlKey},
+      ${fing}.${entFollowing.SubjectCol} AS ${POST_SEL.FollowedBy}
+    FROM ${entPostAuthor.Name} ${pauth}
+    JOIN ${entFollowing.Name} ${fing} ON ${fing}.${entFollowing.ObjectCol} = ${pauth}.${entPostAuthor.ObjectCol}
+    WHERE ${pauth}.${entPostAuthor.SubjectCol} IN ( ${delimParms} );
+    `;
+
+    let bound = DBORM.QUERYING.bindConsol(bind);
+    let fbyRows = DBORM.QUERYING.fetch(sql, bound);
+
+    for (let i = 0; i < rows.length; i++) {
+      let row = rows[i];
+      let postUrlKey = row[POST_SEL.PostUrlKey];
+      
+      let fbys = fbyRows.filter(function(f) { 
+        return STR.sameText(f[POST_SEL.PostUrlKey], postUrlKey); 
+      }).map(function(f) {
+        return f[POST_SEL.FollowedBy];
+      });
+      
+      fbys = ES6.distinctify(fbys).sort();
+      row[POST_SEL.Followers] = fbys;
+    }
   },
 
   infuseTopicRatingTags: function(rows, graphMatchRhs, guessedTopicParm, guessTopics) {

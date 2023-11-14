@@ -771,3 +771,11 @@ ul.biLevelMenu>li:hover>ul, ul.biLevelMenu>li:hover>.menuBottomSpacer {
 .showTaggingTips #optGuessTopics, .showTaggingTips .postTagText {
   border-color: red;
 }
+
+.postBody.followedBy {
+  border-left: solid #216CB1 3px;
+}
+
+.postBody.importantAuthor {
+  border-left: solid #216CB1 5px;
+}
