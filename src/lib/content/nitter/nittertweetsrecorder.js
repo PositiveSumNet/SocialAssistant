@@ -111,7 +111,7 @@ var NEETSREC = {
   },
 
   processTweets: function(scopeElm, parsedUrl) {
-    const tweetElms = NPARSE.getTweetElms(scopeElm);
+    const tweetElms = NEETPARSE.getTweetElms(scopeElm);
     if (!tweetElms || tweetElms.length == 0) { return; }
     const tweets = [];
     for (let i = 0; i < tweetElms.length; i++) {

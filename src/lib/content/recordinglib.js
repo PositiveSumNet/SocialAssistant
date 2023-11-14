@@ -53,12 +53,26 @@ var RECORDING = {
     return _recordingContext.state == SETTINGS.RECORDING.STATE.AUTO_SCROLL;
   },
 
-  isCurrentPageFlaggedForRecording: async function() {
+  calcShouldMinRecordedReplies: function() {
+    if (STR.hasLen(_recordingContext.threadExUrl) && _recordingContext.threadExUrl == document.location.href) {
+      return STR.isTruthy(_recordingContext[SETTINGS.RECORDING.THREAD_EXPANSION.MIN_REPLY_RECORDING]);
+    }
+    else {
+      return false;
+    }
+  },
+
+  checkCurrentPageThreadExpansionStatus: async function() {
     const recordingDomains = RECORDING.getRecordingDomains();
     // we still record if this is a thread detail that we've flagged
     const urlKey = STR.tryGetUrlKey(document.location.href, recordingDomains);
     if (!STR.hasLen(urlKey)) { return false; }
     const flagged = await SETTINGS.RECORDING.THREAD_EXPANSION.isUrlKeyMarkedForRecording(urlKey);
+    if (flagged == true) {
+      // I'm not a fan of side-effecting functions, but this is one (challenges with async)
+      // see calcShouldMinRecordedReplies
+      _recordingContext.threadExUrl = document.location.href;
+    }
     return flagged;
   },
 
@@ -77,7 +91,8 @@ var RECORDING = {
 
   shouldRecord: async function() {
     if (!_recordingContext || _recordingContext.state == SETTINGS.RECORDING.STATE.OFF) {
-      return await RECORDING.isCurrentPageFlaggedForRecording();
+      // I'm not a fan of side-effecting methods, but this is one
+      return await RECORDING.checkCurrentPageThreadExpansionStatus();
     }
     
     if (SETTINGS.RECORDING.isTimeExpiredManualContext(_recordingContext) == true) {

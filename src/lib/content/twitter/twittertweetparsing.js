@@ -1,5 +1,15 @@
 var TWEETPARSE = {
   
+  getTweetElms: function(scopeElem) {
+    if (TPARSE.isTweetElm(scopeElem)) {
+      return [scopeElem];
+    }
+    else {
+      // all img elms with src that starts with the tell-tale prefix
+      return Array.from(scopeElem.querySelectorAll('article[data-testid="tweet"]'));
+    }
+  },
+
   // get all at once, instead of requiring caller to obtain the author and timestamp
   getTweetUrlKeyDirectly: function(tweetElm) {
     const authorHeadlineElm = TWEETPARSE.getAuthorHeadlineElm(tweetElm);

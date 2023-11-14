@@ -857,6 +857,10 @@ var SETTINGS = {
       if (context.state == SETTINGS.RECORDING.STATE.MANUAL && context.manual && context.manual.timeoutAt && Date.now() > context.manual.timeoutAt) {
         context.state = SETTINGS.RECORDING.STATE.OFF;
       }
+
+      // attach THREAD_EXPANSION context (stored separately)
+      context[SETTINGS.RECORDING.THREAD_EXPANSION.MIN_REPLY_RECORDING] = await SETTINGS.RECORDING.THREAD_EXPANSION.getMinReplyRecording();
+      context[SETTINGS.RECORDING.THREAD_EXPANSION.AUTO_ADVANCE] = await SETTINGS.RECORDING.THREAD_EXPANSION.getAutoAdvance();
       
       return context;
     }

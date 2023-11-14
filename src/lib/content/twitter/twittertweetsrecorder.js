@@ -219,9 +219,8 @@ var TWEETSREC = {
   
   processForNodeScope: function(node, parsedUrl) {
     if (!ES6.isElementNode(node)) { return; }
-
     // tweets
-    let tweetElms = TPARSE.getTweetElms(node);
+    let tweetElms = TWEETPARSE.getTweetElms(node);
     if (tweetElms && tweetElms.length > 0) {
       TWEETSREC.processTweets(tweetElms, parsedUrl);
     }
