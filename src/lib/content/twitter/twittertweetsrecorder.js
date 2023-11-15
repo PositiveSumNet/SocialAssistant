@@ -219,38 +219,47 @@ var TWEETSREC = {
   
   processForNodeScope: function(node, parsedUrl) {
     if (!ES6.isElementNode(node)) { return; }
+    const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
+    // we only need firstAuthor when we're filtering to avoid reply-guys
+    const firstAuthor = (shouldFilter) ? TWEETPARSE.getFirstPostAuthor() : null;
     // tweets
     let tweetElms = TWEETPARSE.getTweetElms(node);
+    if (shouldFilter) { tweetElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetElms, firstAuthor); }
     if (tweetElms && tweetElms.length > 0) {
       TWEETSREC.processTweets(tweetElms, parsedUrl);
     }
 
     // author img urls
     let authorImgElms = TPARSE.getTweetAuthorImgElms(node);
+    if (shouldFilter) { authorImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(authorImgElms, firstAuthor); }
     if (authorImgElms && authorImgElms.length > 0) {
       TWEETSREC.processAuthorImages(authorImgElms);
     }
 
     // tweet post img urls
     let tweetPostImgElms = TPARSE.getTweetPostImgElms(node);
+    if (shouldFilter) { tweetPostImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetPostImgElms, firstAuthor); }
     if (tweetPostImgElms && tweetPostImgElms.length > 0) {
       TWEETSREC.processTweetPostImages(tweetPostImgElms);
     }
     
     // tweet post video urls
     let tweetPostEmbeddedVideoElms = TPARSE.getTweetPostEmbeddedVideoElms(node);
+    if (shouldFilter) { tweetPostEmbeddedVideoElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetPostEmbeddedVideoElms, firstAuthor); }
     if (tweetPostEmbeddedVideoElms && tweetPostEmbeddedVideoElms.length > 0) {
       TWEETSREC.processTweetPostEmbeddedVideos(tweetPostEmbeddedVideoElms);
     }
     
     // tweet article cards with image
     let tweetCardImgElms = TPARSE.getTweetCardImgElms(node);
+    if (shouldFilter) { tweetCardImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetCardImgElms, firstAuthor); }
     if (tweetCardImgElms && tweetCardImgElms.length > 0) {
       TWEETSREC.processTweetCards(tweetCardImgElms);
     }
 
     // tweet article cards sans image
     let tweetCardSvgElms = TPARSE.getTweetCardSvgElms(node);
+    if (shouldFilter) { tweetCardSvgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetCardSvgElms, firstAuthor); }
     if (tweetCardSvgElms && tweetCardSvgElms.length > 0) {
       TWEETSREC.processTweetCards(tweetCardSvgElms);
     }
@@ -303,5 +312,50 @@ var TWEETSREC = {
 
   onSaved: function(records) {
     RECORDING.onSavedPosts(records);
+  },
+
+  REPLY_GUY_FILTER: {
+    filter: function(elms, firstAuthor) {
+      if (!STR.hasLen(firstAuthor)) { return elms; }
+      if (elms.length == 0) { return elms; }
+      const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
+      if (!shouldFilter) { return elms; }
+      const keepers = [];
+      
+      for (let i = 0; i < elms.length; i++) {
+        let elm = elms[i];
+        let shouldKeep = TWEETSREC.REPLY_GUY_FILTER.shouldKeep(elm, firstAuthor);
+        if (shouldKeep) {
+          keepers.push(elm);
+        }
+      }
+
+      return keepers;
+    },
+
+    shouldKeep: function(elm, firstAuthor) {
+      let tweetElm;
+      if (TPARSE.isTweetElm(elm)) {
+        tweetElm = elm;
+      }
+      else {
+        const elmInfo = TWEETPARSE.getParentTweetElmInfo(elm);
+        if (!elmInfo) {
+          // caller will filter it out (but we don't need to filter it out on the basis of being a reply-guy)
+          return true;
+        }
+        else if (elmInfo.quoted == true) {
+          // keep all quote tweets
+          return true;
+        }
+        else {
+          tweetElm = elmInfo.elm;
+        }
+      }
+
+      const elmUrlKey = TWEETPARSE.getTweetUrlKeyDirectly(tweetElm);
+      const elmAuthor = STR.getAuthorFromUrlKey(elmUrlKey);
+      return STR.sameText(elmAuthor, firstAuthor);
+    }
   }
 };

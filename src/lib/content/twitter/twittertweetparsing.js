@@ -5,7 +5,6 @@ var TWEETPARSE = {
       return [scopeElem];
     }
     else {
-      // all img elms with src that starts with the tell-tale prefix
       return Array.from(scopeElem.querySelectorAll('article[data-testid="tweet"]'));
     }
   },
@@ -94,6 +93,22 @@ var TWEETPARSE = {
     TWEETPARSE.attachStats(tweet, tweetElm);
 
     return tweet;
+  },
+
+  getTopTweetElm: function(elms) {
+    for (let i = 0; i < elms.length; i++) {
+      let elm = elms[i];
+      if (TPARSE.isTweetElm(elm)) {
+        return elm;
+      }
+      else {
+        let tweetElm = TWEETPARSE.getParentTweetElmInfo(elm);
+        if (tweetElm && tweetElm.elm) {
+          return tweetElm.elm;
+        }
+      }
+    }
+    return null;
   },
 
   getQuotedTweet: function(tweetElm, parsedUrl, parentUrlKey) {
@@ -382,6 +397,20 @@ var TWEETPARSE = {
     return tweetElm.querySelector('div[data-testid="User-Name"]');
   },
 
+  // fyi, returned sans-@
+  getFirstPostAuthor: function() {
+    const mainColumn = TPARSE.getMainColumn();
+    const tweetElm = mainColumn.querySelector('article[data-testid="tweet"]');
+    
+    if (!tweetElm) { return null; }
+    const a = tweetElm.querySelector('a[href*="/status/"]');
+    if (!a) { return null; }
+    let urlKey = STR.cleanTweetUrlKey(a.href);
+    if (!STR.hasLen(urlKey)) { return null; }
+    const authorHandle = STR.getAuthorFromUrlKey(urlKey);
+    return authorHandle;
+  },
+  
   getTweetRelativeUrl: function(timestampElm, tweetElm) {
     if (!timestampElm) {
       // this happens with Ads. It's fine. Can uncomment to debug if needed.

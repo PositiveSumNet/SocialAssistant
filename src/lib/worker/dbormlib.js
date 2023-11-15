@@ -180,11 +180,10 @@ var DBORM = {
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB
 //       const debugRows = DBORM.QUERYING.fetch(`
-//       SELECT ptime.sPostUrlKey AS PostUrlKey,
-//       ptag.oValue AS SubtopicRating,
-//       ptag.NamedGraph
-// FROM SocialPostTime ptime
-// JOIN SocialPostSubtopicRating ptag ON ptag.sPostUrlKey = ptime.sPostUrlKey
+//       SELECT ptime.sPostUrlKey 
+//       FROM SocialPostTime ptime
+//       LEFT JOIN SocialPostThreadUrlKey pthr ON pthr.sPostUrlKey = ptime.sPostUrlKey
+//       WHERE pthr.rowid is NULL
 // ;
 //       `, []);
 
