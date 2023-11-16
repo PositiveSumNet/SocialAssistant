@@ -90,7 +90,7 @@ const processSave = async function(request) {
   const records = request.payload;
   await injectImageBase64s(records);
 
-  saveToTempStorage(records);
+  await saveToTempStorage(records);
   return {saved: records, success: true};
 }
 
@@ -128,10 +128,10 @@ const injectImageBase64s = async function(records) {
 }
 
 // caches what we'll want to persist to the sqlitedb when we get the chance
-const saveToTempStorage = function(records) {
+const saveToTempStorage = async function(records) {
   // the 'fordb-' prefix is how we find all such pending batches (see STORAGE_PREFIX.FOR_DB)
   const key = `fordb-${Date.now().toString()}`;
-  chrome.storage.local.set({ [key]: records });
+  await chrome.storage.local.set({ [key]: records });
 }
 
 /**************************/

@@ -125,7 +125,7 @@ var TWEETSREC = {
   },
 
   // see TWEET_CARD_ATTR
-  processTweetCards: function(imgElms) {
+  processTweetCards: function(imgElms, hasGoodImage) {
     const cards = [];
     for (let i = 0; i < imgElms.length; i++) {
       let imgElm = imgElms[i];
@@ -139,10 +139,11 @@ var TWEETSREC = {
       }
     }
 
+    const prefix = (hasGoodImage) ? 'card:' : 'card-img:';
     if (cards.length > 0) {
       for (let i = 0; i < cards.length; i++) {
         let item = cards[i];
-        let key = `card:${item.urlKey}`.toLowerCase();
+        let key = `${prefix}${item.urlKey}`.toLowerCase();
         RECORDING.pushSavable(item, key);
       }
     }
@@ -298,14 +299,14 @@ var TWEETSREC = {
     let tweetCardImgElms = TPARSE.getTweetCardImgElms(node);
     if (shouldFilter) { tweetCardImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetCardImgElms, firstAuthor); }
     if (tweetCardImgElms && tweetCardImgElms.length > 0) {
-      TWEETSREC.processTweetCards(tweetCardImgElms);
+      TWEETSREC.processTweetCards(tweetCardImgElms, true);
     }
 
     // tweet article cards sans image
     let tweetCardSvgElms = TPARSE.getTweetCardSvgElms(node);
     if (shouldFilter) { tweetCardSvgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetCardSvgElms, firstAuthor); }
     if (tweetCardSvgElms && tweetCardSvgElms.length > 0) {
-      TWEETSREC.processTweetCards(tweetCardSvgElms);
+      TWEETSREC.processTweetCards(tweetCardSvgElms, false);
     }
   },
 

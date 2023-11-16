@@ -505,6 +505,7 @@ const enterRecordingFinisherMode = async function(videoMode) {
   await setVideoMode(videoMode);
   await loadThreadList();
   cmbNavThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
+  setNitterTipViz();
   cmbVideoRes.value = SETTINGS.RECORDING.VIDEO_EXTRACTION.getPreferredVideoRes();
   showRecordingDiv('navFinisherSection');
 }
@@ -538,6 +539,10 @@ cmbVideoRes.addEventListener('change', (event) => {
 // threads
 const cmbNavThreadHow = document.getElementById('cmbNavThreadHow');
 cmbNavThreadHow.addEventListener('change', (event) => {
+  setNitterTipViz();
+});
+
+const setNitterTipViz = function() {
   const domain = cmbNavThreadHow.value;
   SETTINGS.RECORDING.setNavxPreferredDomain(domain);
   const nitterTip = document.getElementById('nitterTipSection');
@@ -547,7 +552,7 @@ cmbNavThreadHow.addEventListener('change', (event) => {
   else {
     nitterTip.style.visibility = 'hidden';
   }
-});
+}
 
 const chkThreadFinishMinReplies = document.getElementById('chkThreadFinishMinReplies');
 chkThreadFinishMinReplies.addEventListener('change', async function(event) {
