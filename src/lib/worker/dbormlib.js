@@ -718,15 +718,59 @@ var DBORM = {
       }
     },
 
+    buildSogKey: function(sog, entDefn) {
+      if (entDefn.OneToOne == true) {
+        return `${sog.s}-${sog.g}`;
+      }
+      else {
+        // some have large object values (binary), so we hash
+        return CRYPTO.hash(`${sog.s}-${sog.o}-${sog.g}`, CRYPTO.HASH_METHOD.SHA1);
+      }
+    },
+
+    // subject, object, graph, entityName
+    buildSogeSavableSet: function(soges, allEntDefns) {
+      const entNames = new Set(soges.map(function(x) { return x.e; }));
+      const relevantEntDefns = allEntDefns.filter(function(e) { return entNames.has(e.Name); });
+      
+      // we want to give precedence to later submissions (relevant for saving thread info, where we wait for more posts to load to get the best thread info)
+      soges.reverse();
+      
+      const set = APPSCHEMA.SAVING.newSavableSet(relevantEntDefns, false);
+      const keys = new Set();
+      for (let i = 0; i < relevantEntDefns.length; i++) {
+        let entDefn = relevantEntDefns[i];
+        let subsetArray = APPSCHEMA.SAVING.getSubset(set, entDefn.Name).sogs;
+        let sogs = soges.filter(function(x) { return STR.sameText(x.e, entDefn.Name); });
+        for (let j = 0; j < sogs.length; j++) {
+          let sog = sogs[j];
+          if (STR.hasLen(sog.s) && sog.o) {
+            let key = DBORM.SAVING.buildSogKey(sog, entDefn);
+            if (!keys.has(key)) {
+              subsetArray.push(sog);
+              keys.add(key);
+            }
+          }
+        }
+      }
+
+      return set;
+    },
+
     // returns records count
-    saveRecords: function(data) {
+    saveRecords: function(data, allEntDefns) {
       const pageType = data.pageType;
-
       const records = data.records;
-      const graph = APPGRAPHS.getGraphByPageType(pageType);
-      const mapper = SAVEMAPPERFACTORY.getSaveMapper(pageType);
-
-      const savableSet = mapper.mapSavableSet(records, pageType, graph);
+      
+      let savableSet;
+      if (pageType == PAGETYPE.SOGE) {
+        savableSet = DBORM.SAVING.buildSogeSavableSet(records, allEntDefns);
+      }
+      else {
+        const graph = APPGRAPHS.getGraphByPageType(pageType);
+        const mapper = SAVEMAPPERFACTORY.getSaveMapper(pageType);
+        savableSet = mapper.mapSavableSet(records, pageType, graph);
+      }
 
       if (records.length > 0) {
         DBORM.SAVING.execSaveSet(savableSet);
@@ -737,10 +781,10 @@ var DBORM = {
 
     // per ensureCopiedToDb, data.key is the storage key of the data we're transferring, and
     // within each batch, val is the request originally cached by background.js (made in content.js)
-    xferCacheToDb: function(data) {
+    xferCacheToDb: function(data, allEntDefns) {
       // we were passed 
-      var items = [];
-      var keys = [];  // we'll send a message indicating that these keys can be cleared from localStorage
+      let items = [];
+      let keys = [];  // we'll send a message indicating that these keys can be cleared from localStorage
       
       for (let i = 0; i < data.batches.length; i++) {
         let batch = data.batches[i];
@@ -754,7 +798,7 @@ var DBORM = {
       for (let i = 0; i < groups.length; i++) {
         let records = groups[i];
         let pageType = records[0].pageType;
-        DBORM.SAVING.saveRecords({ pageType, records });
+        DBORM.SAVING.saveRecords({ pageType, records }, allEntDefns);
       }
 
       // tell caller it can clear those cache keys and send over the next ones

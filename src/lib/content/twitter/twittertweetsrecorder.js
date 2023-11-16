@@ -192,6 +192,43 @@ var TWEETSREC = {
     }
   },
 
+  processAllThreadKeys: function(parsedUrl) {
+    // re-hash *all* thread keys (if we're on a thread detail page)
+    // this allows for the most up-to-date information on the "top post"
+    // (do this last, since ingestion is time-ordered and that way this will override)
+    if (!STR.hasLen(parsedUrl.threadDetailId)) {
+      return;
+    }
+
+    // we're on a thread detail page
+    const threadUrlKey = TWEETPARSE.getFirstPostUrlKey();
+    const allPostUrlKeys = TWEETPARSE.getAllUrlKeysOnPage();
+    const graph = APPGRAPHS.getGraphBySite(SITE.TWITTER);
+    const soges = [];
+    for (let i = 0; i < allPostUrlKeys.length; i++) {
+      let postUrlKey = allPostUrlKeys[i];
+      let soge = {
+        e: APPSCHEMA.SocialPostThreadUrlKey.Name,
+        s: postUrlKey,
+        o: threadUrlKey,
+        g: graph
+      };
+
+      soge[SETTINGS.PAGE_CONTEXT.PAGE_TYPE] = PAGETYPE.SOGE;
+      soges.push(soge);
+    }
+
+    chrome.runtime.sendMessage(
+      {
+        // caches to temp storage
+        actionType: MSGTYPE.TOBACKGROUND.SAVE,
+        payload: soges
+      }, 
+      function(response) {
+        // could process response if needed
+      });
+  },
+
   // see SAVABLE_TWEET_ATTR
   processTweets: function(tweetElms, parsedUrl) {
     const tweets = [];
@@ -263,6 +300,8 @@ var TWEETSREC = {
     if (tweetCardSvgElms && tweetCardSvgElms.length > 0) {
       TWEETSREC.processTweetCards(tweetCardSvgElms);
     }
+
+    TWEETSREC.processAllThreadKeys(parsedUrl);
   },
 
   // ensures that mutation callback wasn't triggered after an ajax call changed the de-facto page type

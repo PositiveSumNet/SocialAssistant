@@ -1,5 +1,7 @@
 // the type of page the user is looking at
 var PAGETYPE = {
+  // special pageType indicating entity, subject, object, graph, timestamp (no mapper required to save it)
+  SOGE: 'soge',
   // nitter uses this pageType too
   TWITTER: {
     HOME: 'twitterHome',

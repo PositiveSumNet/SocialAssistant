@@ -11,11 +11,12 @@ var TWEETPARSE = {
 
   // get all at once, instead of requiring caller to obtain the author and timestamp
   getTweetUrlKeyDirectly: function(tweetElm) {
+    if (!tweetElm) { return null; }
     const authorHeadlineElm = TWEETPARSE.getAuthorHeadlineElm(tweetElm);
     if (!authorHeadlineElm) { return null; }
     const timestampElm = TWEETPARSE.getTimestampElm(authorHeadlineElm, tweetElm);
     if (!timestampElm) { return null; } // happens with ads
-    return TWEETPARSE.getTweetRelativeUrl(timestampElm, tweetElm);
+    return TWEETPARSE.getTweetRelativeUrl(timestampElm);
   },
 
   attachStat: function(tweet, parts, clue, prop) {
@@ -54,7 +55,7 @@ var TWEETPARSE = {
     tweet.pageType = PAGETYPE.TWITTER.TWEETS;
     
     // e.g. "/scafaria/status/1665507318031630337"
-    tweet.urlKey = TWEETPARSE.getTweetRelativeUrl(timestampElm, tweetElm);
+    tweet.urlKey = TWEETPARSE.getTweetRelativeUrl(timestampElm);
     if (!tweet.urlKey) {
       return null;
     }
@@ -259,7 +260,7 @@ var TWEETPARSE = {
     else {
       const authorHeadlineElm = TWEETPARSE.getAuthorHeadlineElm(tweetElmInfo.elm);
       const timestampElm = TWEETPARSE.getTimestampElm(authorHeadlineElm, tweetElmInfo.elm);
-      const postUrlKey = TWEETPARSE.getTweetRelativeUrl(timestampElm, tweetElmInfo.elm);
+      const postUrlKey = TWEETPARSE.getTweetRelativeUrl(timestampElm);
       return postUrlKey;
     }
   },
@@ -397,21 +398,31 @@ var TWEETPARSE = {
     return tweetElm.querySelector('div[data-testid="User-Name"]');
   },
 
-  // fyi, returned sans-@
-  getFirstPostAuthor: function() {
+  getAllUrlKeysOnPage: function() {
+    const mainColumn = TPARSE.getMainColumn();
+    const tweetElms = Array.from(mainColumn.querySelectorAll('article[data-testid="tweet"]'));
+    let urlKeys = tweetElms.map(function(elm) { return TWEETPARSE.getTweetUrlKeyDirectly(elm); });
+    urlKeys = urlKeys.filter(function(k) { return STR.hasLen(k); });
+    return urlKeys;
+  },
+
+  getFirstPostUrlKey: function() {
     const mainColumn = TPARSE.getMainColumn();
     const tweetElm = mainColumn.querySelector('article[data-testid="tweet"]');
-    
     if (!tweetElm) { return null; }
-    const a = tweetElm.querySelector('a[href*="/status/"]');
-    if (!a) { return null; }
-    let urlKey = STR.cleanTweetUrlKey(a.href);
+    const urlKey = TWEETPARSE.getTweetUrlKeyDirectly(tweetElm);
+    return urlKey;
+  },
+
+  // fyi, returned sans-@
+  getFirstPostAuthor: function() {
+    const urlKey = TWEETPARSE.getFirstPostUrlKey();
     if (!STR.hasLen(urlKey)) { return null; }
     const authorHandle = STR.getAuthorFromUrlKey(urlKey);
     return authorHandle;
   },
   
-  getTweetRelativeUrl: function(timestampElm, tweetElm) {
+  getTweetRelativeUrl: function(timestampElm) {
     if (!timestampElm) {
       // this happens with Ads. It's fine. Can uncomment to debug if needed.
       // console.log('No timestamp found for:');
