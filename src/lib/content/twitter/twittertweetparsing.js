@@ -45,7 +45,7 @@ var TWEETPARSE = {
     TWEETPARSE.attachStat(tweet, parts, 'reposts', SAVABLE_TWEET_ATTR.reshareCount);
   },
 
-  buildTweetFromElm: function(tweetElm, parsedUrl) {
+  buildTweetFromElm: function(tweetElm, parsedUrl, threadUrlKey) {
     // note: author image loads with a delay, so is handled separately via getTweetAuthorImgElms
     const authorHeadlineElm = TWEETPARSE.getAuthorHeadlineElm(tweetElm);
     const timestampElm = TWEETPARSE.getTimestampElm(authorHeadlineElm, tweetElm);
@@ -68,7 +68,7 @@ var TWEETPARSE = {
     // see if replying to a post
     const threadInfo = TWEETPARSE.THREADING.getThreadInfo(tweetElm, parsedUrl, tweet.urlKey);
     tweet.replyToUrlKey = threadInfo[THREAD_INFO.replyToUrlKey];
-    tweet.threadUrlKey = threadInfo[THREAD_INFO.threadUrlKey];
+    tweet.threadUrlKey = threadUrlKey || threadInfo[THREAD_INFO.threadUrlKey];
 
     const retweetedBy = TWEETPARSE.getRetweetedByHandle(tweetElm);
     if (retweetedBy) {

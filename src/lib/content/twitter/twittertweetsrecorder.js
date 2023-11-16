@@ -4,8 +4,23 @@
 // specific observers are held in _observers and also referenced by specific recorders
 var _tweetObserver;
 
+// as a detail page loads, we learn the threadId
+var _threadDetailInfo = {
+  threadDetailId: '',
+  threadUrlKey: '',
+  authorHandle: ''
+};
+
 var TWEETSREC = {
   
+  clearThreadDetailCache: function() {
+    _threadDetailInfo = {
+      threadDetailId: '',
+      threadUrlKey: '',
+      authorHandle: ''
+    };
+  },
+
   // IRecorder
   pollForRecording: async function() {
     const mainColumn = TPARSE.getMainColumn();
@@ -192,50 +207,17 @@ var TWEETSREC = {
     }
   },
 
-  processAllThreadKeys: function(parsedUrl) {
-    // re-hash *all* thread keys (if we're on a thread detail page)
-    // this allows for the most up-to-date information on the "top post"
-    // (do this last, since ingestion is time-ordered and that way this will override)
-    if (!STR.hasLen(parsedUrl.threadDetailId)) {
-      return;
-    }
-
-    // we're on a thread detail page
-    const threadUrlKey = TWEETPARSE.getFirstPostUrlKey();
-    const allPostUrlKeys = TWEETPARSE.getAllUrlKeysOnPage();
-    const graph = APPGRAPHS.getGraphBySite(SITE.TWITTER);
-    const soges = [];
-    for (let i = 0; i < allPostUrlKeys.length; i++) {
-      let postUrlKey = allPostUrlKeys[i];
-      let soge = {
-        e: APPSCHEMA.SocialPostThreadUrlKey.Name,
-        s: postUrlKey,
-        o: threadUrlKey,
-        g: graph
-      };
-
-      soge[SETTINGS.PAGE_CONTEXT.PAGE_TYPE] = PAGETYPE.SOGE;
-      soges.push(soge);
-    }
-
-    chrome.runtime.sendMessage(
-      {
-        // caches to temp storage
-        actionType: MSGTYPE.TOBACKGROUND.SAVE,
-        payload: soges
-      }, 
-      function(response) {
-        // could process response if needed
-      });
-  },
-
   // see SAVABLE_TWEET_ATTR
   processTweets: function(tweetElms, parsedUrl) {
+    const threadUrlKey = (STR.hasLen(parsedUrl.threadDetailId) && parsedUrl.threadDetailId == _threadDetailInfo.threadDetailId)
+      ? _threadDetailInfo.threadUrlKey
+      : null;
+    
     const tweets = [];
     for (let i = 0; i < tweetElms.length; i++) {
       let tweetElm = tweetElms[i];
 
-      let tweet = TWEETPARSE.buildTweetFromElm(tweetElm, parsedUrl);
+      let tweet = TWEETPARSE.buildTweetFromElm(tweetElm, parsedUrl, threadUrlKey);
       if (tweet) {
         tweets.push(tweet);
       }
@@ -253,12 +235,37 @@ var TWEETSREC = {
       }
     }
   },
+
+  cacheThreadDetailUrlKey: function(parsedUrl) {
+    if (!STR.hasLen(parsedUrl.threadDetailId)) {
+      // we're not on a thread detail page
+      TWEETSREC.clearThreadDetailCache();
+      return;
+    }
+
+    if (parsedUrl.threadDetailId != _threadDetailInfo.threadDetailId) {
+      TWEETSREC.clearThreadDetailCache();
+    }
+
+    if (_threadDetailInfo.threadDetailId == parsedUrl.threadDetailId && STR.hasLen(_threadDetailInfo.threadUrlKey)) {
+      // already set (and setting it again risks a bad reset if X removes dom elements)
+      return;
+    }
+
+    const threadUrlKey = TWEETPARSE.getFirstPostUrlKey();
+    if (!STR.hasLen(threadUrlKey)) { return; }
+
+    _threadDetailInfo.threadDetailId = parsedUrl.threadDetailId;
+    _threadDetailInfo.threadUrlKey = threadUrlKey;
+    _threadDetailInfo.authorHandle = STR.getAuthorFromUrlKey(threadUrlKey);
+  },
   
   processForNodeScope: function(node, parsedUrl) {
     if (!ES6.isElementNode(node)) { return; }
     const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
+    TWEETSREC.cacheThreadDetailUrlKey(parsedUrl);
     // we only need firstAuthor when we're filtering to avoid reply-guys
-    const firstAuthor = (shouldFilter) ? TWEETPARSE.getFirstPostAuthor() : null;
+    const firstAuthor = (shouldFilter) ? _threadDetailInfo.authorHandle : null;
     // tweets
     let tweetElms = TWEETPARSE.getTweetElms(node);
     if (shouldFilter) { tweetElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetElms, firstAuthor); }
@@ -300,8 +307,6 @@ var TWEETSREC = {
     if (tweetCardSvgElms && tweetCardSvgElms.length > 0) {
       TWEETSREC.processTweetCards(tweetCardSvgElms);
     }
-
-    TWEETSREC.processAllThreadKeys(parsedUrl);
   },
 
   // ensures that mutation callback wasn't triggered after an ajax call changed the de-facto page type
