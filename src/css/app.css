@@ -619,11 +619,23 @@ a.postAnotherTag {
 }
 
 #dbProcessingMsg {
-  color: #ddd;
+  color: #777;
 }
 
-#dbProcessingMsg.completed {
+#dbProcessingMsg:hover {
+  color: #fff;
+}
+
+#dbProcessingMsg.completed, #dbProcessingMsg.completed:hover {
   color: #ffe34c;
+}
+
+#dbProcessingMsg .spinner-border {
+  color: #f5a11d;
+}
+
+#dbProcessingMsg.completed .spinner-border {
+  display: none;
 }
 
 .topicsPicker {
