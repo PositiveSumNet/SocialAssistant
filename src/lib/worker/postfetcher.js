@@ -351,18 +351,30 @@ var POSTFETCHER = {
       }
 
       if (STR.hasLen(request.networkOwner)) {
-        if (request.withRetweets == true) {
+        let bindAuthorParm = false;
+        if (STR.sameText(request.networkOwner, SPECIAL_OWNER.ALL_FOLLOWINGS)) {
+          authorCondition = POSTFETCHER.writeFollowingAuthorCondition('AND', ahandle, entAuthorHandle);
+        }
+        else if (STR.sameText(request.networkOwner, SPECIAL_OWNER.ALL_FAVORITES)) {
+          authorCondition = POSTFETCHER.writeFavoriteAuthorCondition('AND', ahandle, entAuthorHandle);
+        }
+        else if (request.withRetweets == true) {
           authorCondition = `  AND CASE
                                   WHEN ${ahandle}.${entAuthorHandle.ObjectCol} = $author THEN 1
                                   WHEN ${preposter}.${entReposter.ObjectCol} = $author THEN 1
                                   ELSE 0
                                 END = 1
                             `;
+
+          bindAuthorParm = true;
         }
         else {
           authorCondition = `  AND ${ahandle}.${entAuthorHandle.ObjectCol} = $author`;
+          bindAuthorParm = true;
         }
-        bind.push({key: '$author', value: request.networkOwner});
+        if (bindAuthorParm == true) {
+          bind.push({key: '$author', value: request.networkOwner});
+        }
       }
     }
 
@@ -489,6 +501,34 @@ var POSTFETCHER = {
     POSTFETCHER.infuseAuthorIsTargeted(rows);
     
     return rows;
+  },
+
+  writeFollowingAuthorCondition: function(conjunction, ahandle, entAuthorHandle) {
+    const entFollowing = APPSCHEMA.SocialConnIsFollowing;
+    
+    // the OR for SubjectCol is so that we also capture the person whose following list was imported
+    // (usually that's the active user); we don't want to miss them
+    const sql = `${conjunction} EXISTS (
+      SELECT 1
+      FROM ${entFollowing.Name} x
+      WHERE x.${entFollowing.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+         OR x.${entFollowing.SubjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+    )`;
+
+    return sql;
+  },
+
+  writeFavoriteAuthorCondition: function(conjunction, ahandle, entAuthorHandle) {
+    const entList = APPSCHEMA.SocialListMember;
+
+    const sql = `${conjunction} EXISTS (
+      SELECT 1
+      FROM ${entList.Name} x
+      WHERE x.${entList.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+        AND x.${entList.SubjectCol} = '${LIST_FAVORITES}'
+    )`;
+
+    return sql;
   },
 
   writeOrderByRating: function(topic, orderByTopicParm) {

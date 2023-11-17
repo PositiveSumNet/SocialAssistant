@@ -32,6 +32,11 @@ const VIDEO_RES = {
   LOWEST: 'lowest'
 };
 
+const SPECIAL_OWNER = {
+  ALL_FOLLOWINGS: 'ALL_FOLLOWINGS',
+  ALL_FAVORITES: 'ALL_FAVORITES'
+};
+
 const STORAGE_PREFIX = {
   FOR_DB: 'fordb-',
   THREAD_EXPANSION_URLKEY: 'threadMore-',
