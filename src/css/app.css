@@ -539,7 +539,7 @@ a.postAnotherTag {
   display: inline-block;
 }
 
-.oneTopic.oneThread #optSortByStars {
+.oneTopic.oneThread #optSortByStars, .oneThread #optDemandQualityPosts {
   display: none;
 }
 
