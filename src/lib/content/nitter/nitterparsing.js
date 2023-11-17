@@ -1,4 +1,14 @@
 var NPARSE = {
+  isErrorPage: function() {
+    const errorPanel = document.querySelector('.error-panel');
+    if (errorPanel && errorPanel.textContent == 'Tweet not found') {
+      return true;
+    }
+    else {
+      return false;
+    }
+  },
+  
   getMainColumn: function(warn) {
     // main timeline
     let elms = document.querySelectorAll('.timeline');

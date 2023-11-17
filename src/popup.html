@@ -36,8 +36,18 @@
         <div><i class="bi-info-circle"></i> Need help? Try our <a href="https://youtu.be/BGFnMst3RAk" target="_blank">video</a> and <a href='https://whosum.com/faq' target='_blank'>FAQ</a></div>
       </div>
       <div id="navFinisherSection" class="appRecordingSection" style="display: none;">
-        <h5 id="finishVideosHeader">Click to save embedded videos:</h5>
-        <h5 id="finishThreadHeader">Click to visit and record rest of thread:</h5>
+        <div id="finishVideosHeader">
+          <span>Click to save embedded videos:</span>
+          <span class="spinner-border spinner-border-sm text-primary d-none" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </span>
+        </div>
+        <div id="finishThreadHeader">
+          <span class="h5">Click to visit and record rest of thread:</span>
+          <span class="spinner-border spinner-border-sm text-primary d-none" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </span>
+        </div>
         <div class="container-fluid pt-2">
           <div class="row pb-1">
             <div class='input-group col' id="videoResSection">

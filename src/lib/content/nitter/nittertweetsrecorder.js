@@ -6,6 +6,8 @@ window.onload = function() {
   _nitterFullyLoaded = true;
 };
 
+var _isDeadThread = false;
+
 var NEETSREC = {
   
   // IRecorder
@@ -25,6 +27,17 @@ var NEETSREC = {
           NEETSREC.kickoffRecording();
         }
       }
+    }
+    else if (NPARSE.isErrorPage() == true) {
+      const parsedUrl = RECORDING.getParsedUrl();
+      if (!_isDeadThread) {
+        // not yet reported
+        chrome.runtime.sendMessage({
+          actionType: MSGTYPE.TO_POPUP.DEAD_THREAD,
+          parsedUrl: parsedUrl
+        });
+      }
+      _isDeadThread = true;
     }
 
     if (polledContextOk != false) {
