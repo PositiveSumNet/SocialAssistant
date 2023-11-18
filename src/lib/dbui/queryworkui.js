@@ -79,13 +79,13 @@ var QUERYWORK_UI = {
     txtOwnerHandle.onblur = function() {
       // the delay is to give time to register a button-click
       setTimeout(() => {
-        document.getElementById('specialOwnerPicker').classList.add('d-none');
-      }, 50);
+        QUERYWORK_UI.setSpecialOwnerViz(false);
+      }, 200);
     };
 
     txtOwnerHandle.addEventListener('keyup', function(e) {
       if (e.key == "Escape") {
-        document.getElementById('specialOwnerPicker').classList.add('d-none');
+        QUERYWORK_UI.setSpecialOwnerViz(false);
       }
     });
 
@@ -103,7 +103,7 @@ var QUERYWORK_UI = {
       // onOrdinaryInputFn
       function() {
         _deletingOwner = false;
-        document.getElementById('specialOwnerPicker').classList.add('d-none');
+        QUERYWORK_UI.setSpecialOwnerViz(false);
       },
       // onDebouncedFn
       QUERYWORK_UI.suggestAccountOwner,
@@ -370,6 +370,17 @@ var QUERYWORK_UI = {
     };
   },
 
+  setSpecialOwnerViz: function(visible) {
+    if (visible == true) {
+      document.getElementById('specialOwnerPicker').classList.remove('d-none');
+      document.getElementById('txtOwnerHandle').setAttribute('placeholder', 'Type or pick below');
+    }
+    else {
+      document.getElementById('specialOwnerPicker').classList.add('d-none');
+      document.getElementById('txtOwnerHandle').setAttribute('placeholder', 'account');
+    }
+  },
+
   onCopiedToDb: async function(cacheKeys) {
     // we can clear out the cache keys
     for (let i = 0; i < cacheKeys.length; i++) {
@@ -569,7 +580,7 @@ var QUERYWORK_UI = {
         if (!STR.hasLen(userInput)) {
           if (!_deletingOwner || QUERYWORK_UI.isAccountOwnerFocused()) {
             // only show the special owner buttons if the textbox still has focus
-            document.getElementById('specialOwnerPicker').classList.remove('d-none');
+            QUERYWORK_UI.setSpecialOwnerViz(true);
           }
           // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
           const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
