@@ -441,10 +441,18 @@
               <option id="optPosts" value="posts">Posts</option>
             </select>
           </div>
-          <div class='pt-2 col-2'>
-            <div class='input-group' style="margin-bottom:20px;">
+          <div class='pt-2 col-2 position-relative' style="margin-bottom:20px;">
+            <div class='input-group'>
               <label for='txtOwnerHandle' class='text-muted input-group-text'>@</label>
-              <input id='txtOwnerHandle' type='text' placeholder='account' class='form-control' >
+              <input id='txtOwnerHandle' type='text' placeholder='account' class='form-control' autocomplete="off" >
+            </div>
+            <div id="specialOwnerPicker" class="position-absolute start-0 ms-2 d-none">
+              <a href="#" id="btnPickOwnerFavorites" class="mt-2 pt-2 pb-2 ps-1 pe-1">
+                <i class="bi-star"></i> Favorited
+              </a>
+              <a href="#" id="btnPickOwnerFollowing" class="mt-2 pt-2 pb-2 ps-1 pe-1">
+                <i class="bi-diagram-2"></i> Followed
+              </a>
             </div>
           </div>
           <div class='pt-2 col-2'>
@@ -520,10 +528,10 @@
             </table>
           </div>
         </div>
+        <div id='listOwnerPivotPicker' class='row'></div>
         <div id="connListProgress" class="progress" style="height:3px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
         </div>
-        <div id='listOwnerPivotPicker' class='row pt-2'></div>
         <div id="filteredThreadSection" class="row">
           <div>
             <a href="#" id="btnClearThreadFilter"><i class="bi-x-circle"></i> Filtered by thread. Click to clear.</a>

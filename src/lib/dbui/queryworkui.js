@@ -65,6 +65,16 @@ var QUERYWORK_UI = {
       }
     };
 
+    txtOwnerHandle.onblur = function() {
+      document.getElementById('specialOwnerPicker').classList.add('d-none');
+    };
+
+    txtOwnerHandle.addEventListener('keyup', function(e) {
+      if (e.key == "Escape") {
+        document.getElementById('specialOwnerPicker').classList.add('d-none');
+      }
+    });
+
     QUERYWORK_UI.bindTypeahead(
       txtOwnerHandle, 
       // onBackspaceFn
@@ -79,6 +89,7 @@ var QUERYWORK_UI = {
       // onOrdinaryInputFn
       function() {
         _deletingOwner = false;
+        document.getElementById('specialOwnerPicker').classList.add('d-none');
       },
       // onDebouncedFn
       QUERYWORK_UI.suggestAccountOwner,
@@ -97,7 +108,6 @@ var QUERYWORK_UI = {
     // topic filter
     const txtTopicFilter = document.getElementById('txtTopicFilter');
 
-    // auto-populate with a few owners on-focus (if empty)
     txtTopicFilter.onfocus = function () {
       const userInput = this.value || '';
       QUERYWORK_UI.suggestTopic(userInput);
@@ -536,6 +546,7 @@ var QUERYWORK_UI = {
       case PAGETYPE.TWITTER.TWEETS:
       case PAGETYPE.MASTODON.TOOTS:
         if (!STR.hasLen(userInput)) {
+          document.getElementById('specialOwnerPicker').classList.remove('d-none');
           // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
           const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
           listOwnerPivotPicker.replaceChildren();

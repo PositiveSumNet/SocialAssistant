@@ -738,6 +738,24 @@ ul.subtopicsUl {
   border: solid 1px #f5a11d; 
 }
 
+#specialOwnerPicker {
+  opacity: 100%;
+  background-color: white;
+}
+
+#specialOwnerPicker a {
+  opacity: 100%;
+  display: inline-block;
+  border: solid 1px #216CB1;
+  color: #216CB1;
+  background-color: white;
+}
+
+#specialOwnerPicker a:hover {
+  color: white;
+  background-color: #216CB1;
+}
+
 #listTopicPicker {
   opacity: 100%;
   color: white;
