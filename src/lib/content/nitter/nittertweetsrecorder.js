@@ -6,8 +6,6 @@ window.onload = function() {
   _nitterFullyLoaded = true;
 };
 
-var _isDeadThread = false;
-
 var NEETSREC = {
   
   // IRecorder
