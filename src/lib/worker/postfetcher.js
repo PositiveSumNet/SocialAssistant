@@ -427,12 +427,16 @@ var POSTFETCHER = {
       `;
     }
 
+    // re FavoritedAuthor status, note the check for not marked as deleted
     const sql = `${cteSql}
     SELECT  ${ptime}.${entPostTime.SubjectCol} AS ${POST_SEL.PostUrlKey},
             ${ptime}.${entPostTime.ObjectCol} AS ${POST_SEL.PostTime},
             ${ahandle}.${entAuthorHandle.ObjectCol} AS ${POST_SEL.AuthorHandle},
             ${aname}.${entProfileName.ObjectCol} AS ${POST_SEL.AuthorName},
-            CASE WHEN ${alist}.${entListMember.SubjectCol} IS NULL THEN 0 ELSE 1 END AS ${POST_SEL.FavoritedAuthor},
+            CASE 
+              WHEN ${alist}.${SCHEMA_CONSTANTS.COLUMNS.Timestamp} LIKE '202%' THEN 1
+              ELSE 0
+              END AS ${POST_SEL.FavoritedAuthor},
             ${ptext}.${entPostText.ObjectCol} AS ${POST_SEL.PostText},
             ${preplykey}.${entReplyToUrlKey.ObjectCol} AS ${POST_SEL.ReplyToUrlKey},
             ${preposter}.${entReposter.ObjectCol} AS ${POST_SEL.ReposterHandle},
@@ -534,6 +538,7 @@ var POSTFETCHER = {
       FROM ${entList.Name} x
       WHERE x.${entList.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
         AND x.${entList.SubjectCol} = '${LIST_FAVORITES}'
+        AND x.${SCHEMA_CONSTANTS.COLUMNS.Timestamp} LIKE '202%'
     )`;
 
     return sql;

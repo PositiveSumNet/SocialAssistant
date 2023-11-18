@@ -207,6 +207,10 @@ var QUERYING_UI = {
   },
 
   OWNER: {
+    resetUiOwner: function() {
+      document.getElementById('txtOwnerHandle').value = '';
+    },
+    
     uiHasSpecificOwner: function() {
       let owner = QUERYING_UI.OWNER.getOwnerFromUi();
       

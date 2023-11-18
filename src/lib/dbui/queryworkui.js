@@ -246,6 +246,7 @@ var QUERYWORK_UI = {
 
     document.getElementById('cmbType').addEventListener('change', (event) => {
       QUERYING_UI.PAGING.resetPage();
+      QUERYING_UI.OWNER.resetUiOwner();
       QUERYING_UI.FILTERS.setQueryOptionVisibility();
       QUERYWORK_UI.executeSearch();
     });

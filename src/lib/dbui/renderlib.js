@@ -789,7 +789,7 @@ var RENDER = {
       }
 
       return `
-      <a href='#' class='canstar position-absolute start-0' style='z-index:99' data-testid='${authorSansAt}'><i class='${starCls}'></i></a>
+      <a href='#' data-toggle='tooltip' title='Toggle the favorited status of this post author' class='canstar position-absolute top-0 start-100 translate-middle-x' style='z-index:99' data-testid='${authorSansAt}'><i class='${starCls}'></i></a>
       <a class='postAuthorLink position-relative' href='${profileUrl}' target='_blank'>
         <img class='postAuthorImg' alt='${handle}' src='${imgSrc}' ${authorTip}>
       </a>`;
