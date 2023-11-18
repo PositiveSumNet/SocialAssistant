@@ -217,10 +217,11 @@ var NEETSREC = {
       const topTweet = tweets[0];
       const topElmAuthor = STR.getAuthorFromUrlKey(topTweet.urlKey);
 
+      const pageOwner = URLPARSE.getActivePageOwner();
       for (let i = 0; i < tweets.length; i++) {
         let tweet = tweets[i];
         let author = STR.getAuthorFromUrlKey(tweet.urlKey);
-        if (STR.sameText(author, topElmAuthor)) {
+        if (STR.sameText(author, topElmAuthor) || STR.sameText(author, pageOwner)) {
           keepers.push(tweet);
         }
       }
