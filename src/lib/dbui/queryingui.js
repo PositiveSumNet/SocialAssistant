@@ -1,9 +1,7 @@
 var QUERYING_UI = {
   
   initMainListUiElms: function() {
-    const txtOwnerHandle= document.getElementById('txtOwnerHandle');
-    const owner = txtOwnerHandle.value;
-    if (STR.hasLen(owner)) {
+    if (QUERYING_UI.OWNER.uiHasSpecificOwner() == true) {
       optWithRetweets.style.display = 'inline-block';
     }
     else {
@@ -209,6 +207,14 @@ var QUERYING_UI = {
   },
 
   OWNER: {
+    uiHasSpecificOwner: function() {
+      let owner = QUERYING_UI.OWNER.getOwnerFromUi();
+      
+      return STR.hasLen(owner) && 
+        !STR.sameText(owner, SPECIAL_OWNER.ALL_FAVORITES) && 
+        !STR.sameText(owner, SPECIAL_OWNER.ALL_FOLLOWING);
+    },
+    
     getOwnerFromUi: function() {
       const txtOwnerHandle = document.getElementById('txtOwnerHandle');
       // trim the '@'
