@@ -540,13 +540,23 @@ var QUERYWORK_UI = {
     });
   },
 
+  isAccountOwnerFocused: function() {
+    const focusedElm = document.activeElement;
+    if (!focusedElm) { return false; }
+    const txtOwnerHandle = document.getElementById('txtOwnerHandle');
+    return focusedElm === txtOwnerHandle;
+  },
+
   suggestAccountOwner: function(userInput) {
     const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
     switch (pageType) {
       case PAGETYPE.TWITTER.TWEETS:
       case PAGETYPE.MASTODON.TOOTS:
         if (!STR.hasLen(userInput)) {
-          document.getElementById('specialOwnerPicker').classList.remove('d-none');
+          if (!_deletingOwner || QUERYWORK_UI.isAccountOwnerFocused()) {
+            // only show the special owner buttons if the textbox still has focus
+            document.getElementById('specialOwnerPicker').classList.remove('d-none');
+          }
           // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
           const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
           listOwnerPivotPicker.replaceChildren();
