@@ -340,6 +340,7 @@ var POST_SEL = {
   AuthorName: 'AuthorName',
   AuthorImgCdnUrl: 'AuthorImgCdnUrl',
   AuthorImg64Url: 'AuthorImg64Url',
+  FavoritedAuthor: 'FavoritedAuthor',
   ReplyToUrlKey: 'ReplyToUrlKey',
   ThreadUrlKey: 'ThreadUrlKey',
   EmbedsVideo: 'EmbedsVideo',

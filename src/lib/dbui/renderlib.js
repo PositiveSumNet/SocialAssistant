@@ -833,6 +833,10 @@ var RENDER = {
       const tagggingElm = RENDER.POST.TAGGING.renderTagControls(post);
       
       let bodyCls = 'container postBody';
+      let isFavoriteAuthor = (post[POST_SEL.FavoritedAuthor] == 1);
+      if (isFavoriteAuthor) {
+        bodyCls = `${bodyCls} favoriteAuthor`;
+      }
       let authorTip = '';
       if (post[POST_SEL.ImportantAuthor] == true) {
         bodyCls = `${bodyCls} importantAuthor`;

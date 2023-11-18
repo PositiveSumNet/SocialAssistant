@@ -222,6 +222,8 @@ var POSTFETCHER = {
     const entProfileName = APPSCHEMA.SocialProfileDisplayName;
     const entProfileImgCdnUrl = APPSCHEMA.SocialProfileImgSourceUrl;
     const entProfileImg64Url = APPSCHEMA.SocialProfileImgBinary;
+    // list member (for author-favorite status)
+    const entListMember = APPSCHEMA.SocialListMember;
     // post
     const entPostTime = APPSCHEMA.SocialPostTime;
     const entPostText = APPSCHEMA.SocialPostText;
@@ -248,6 +250,7 @@ var POSTFETCHER = {
     const aname = 'aname';
     const acdnurl = 'acdnurl';
     const a64url = 'a64url';
+    const alist = 'alist';
     const ptime = 'ptime';
     const ptext = 'ptext';
     const preplykey = 'preplykey';
@@ -429,6 +432,7 @@ var POSTFETCHER = {
             ${ptime}.${entPostTime.ObjectCol} AS ${POST_SEL.PostTime},
             ${ahandle}.${entAuthorHandle.ObjectCol} AS ${POST_SEL.AuthorHandle},
             ${aname}.${entProfileName.ObjectCol} AS ${POST_SEL.AuthorName},
+            CASE WHEN ${alist}.${entListMember.SubjectCol} IS NULL THEN 0 ELSE 1 END AS ${POST_SEL.FavoritedAuthor},
             ${ptext}.${entPostText.ObjectCol} AS ${POST_SEL.PostText},
             ${preplykey}.${entReplyToUrlKey.ObjectCol} AS ${POST_SEL.ReplyToUrlKey},
             ${preposter}.${entReposter.ObjectCol} AS ${POST_SEL.ReposterHandle},
@@ -447,6 +451,9 @@ var POSTFETCHER = {
       AND ${psrch}.${graphMatchRhs}
     JOIN ${entAuthorHandle.Name} ${ahandle} ON ${ahandle}.${entAuthorHandle.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
       AND ${ahandle}.${graphMatchRhs}
+    LEFT JOIN ${entListMember.Name} ${alist} ON ${alist}.${entListMember.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+      AND ${alist}.${graphMatchRhs}
+      AND ${alist}.${entListMember.SubjectCol} = '${LIST_FAVORITES}'
     ${replyToJoinWord} ${entReplyToUrlKey.Name} ${preplykey} ON ${preplykey}.${entReplyToUrlKey.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
       AND ${preplykey}.${graphMatchRhs}
     ${threadUrlKeyJoinWord} ${entThreadUrlKey.Name} ${pthread} ON ${pthread}.${entThreadUrlKey.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
