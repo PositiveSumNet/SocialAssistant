@@ -351,11 +351,12 @@ var POSTFETCHER = {
       }
 
       if (STR.hasLen(request.networkOwner)) {
+        const sansPrefixOwner = STR.stripPrefix(request.networkOwner, '@');
         let bindAuthorParm = false;
-        if (STR.sameText(request.networkOwner, SPECIAL_OWNER.ALL_FOLLOWINGS)) {
+        if (STR.sameText(sansPrefixOwner, SPECIAL_OWNER.ALL_FOLLOWING)) {
           authorCondition = POSTFETCHER.writeFollowingAuthorCondition('AND', ahandle, entAuthorHandle);
         }
-        else if (STR.sameText(request.networkOwner, SPECIAL_OWNER.ALL_FAVORITES)) {
+        else if (STR.sameText(sansPrefixOwner, SPECIAL_OWNER.ALL_FAVORITES)) {
           authorCondition = POSTFETCHER.writeFavoriteAuthorCondition('AND', ahandle, entAuthorHandle);
         }
         else if (request.withRetweets == true) {

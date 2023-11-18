@@ -51,6 +51,17 @@ var QUERYWORK_UI = {
     };
 
     // owner filter
+    document.getElementById('btnPickOwnerFavorites').onclick = function(event) {
+      txtOwnerHandle.value = SPECIAL_OWNER.ALL_FAVORITES;
+      QUERYWORK_UI.onChooseOwner();
+      return false;
+    };
+    document.getElementById('btnPickOwnerFollowing').onclick = function(event) {
+      txtOwnerHandle.value = SPECIAL_OWNER.ALL_FOLLOWING;
+      QUERYWORK_UI.onChooseOwner();
+      return false;
+    };
+
     const txtOwnerHandle = document.getElementById('txtOwnerHandle');
 
     document.getElementById('listOwnerPivotPicker').onclick = function(event) {
@@ -66,7 +77,10 @@ var QUERYWORK_UI = {
     };
 
     txtOwnerHandle.onblur = function() {
-      document.getElementById('specialOwnerPicker').classList.add('d-none');
+      // the delay is to give time to register a button-click
+      setTimeout(() => {
+        document.getElementById('specialOwnerPicker').classList.add('d-none');
+      }, 50);
     };
 
     txtOwnerHandle.addEventListener('keyup', function(e) {
@@ -242,7 +256,7 @@ var QUERYWORK_UI = {
       QUERYING_UI.PAGING.resetPage();
       QUERYWORK_UI.executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
       return false;
-    }
+    };
         
   },
 

@@ -33,8 +33,8 @@ const VIDEO_RES = {
 };
 
 const SPECIAL_OWNER = {
-  ALL_FOLLOWINGS: 'ALL_FOLLOWINGS',
-  ALL_FAVORITES: 'ALL_FAVORITES'
+  ALL_FOLLOWING: 'all_following',
+  ALL_FAVORITES: 'all_favorites'
 };
 
 const STORAGE_PREFIX = {
