@@ -22,6 +22,20 @@ var TPARSE = {
     }
   },
 
+  isDeadThread: function() {
+    const telltale = Array.from(document.querySelectorAll('article a[href*=rules-and-policies]'))
+      .find(function(elm) {
+        return elm.textContent == 'Learn more';
+      });
+
+    if (telltale) {
+      return Array.from(document.querySelectorAll('article')).length == 1;
+    }
+    else {
+      return false;
+    }
+  },
+
   isThrottled: function() {
     const elm = TPARSE.getThrottledRetryElem();
     return elm != undefined && elm != null;

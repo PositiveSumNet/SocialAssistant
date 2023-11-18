@@ -746,8 +746,11 @@ const autoAdvanceToNextThread = async function() {
     }
   }
 
-  if (!STR.hasLen(nextUrlKey) && relevantUrlKeys.length > 0) {
-    nextUrlKey = relevantUrlKeys[0];
+  if (!STR.hasLen(nextUrlKey)) {
+    const nextClickCandidates = relevantUrlKeys.filter(function(k) { return !STR.sameText(k, selectedUrlKey); });
+    if (nextClickCandidates.length > 0) {
+      nextUrlKey = relevantUrlKeys[0];
+    }
   }
 
   if (STR.hasLen(nextUrlKey)) {

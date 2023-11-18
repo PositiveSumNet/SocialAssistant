@@ -16,6 +16,8 @@ var _countWhenScrollDoneSet;
 // throttle
 var _lastUnthrottleAttempt = null;
 
+var _isDeadThread = false;
+
 var RECORDING = {
   
   getRecordingDomains: function() {

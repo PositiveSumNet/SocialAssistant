@@ -79,6 +79,12 @@ var URLPARSE = {
     }
   },
 
+  getActivePageOwner: function() {
+    const parsedUrl = URLPARSE.parseUrl(document.location.href);
+    if (!parsedUrl) { return null; }
+    return parsedUrl.owner;
+  },
+
   parseUrl: function(url) {
     let fullUrl = url;
     if (!url || url.length == 0) { return undefined; }

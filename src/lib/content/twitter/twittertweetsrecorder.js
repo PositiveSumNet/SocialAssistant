@@ -25,6 +25,7 @@ var TWEETSREC = {
   pollForRecording: async function() {
     const mainColumn = TPARSE.getMainColumn();
     let polledContextOk = undefined;  // see ES6.tryCureInvalidatedContext
+
     if (mainColumn) {
       polledContextOk = await RECORDING.pollContext();
       if (polledContextOk == true) {
@@ -260,9 +261,28 @@ var TWEETSREC = {
     _threadDetailInfo.threadUrlKey = threadUrlKey;
     _threadDetailInfo.authorHandle = STR.getAuthorFromUrlKey(threadUrlKey);
   },
+
+  checkForDeadThread: function() {
+    if (TPARSE.isDeadThread() == true) {
+      if (!_isDeadThread) {
+        console.log('report');
+        // not yet reported
+        chrome.runtime.sendMessage({
+          actionType: MSGTYPE.TO_POPUP.DEAD_THREAD,
+          parsedUrl: URLPARSE.parseUrl(document.location.href)
+        });
+      }
+      _isDeadThread = true;
+      return true;
+    }
+    else {
+      return false;
+    }
+  },
   
   processForNodeScope: function(node, parsedUrl) {
     if (!ES6.isElementNode(node)) { return; }
+    if (TWEETSREC.checkForDeadThread() == true) { return; }
     const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
     TWEETSREC.cacheThreadDetailUrlKey(parsedUrl);
     // we only need firstAuthor when we're filtering to avoid reply-guys
@@ -367,9 +387,10 @@ var TWEETSREC = {
       if (!shouldFilter) { return elms; }
       const keepers = [];
       
+      const pageOwner = URLPARSE.getActivePageOwner();
       for (let i = 0; i < elms.length; i++) {
         let elm = elms[i];
-        let shouldKeep = TWEETSREC.REPLY_GUY_FILTER.shouldKeep(elm, firstAuthor);
+        let shouldKeep = TWEETSREC.REPLY_GUY_FILTER.shouldKeep(elm, firstAuthor, pageOwner);
         if (shouldKeep) {
           keepers.push(elm);
         }
@@ -378,7 +399,7 @@ var TWEETSREC = {
       return keepers;
     },
 
-    shouldKeep: function(elm, firstAuthor) {
+    shouldKeep: function(elm, firstAuthor, pageOwner) {
       let tweetElm;
       if (TPARSE.isTweetElm(elm)) {
         tweetElm = elm;
@@ -400,7 +421,7 @@ var TWEETSREC = {
 
       const elmUrlKey = TWEETPARSE.getTweetUrlKeyDirectly(tweetElm);
       const elmAuthor = STR.getAuthorFromUrlKey(elmUrlKey);
-      return STR.sameText(elmAuthor, firstAuthor);
+      return STR.sameText(elmAuthor, firstAuthor) || STR.sameText(elmAuthor, pageOwner);
     }
   }
 };
