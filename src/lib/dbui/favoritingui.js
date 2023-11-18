@@ -2,6 +2,8 @@ var FAVORITING_UI = {
   configureFavoriting: function(a) {
     a.onclick = function(event) {
       const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
+      const site = PAGETYPE.getSite(pageType);
+
       const handle = a.getAttribute('data-testid');
       const atHandle = STR.ensurePrefix(handle, '@');
       const iconElm = a.querySelector('i');
@@ -28,7 +30,7 @@ var FAVORITING_UI = {
         actionType: MSGTYPE.TODB.SET_LIST_MEMBER, 
         list: LIST_FAVORITES, 
         member: atHandle, 
-        pageType: pageType,
+        site: site,
         removal: removeFromFavorites
       };
       

@@ -179,15 +179,11 @@ var DBORM = {
       postMessage({ type: MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION, payload: {version: dbVersion} });
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB
-//       const debugRows = DBORM.QUERYING.fetch(`
-//       SELECT ptime.sPostUrlKey 
-//       FROM SocialPostTime ptime
-//       LEFT JOIN SocialPostThreadUrlKey pthr ON pthr.sPostUrlKey = ptime.sPostUrlKey
-//       WHERE pthr.rowid is NULL
-// ;
-//       `, []);
+      // const debugRows = DBORM.QUERYING.fetch(`
+      // SELECT * FROM SocialListMember;
+      // `, []);
 
-//       console.log(debugRows);
+      //  console.log(debugRows);
     },
     
     getMaxScriptNumber: function(scripts) {
@@ -827,10 +823,10 @@ var DBORM = {
       postMessage({ type: MSGTYPE.FROMDB.DELETED_BY_SUBJECT, request: request });
     },
 
-    // request: {list: 'list', member: '@scafaria', pageType: pageType, removal: false}
+    // request: {list: 'list', member: '@scafaria', site: site, removal: false}
     setListMember: function(request) {
-      const graph = APPGRAPHS.getGraphByPageType(request.pageType);
-      const listMemberEntDefn = PAGETYPE.getListMemberEntDefn(request.pageType);
+      const graph = APPGRAPHS.getGraphBySite(request.site);
+      const listMemberEntDefn = PAGETYPE.getListMemberEntDefn(request.site);
       
       const nowTime = DBORM.getNowTime(request.removal);   // will be semantically negated if removal is true
       

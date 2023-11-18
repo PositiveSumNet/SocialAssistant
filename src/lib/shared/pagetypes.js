@@ -58,13 +58,12 @@ var PAGETYPE = {
     }
   },
 
-  getListMemberEntDefn: function(pageType) {
-    switch (pageType) {
-      case PAGETYPE.TWITTER.FOLLOWERS:
-      case PAGETYPE.TWITTER.FOLLOWING:
-      case PAGETYPE.MASTODON.FOLLOWERS:
-      case PAGETYPE.MASTODON.FOLLOWING:
-              return APPSCHEMA.SocialListMember;
+  getListMemberEntDefn: function(site) {
+    switch (site) {
+      case SITE.TWITTER:
+      case SITE.NITTER:
+      case SITE.MASTODON:
+        return APPSCHEMA.SocialListMember;
       default:
         return undefined;
     }
