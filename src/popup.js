@@ -840,9 +840,18 @@ btnClearSelNav.addEventListener('click', async () => {
 
 const btnClearNavAll = document.getElementById('btnClearNavAll');
 btnClearNavAll.addEventListener('click', async () => {
-  const urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys();
-  for (let i = 0; i < urlKeys.length; i++) {
-    await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKeys[i]);
+  const videoMode = getVideoMode();
+  if (videoMode == true) {
+    const urlKeys = await SETTINGS.RECORDING.VIDEO_EXTRACTION.getEmbeddedVideoUrlKeys();
+    for (let i = 0; i < urlKeys.length; i++) {
+      await SETTINGS.RECORDING.VIDEO_EXTRACTION.removeVideoUrlKey(urlKeys[i]);
+    }
+  }
+  else {
+    const urlKeys = await SETTINGS.RECORDING.THREAD_EXPANSION.getExpandThreadUrlKeys();
+    for (let i = 0; i < urlKeys.length; i++) {
+      await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKeys[i]);
+    }
   }
 
   // reset
