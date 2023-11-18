@@ -6,6 +6,8 @@ window.onload = function() {
   _nitterFullyLoaded = true;
 };
 
+var _isDeadThread = false;
+
 var NEETSREC = {
   
   // IRecorder
@@ -25,6 +27,17 @@ var NEETSREC = {
           NEETSREC.kickoffRecording();
         }
       }
+    }
+    else if (NPARSE.isErrorPage() == true) {
+      const parsedUrl = RECORDING.getParsedUrl();
+      if (!_isDeadThread) {
+        // not yet reported
+        chrome.runtime.sendMessage({
+          actionType: MSGTYPE.TO_POPUP.DEAD_THREAD,
+          parsedUrl: parsedUrl
+        });
+      }
+      _isDeadThread = true;
     }
 
     if (polledContextOk != false) {
@@ -111,9 +124,9 @@ var NEETSREC = {
   },
 
   processTweets: function(scopeElm, parsedUrl) {
-    const tweetElms = NPARSE.getTweetElms(scopeElm);
+    const tweetElms = NEETPARSE.getTweetElms(scopeElm);
     if (!tweetElms || tweetElms.length == 0) { return; }
-    const tweets = [];
+    let tweets = [];
     for (let i = 0; i < tweetElms.length; i++) {
       let tweetElm = tweetElms[i];
       let tweet = NEETPARSE.buildTweetFromElm(tweetElm, parsedUrl);
@@ -121,6 +134,8 @@ var NEETSREC = {
         tweets.push(tweet);
       }
     }
+
+    tweets = NEETSREC.REPLY_GUY_FILTER.filter(tweets);
 
     if (tweets.length > 0) {
       for (let i = 0; i < tweets.length; i++) {
@@ -191,5 +206,28 @@ var NEETSREC = {
 
   onSaved: function(records) {
     RECORDING.onSavedPosts(records);
-  }  
+  },
+
+  REPLY_GUY_FILTER: {
+    // note that twitter operates on dom elements, whereas this filters tweets
+    filter: function(tweets) {
+      if (tweets.length == 0) { return tweets; }
+      const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
+      if (!shouldFilter) { return tweets; }
+      const keepers = [];
+      // top-most tweet is used as basis for comparison (on author) with subsequent tweets
+      const topTweet = tweets[0];
+      const topElmAuthor = STR.getAuthorFromUrlKey(topTweet.urlKey);
+
+      for (let i = 0; i < tweets.length; i++) {
+        let tweet = tweets[i];
+        let author = STR.getAuthorFromUrlKey(tweet.urlKey);
+        if (STR.sameText(author, topElmAuthor)) {
+          keepers.push(tweet);
+        }
+      }
+
+      return keepers;
+    }
+  }
 };

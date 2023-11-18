@@ -4,8 +4,23 @@
 // specific observers are held in _observers and also referenced by specific recorders
 var _tweetObserver;
 
+// as a detail page loads, we learn the threadId
+var _threadDetailInfo = {
+  threadDetailId: '',
+  threadUrlKey: '',
+  authorHandle: ''
+};
+
 var TWEETSREC = {
   
+  clearThreadDetailCache: function() {
+    _threadDetailInfo = {
+      threadDetailId: '',
+      threadUrlKey: '',
+      authorHandle: ''
+    };
+  },
+
   // IRecorder
   pollForRecording: async function() {
     const mainColumn = TPARSE.getMainColumn();
@@ -110,7 +125,7 @@ var TWEETSREC = {
   },
 
   // see TWEET_CARD_ATTR
-  processTweetCards: function(imgElms) {
+  processTweetCards: function(imgElms, hasGoodImage) {
     const cards = [];
     for (let i = 0; i < imgElms.length; i++) {
       let imgElm = imgElms[i];
@@ -124,10 +139,11 @@ var TWEETSREC = {
       }
     }
 
+    const prefix = (hasGoodImage) ? 'card:' : 'card-img:';
     if (cards.length > 0) {
       for (let i = 0; i < cards.length; i++) {
         let item = cards[i];
-        let key = `card:${item.urlKey}`.toLowerCase();
+        let key = `${prefix}${item.urlKey}`.toLowerCase();
         RECORDING.pushSavable(item, key);
       }
     }
@@ -194,11 +210,15 @@ var TWEETSREC = {
 
   // see SAVABLE_TWEET_ATTR
   processTweets: function(tweetElms, parsedUrl) {
+    const threadUrlKey = (STR.hasLen(parsedUrl.threadDetailId) && parsedUrl.threadDetailId == _threadDetailInfo.threadDetailId)
+      ? _threadDetailInfo.threadUrlKey
+      : null;
+    
     const tweets = [];
     for (let i = 0; i < tweetElms.length; i++) {
       let tweetElm = tweetElms[i];
 
-      let tweet = TWEETPARSE.buildTweetFromElm(tweetElm, parsedUrl);
+      let tweet = TWEETPARSE.buildTweetFromElm(tweetElm, parsedUrl, threadUrlKey);
       if (tweet) {
         tweets.push(tweet);
       }
@@ -216,44 +236,77 @@ var TWEETSREC = {
       }
     }
   },
+
+  cacheThreadDetailUrlKey: function(parsedUrl) {
+    if (!STR.hasLen(parsedUrl.threadDetailId)) {
+      // we're not on a thread detail page
+      TWEETSREC.clearThreadDetailCache();
+      return;
+    }
+
+    if (parsedUrl.threadDetailId != _threadDetailInfo.threadDetailId) {
+      TWEETSREC.clearThreadDetailCache();
+    }
+
+    if (_threadDetailInfo.threadDetailId == parsedUrl.threadDetailId && STR.hasLen(_threadDetailInfo.threadUrlKey)) {
+      // already set (and setting it again risks a bad reset if X removes dom elements)
+      return;
+    }
+
+    const threadUrlKey = TWEETPARSE.getFirstPostUrlKey();
+    if (!STR.hasLen(threadUrlKey)) { return; }
+
+    _threadDetailInfo.threadDetailId = parsedUrl.threadDetailId;
+    _threadDetailInfo.threadUrlKey = threadUrlKey;
+    _threadDetailInfo.authorHandle = STR.getAuthorFromUrlKey(threadUrlKey);
+  },
   
   processForNodeScope: function(node, parsedUrl) {
     if (!ES6.isElementNode(node)) { return; }
-
+    const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
+    TWEETSREC.cacheThreadDetailUrlKey(parsedUrl);
+    // we only need firstAuthor when we're filtering to avoid reply-guys
+    const firstAuthor = (shouldFilter) ? _threadDetailInfo.authorHandle : null;
     // tweets
-    let tweetElms = TPARSE.getTweetElms(node);
+    let tweetElms = TWEETPARSE.getTweetElms(node);
+    if (shouldFilter) { tweetElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetElms, firstAuthor); }
     if (tweetElms && tweetElms.length > 0) {
       TWEETSREC.processTweets(tweetElms, parsedUrl);
     }
 
     // author img urls
     let authorImgElms = TPARSE.getTweetAuthorImgElms(node);
+    if (shouldFilter) { authorImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(authorImgElms, firstAuthor); }
     if (authorImgElms && authorImgElms.length > 0) {
       TWEETSREC.processAuthorImages(authorImgElms);
     }
 
     // tweet post img urls
     let tweetPostImgElms = TPARSE.getTweetPostImgElms(node);
+    if (shouldFilter) { tweetPostImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetPostImgElms, firstAuthor); }
     if (tweetPostImgElms && tweetPostImgElms.length > 0) {
       TWEETSREC.processTweetPostImages(tweetPostImgElms);
     }
     
     // tweet post video urls
     let tweetPostEmbeddedVideoElms = TPARSE.getTweetPostEmbeddedVideoElms(node);
+    if (shouldFilter) { tweetPostEmbeddedVideoElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetPostEmbeddedVideoElms, firstAuthor); }
     if (tweetPostEmbeddedVideoElms && tweetPostEmbeddedVideoElms.length > 0) {
       TWEETSREC.processTweetPostEmbeddedVideos(tweetPostEmbeddedVideoElms);
     }
     
     // tweet article cards with image
     let tweetCardImgElms = TPARSE.getTweetCardImgElms(node);
+    if (shouldFilter) { tweetCardImgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetCardImgElms, firstAuthor); }
     if (tweetCardImgElms && tweetCardImgElms.length > 0) {
-      TWEETSREC.processTweetCards(tweetCardImgElms);
+      TWEETSREC.processTweetCards(tweetCardImgElms, true);
     }
 
     // tweet article cards sans image
     let tweetCardSvgElms = TPARSE.getTweetCardSvgElms(node);
+    if (shouldFilter) { tweetCardSvgElms = TWEETSREC.REPLY_GUY_FILTER.filter(tweetCardSvgElms, firstAuthor); }
     if (tweetCardSvgElms && tweetCardSvgElms.length > 0) {
-      TWEETSREC.processTweetCards(tweetCardSvgElms);
+      TWEETSREC.processTweetCards(tweetCardSvgElms, false);
     }
   },
 
@@ -304,5 +357,50 @@ var TWEETSREC = {
 
   onSaved: function(records) {
     RECORDING.onSavedPosts(records);
+  },
+
+  REPLY_GUY_FILTER: {
+    filter: function(elms, firstAuthor) {
+      if (!STR.hasLen(firstAuthor)) { return elms; }
+      if (elms.length == 0) { return elms; }
+      const shouldFilter = RECORDING.calcShouldMinRecordedReplies();
+      if (!shouldFilter) { return elms; }
+      const keepers = [];
+      
+      for (let i = 0; i < elms.length; i++) {
+        let elm = elms[i];
+        let shouldKeep = TWEETSREC.REPLY_GUY_FILTER.shouldKeep(elm, firstAuthor);
+        if (shouldKeep) {
+          keepers.push(elm);
+        }
+      }
+
+      return keepers;
+    },
+
+    shouldKeep: function(elm, firstAuthor) {
+      let tweetElm;
+      if (TPARSE.isTweetElm(elm)) {
+        tweetElm = elm;
+      }
+      else {
+        const elmInfo = TWEETPARSE.getParentTweetElmInfo(elm);
+        if (!elmInfo) {
+          // caller will filter it out (but we don't need to filter it out on the basis of being a reply-guy)
+          return true;
+        }
+        else if (elmInfo.quoted == true) {
+          // keep all quote tweets
+          return true;
+        }
+        else {
+          tweetElm = elmInfo.elm;
+        }
+      }
+
+      const elmUrlKey = TWEETPARSE.getTweetUrlKeyDirectly(tweetElm);
+      const elmAuthor = STR.getAuthorFromUrlKey(elmUrlKey);
+      return STR.sameText(elmAuthor, firstAuthor);
+    }
   }
 };

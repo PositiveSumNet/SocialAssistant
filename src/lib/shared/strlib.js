@@ -556,6 +556,8 @@ var STR = {
   cleanTweetUrlKey: function(href) {
     href = STR.stripSuffix(href, '/history');     // happens when a tweet has been edited, e.g. see "/ChrisDJackson/status/1700935165550219736"
     href = STR.getUrlSansHashAndQueryString(href);
+    href = STR.stripHttpWwwPrefix(href);
+    href = href.replace('twitter.com', '').replace('x.com', '');
     return href;
   },
 
@@ -570,6 +572,15 @@ var STR = {
     let fileName = urlKey.replaceAll('/', '_');
     fileName = `${fileName}.mp4`;
     return fileName;
+  },
+
+  getAuthorFromUrlKey: function(urlKey) {
+    if (!urlKey) { return null; }
+    urlKey = STR.stripUrlHashSuffix(urlKey);
+    if (urlKey.indexOf('/status/') < 0) { return null; }
+    const parts = urlKey.split('/').filter(function(p) { return STR.hasLen(p); });
+    if (parts.length == 0) { return null; }
+    return parts[0]; // first part
   },
 
   getTweetIdFromUrlKey: function(urlKey) {

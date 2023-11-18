@@ -253,7 +253,7 @@ onmessage = (evt) => {
   let actionType = getActionType(evt);
   switch(actionType) {
     case MSGTYPE.TODB.XFER_CACHE_TODB:
-      DBORM.SAVING.xferCacheToDb(evt.data);
+      DBORM.SAVING.xferCacheToDb(evt.data, getAllEntities());
       break;
     case MSGTYPE.TODB.SUGGEST_OWNER:
       suggestOwner(evt.data);
@@ -283,7 +283,7 @@ onmessage = (evt) => {
       POSTFETCHER.searchInUseTopics(evt.data);
       break;
     case MSGTYPE.TODB.SAVE_PAGE_RECORDS:
-      savePageRecords(evt.data)
+      savePageRecords(evt.data, getAllEntities());
       break;
     case MSGTYPE.TODB.FETCH_FOR_BACKUP:
       fetchForBackup(evt.data);
@@ -356,8 +356,8 @@ const executeSearch = function(request) {
   }
 }
 
-const savePageRecords = function(data) {
-  const recordCount = DBORM.SAVING.saveRecords(data);
+const savePageRecords = function(data, allEntDefns) {
+  const recordCount = DBORM.SAVING.saveRecords(data, allEntDefns);
   console.log('saved ' + recordCount);
   if (data.onSuccessCountMsg) {
     // tell the listener how many were saved

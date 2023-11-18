@@ -73,16 +73,6 @@ var TPARSE = {
     return trimmed;
   },
 
-  getTweetElms: function(scopeElem) {
-    if (TPARSE.isTweetElm(scopeElem)) {
-      return [scopeElem];
-    }
-    else {
-      // all img elms with src that starts with the tell-tale prefix
-      return Array.from(scopeElem.querySelectorAll('article[data-testid="tweet"]'));
-    }
-  },
-
   isTweetElm: function(elm) {
     const isTweet = elm && STR.sameText(elm.tagName, 'article') && STR.sameText(elm.getAttribute('data-testid'), 'tweet');
     return isTweet;

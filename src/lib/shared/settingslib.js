@@ -677,6 +677,27 @@ var SETTINGS = {
     },
 
     THREAD_EXPANSION: {
+      MIN_REPLY_RECORDING: 'threadExMinReplies',
+      AUTO_ADVANCE: 'threadExAutoAdvance',
+      
+      getMinReplyRecording: async function() {
+        const result = await SETTINGS.getStorageValue(SETTINGS.RECORDING.THREAD_EXPANSION.MIN_REPLY_RECORDING);
+        return STR.isTruthy(result);
+      },
+      
+      saveMinReplyRecording: async function(settingValue) {
+        await chrome.storage.local.set({ [SETTINGS.RECORDING.THREAD_EXPANSION.MIN_REPLY_RECORDING]: settingValue });
+      },
+  
+      getAutoAdvance: async function() {
+        const result = await SETTINGS.getStorageValue(SETTINGS.RECORDING.THREAD_EXPANSION.AUTO_ADVANCE);
+        return STR.isTruthy(result);
+      },
+      
+      saveAutoAdvance: async function(settingValue) {
+        await chrome.storage.local.set({ [SETTINGS.RECORDING.THREAD_EXPANSION.AUTO_ADVANCE]: settingValue });
+      },
+  
       getExpandThreadUrlKeys: async function(take, skip, owner) {
         return await SETTINGS.RECORDING.getPrefixedCacheValues(STORAGE_PREFIX.THREAD_EXPANSION_URLKEY, take, skip, owner);
       },
@@ -836,6 +857,10 @@ var SETTINGS = {
       if (context.state == SETTINGS.RECORDING.STATE.MANUAL && context.manual && context.manual.timeoutAt && Date.now() > context.manual.timeoutAt) {
         context.state = SETTINGS.RECORDING.STATE.OFF;
       }
+
+      // attach THREAD_EXPANSION context (stored separately)
+      context[SETTINGS.RECORDING.THREAD_EXPANSION.MIN_REPLY_RECORDING] = await SETTINGS.RECORDING.THREAD_EXPANSION.getMinReplyRecording();
+      context[SETTINGS.RECORDING.THREAD_EXPANSION.AUTO_ADVANCE] = await SETTINGS.RECORDING.THREAD_EXPANSION.getAutoAdvance();
       
       return context;
     }

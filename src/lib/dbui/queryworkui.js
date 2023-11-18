@@ -51,6 +51,17 @@ var QUERYWORK_UI = {
     };
 
     // owner filter
+    document.getElementById('btnPickOwnerFavorites').onclick = function(event) {
+      txtOwnerHandle.value = SPECIAL_OWNER.ALL_FAVORITES;
+      QUERYWORK_UI.onChooseOwner();
+      return false;
+    };
+    document.getElementById('btnPickOwnerFollowing').onclick = function(event) {
+      txtOwnerHandle.value = SPECIAL_OWNER.ALL_FOLLOWING;
+      QUERYWORK_UI.onChooseOwner();
+      return false;
+    };
+
     const txtOwnerHandle = document.getElementById('txtOwnerHandle');
 
     document.getElementById('listOwnerPivotPicker').onclick = function(event) {
@@ -64,6 +75,19 @@ var QUERYWORK_UI = {
         QUERYWORK_UI.suggestAccountOwner(userInput);
       }
     };
+
+    txtOwnerHandle.onblur = function() {
+      // the delay is to give time to register a button-click
+      setTimeout(() => {
+        QUERYWORK_UI.setSpecialOwnerViz(false);
+      }, 200);
+    };
+
+    txtOwnerHandle.addEventListener('keyup', function(e) {
+      if (e.key == "Escape") {
+        QUERYWORK_UI.setSpecialOwnerViz(false);
+      }
+    });
 
     QUERYWORK_UI.bindTypeahead(
       txtOwnerHandle, 
@@ -79,6 +103,7 @@ var QUERYWORK_UI = {
       // onOrdinaryInputFn
       function() {
         _deletingOwner = false;
+        QUERYWORK_UI.setSpecialOwnerViz(false);
       },
       // onDebouncedFn
       QUERYWORK_UI.suggestAccountOwner,
@@ -97,7 +122,6 @@ var QUERYWORK_UI = {
     // topic filter
     const txtTopicFilter = document.getElementById('txtTopicFilter');
 
-    // auto-populate with a few owners on-focus (if empty)
     txtTopicFilter.onfocus = function () {
       const userInput = this.value || '';
       QUERYWORK_UI.suggestTopic(userInput);
@@ -222,6 +246,7 @@ var QUERYWORK_UI = {
 
     document.getElementById('cmbType').addEventListener('change', (event) => {
       QUERYING_UI.PAGING.resetPage();
+      QUERYING_UI.OWNER.resetUiOwner();
       QUERYING_UI.FILTERS.setQueryOptionVisibility();
       QUERYWORK_UI.executeSearch();
     });
@@ -232,7 +257,7 @@ var QUERYWORK_UI = {
       QUERYING_UI.PAGING.resetPage();
       QUERYWORK_UI.executeSearch();  // no threadUrlKey passed in, so query string will be conformed to '' for thread
       return false;
-    }
+    };
         
   },
 
@@ -344,6 +369,17 @@ var QUERYWORK_UI = {
           break;
       }
     };
+  },
+
+  setSpecialOwnerViz: function(visible) {
+    if (visible == true) {
+      document.getElementById('specialOwnerPicker').classList.remove('d-none');
+      document.getElementById('txtOwnerHandle').setAttribute('placeholder', 'Type or pick below');
+    }
+    else {
+      document.getElementById('specialOwnerPicker').classList.add('d-none');
+      document.getElementById('txtOwnerHandle').setAttribute('placeholder', 'account');
+    }
   },
 
   onCopiedToDb: async function(cacheKeys) {
@@ -530,12 +566,23 @@ var QUERYWORK_UI = {
     });
   },
 
+  isAccountOwnerFocused: function() {
+    const focusedElm = document.activeElement;
+    if (!focusedElm) { return false; }
+    const txtOwnerHandle = document.getElementById('txtOwnerHandle');
+    return focusedElm === txtOwnerHandle;
+  },
+
   suggestAccountOwner: function(userInput) {
     const pageType = QUERYING_UI.PAGE_TYPE.getPageTypeFromUi();
     switch (pageType) {
       case PAGETYPE.TWITTER.TWEETS:
       case PAGETYPE.MASTODON.TOOTS:
         if (!STR.hasLen(userInput)) {
+          if (!_deletingOwner || QUERYWORK_UI.isAccountOwnerFocused()) {
+            // only show the special owner buttons if the textbox still has focus
+            QUERYWORK_UI.setSpecialOwnerViz(true);
+          }
           // we aren't interested to show the auto-furled top-5 list with tweets because it's not worth it relative to the trouble of clearing the choices (no ui element for that yet)
           const listOwnerPivotPicker = document.getElementById('listOwnerPivotPicker');
           listOwnerPivotPicker.replaceChildren();

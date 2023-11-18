@@ -23,7 +23,10 @@
     {
       "js": [
         "lib/shared/constants.js", 
+        "lib/shared/datatypes.js", 
         "lib/shared/pagetypes.js", 
+        "lib/shared/appgraphs.js", 
+        "lib/shared/appschema.js", 
         "lib/shared/settingslib.js", 
         "lib/shared/es6lib.js", 
         "lib/shared/strlib.js", 
@@ -39,7 +42,6 @@
         "lib/content/nitter/nittertweetsrecorder.js",
         "lib/content/nitter/nitterparsing.js", 
         "lib/content/nitter/nittertweetparsing.js",
-        "lib/content/nitter/nitterprofileparsing.js", 
         "lib/content/embvideo/squiddy.js", 
         "lib/content/recorderfactory.js",
         "content.js"

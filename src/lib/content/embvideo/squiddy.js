@@ -11,11 +11,10 @@ var SQUIDDY = {
         bestAnchor = anchors.find(function(a) { return a.innerText.indexOf('Lowest resolution') > -1; });
         break;
       case VIDEO_RES.HIGH:
+      default:
         bestAnchor = anchors.find(function(a) { return a.innerText.indexOf('Best resolution') > -1; });
         break;
-      default:
-        return null;
-    }
+      }
 
     return bestAnchor ? bestAnchor.href : anchors[0].href;
   },

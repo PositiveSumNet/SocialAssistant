@@ -32,6 +32,11 @@ const VIDEO_RES = {
   LOWEST: 'lowest'
 };
 
+const SPECIAL_OWNER = {
+  ALL_FOLLOWING: 'all_following',
+  ALL_FAVORITES: 'all_favorites'
+};
+
 const STORAGE_PREFIX = {
   FOR_DB: 'fordb-',
   THREAD_EXPANSION_URLKEY: 'threadMore-',
@@ -335,6 +340,7 @@ var POST_SEL = {
   AuthorName: 'AuthorName',
   AuthorImgCdnUrl: 'AuthorImgCdnUrl',
   AuthorImg64Url: 'AuthorImg64Url',
+  FavoritedAuthor: 'FavoritedAuthor',
   ReplyToUrlKey: 'ReplyToUrlKey',
   ThreadUrlKey: 'ThreadUrlKey',
   EmbedsVideo: 'EmbedsVideo',

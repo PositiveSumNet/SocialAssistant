@@ -1,5 +1,8 @@
+const ITEM_SAVED = '(saved) ';
+const ITEM_DOWNLOADED = '(downloaded) '
 const _guidedNavPageSize = 10;
 var _guidedNavPageNum = 1;
+var _emptyThreadPage = false;
 const _savedThreads = new Set();
 const _downloadedVideoUrlKeys = new Set();
 
@@ -8,6 +11,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // stackoverflow.com/a/73836810
   let returnsData = false;
   switch (request.actionType) {
+    case MSGTYPE.TO_POPUP.DEAD_THREAD:
     case MSGTYPE.TO_POPUP.SAVED_THREAD:
     default:
       break;
@@ -15,11 +19,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   (async () => {
     switch (request.actionType) {
+      case MSGTYPE.TO_POPUP.DEAD_THREAD:
+        // happens if e.g. clicked a protected tweet; want to move on to the next
+        hideSpinners();
+        await clearDeadThreadUrl(request.parsedUrl);
+        await tryAutoAdvance();
+        return returnsData;
       case MSGTYPE.TO_POPUP.SAVED_THREAD:
-        onSavedViaNav(request.threadUrlKeys);
+        hideSpinners();
+        await onSavedViaNav(request.threadUrlKeys);
         return returnsData;
       case MSGTYPE.TO_POPUP.DOWNLOAD_MEDIA:
-        downloadVideo(request);
+        hideSpinners();
+        await downloadVideo(request);
         return returnsData;
       default:
         return returnsData;
@@ -502,20 +514,26 @@ btnChooseVideoExtracter.addEventListener('click', async () => {
 
 const enterRecordingFinisherMode = async function(videoMode) {
   document.getElementById('txtNavFilterOwner').value = SETTINGS.RECORDING.getAuthorFilter();
-  setVideoMode(videoMode);
+  await setVideoMode(videoMode);
   await loadThreadList();
   cmbNavThreadHow.value = SETTINGS.RECORDING.getNavxPreferredDomain();
+  setNitterTipViz();
   cmbVideoRes.value = SETTINGS.RECORDING.VIDEO_EXTRACTION.getPreferredVideoRes();
   showRecordingDiv('navFinisherSection');
 }
 
-const setVideoMode = function(videoMode) {
+const setVideoMode = async function(videoMode) {
   const sectionElm = document.getElementById('navFinisherSection');
   if (videoMode == true) {
     sectionElm.classList.add('videoMode');
   }
   else {
+    // thread-finisher mode
     sectionElm.classList.remove('videoMode');
+    const minReplies = await SETTINGS.RECORDING.THREAD_EXPANSION.getMinReplyRecording();
+    const autoAdvance = await SETTINGS.RECORDING.THREAD_EXPANSION.getAutoAdvance();
+    document.getElementById('chkThreadFinishMinReplies').checked = minReplies;
+    document.getElementById('chkThreadFinishAutoAdvance').checked = autoAdvance;
   }
 }
 
@@ -533,6 +551,10 @@ cmbVideoRes.addEventListener('change', (event) => {
 // threads
 const cmbNavThreadHow = document.getElementById('cmbNavThreadHow');
 cmbNavThreadHow.addEventListener('change', (event) => {
+  setNitterTipViz();
+});
+
+const setNitterTipViz = function() {
   const domain = cmbNavThreadHow.value;
   SETTINGS.RECORDING.setNavxPreferredDomain(domain);
   const nitterTip = document.getElementById('nitterTipSection');
@@ -542,7 +564,35 @@ cmbNavThreadHow.addEventListener('change', (event) => {
   else {
     nitterTip.style.visibility = 'hidden';
   }
+}
+
+const chkThreadFinishMinReplies = document.getElementById('chkThreadFinishMinReplies');
+chkThreadFinishMinReplies.addEventListener('change', async function(event) {
+  await SETTINGS.RECORDING.THREAD_EXPANSION.saveMinReplyRecording(chkThreadFinishMinReplies.checked);
 });
+
+const chkThreadFinishAutoAdvance = document.getElementById('chkThreadFinishAutoAdvance');
+chkThreadFinishAutoAdvance.addEventListener('change', async function(event) {
+  await SETTINGS.RECORDING.THREAD_EXPANSION.saveAutoAdvance(chkThreadFinishAutoAdvance.checked);
+  await tryAutoAdvance();
+});
+
+const clearDeadThreadUrl = async function(parsedUrl) {
+  const urlKey = STR.makeTweetRelativeUrl(parsedUrl.owner, parsedUrl.threadDetailId);
+  let allOptionElms = Array.from(lstNavFinisher.querySelectorAll('option'));
+  const matchedOptionElm = allOptionElms.find(function(elm) { return elm.getAttribute('value') == urlKey; });
+  if (matchedOptionElm) {
+    matchedOptionElm.remove();
+  }
+  await SETTINGS.RECORDING.THREAD_EXPANSION.removeThreadExpansionUrlKey(urlKey);
+}
+
+const tryAutoAdvance = async function() {
+  const shouldAutoAdvance = await SETTINGS.RECORDING.THREAD_EXPANSION.getAutoAdvance();
+  if (shouldAutoAdvance == true) {
+    await autoAdvanceToNextThread();
+  }
+}
 
 const btnNavFilterOwner = document.getElementById('btnNavFilterOwner');
 btnNavFilterOwner.onclick = async function(event) {
@@ -552,6 +602,10 @@ btnNavFilterOwner.onclick = async function(event) {
 
 const lstNavFinisher = document.getElementById('lstNavFinisher');
 lstNavFinisher.addEventListener('change', async (event) => {
+  await onClickNavFinisher();
+});
+
+const onClickNavFinisher = async function() {
   const urlKey = lstNavFinisher.value;
   const videoMode = getVideoMode();
   if (STR.hasLen(urlKey)) {
@@ -564,10 +618,24 @@ lstNavFinisher.addEventListener('change', async (event) => {
       fullUrl = STR.expandTweetUrl(urlKey, cmbNavThreadHow.value);
     }
     let [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+    
+    showSpinners();
     chrome.tabs.update(tab.id, {url: fullUrl});
     // then via content.js it's automatically recorded (or video navigated-to in the case of squidlr)
   }
-});
+}
+
+const showSpinners = function() {
+  Array.from(document.querySelectorAll('.spinner-border')).forEach(function(elm) {
+    elm.classList.remove('d-none');
+  });
+}
+
+const hideSpinners = function() {
+  Array.from(document.querySelectorAll('.spinner-border')).forEach(function(elm) {
+    elm.classList.add('d-none');
+  });
+}
 
 const loadThreadList = async function() {
   // make sure the setting is stored (in case they didn't hit 'Apply' but they're hitting some other action like 'next page'; they'll still expect textbox edits to take effect on that click)
@@ -589,12 +657,19 @@ const loadThreadList = async function() {
   }
   
   let html = '';
-  for (let i = 0; i < urlKeys.length; i++) {
-    let urlKey = urlKeys[i];
-    let threadLabel = writeUrlFinisherLabel(urlKey, videoMode);
-    let optHtml = `<option value='${urlKey}'>${threadLabel}</option>`;
-    html = STR.appendLine(html, optHtml);
+  if (urlKeys.length == 0) {
+    _emptyThreadPage = true;
   }
+  else {
+    _emptyThreadPage = false;
+    for (let i = 0; i < urlKeys.length; i++) {
+      let urlKey = urlKeys[i];
+      let threadLabel = writeUrlFinisherLabel(urlKey, videoMode);
+      let optHtml = `<option value='${urlKey}'>${threadLabel}</option>`;
+      html = STR.appendLine(html, optHtml);
+    }
+  }
+
   lstNavFinisher.innerHTML = DOMPurify.sanitize(html);
 }
 
@@ -616,7 +691,7 @@ const setExpandThreadsBtnViz = async function() {
   }
 }
 
-const onSavedViaNav = function(urlKeys) {
+const onSavedViaNav = async function(urlKeys) {
   const videoMode = getVideoMode();
   for (let i = 0; i < urlKeys.length; i++) {
     let urlKey = urlKeys[i];
@@ -637,19 +712,80 @@ const onSavedViaNav = function(urlKeys) {
       }
     }
   }
+
+  if (!videoMode) {
+    const shouldAutoAdvance = await SETTINGS.RECORDING.THREAD_EXPANSION.getAutoAdvance();
+    if (shouldAutoAdvance == true) {
+      await autoAdvanceToNextThread();
+    }
+  }
 }
 
-const downloadVideo = function(request) {
+const autoAdvanceToNextThread = async function() {
+  const selectedUrlKey = lstNavFinisher.value;
+  
+  // include the selected one plus all that aren't yet processed
+  let allOptionElms = Array.from(lstNavFinisher.querySelectorAll('option'));
+  
+  const relevantUrlKeys = allOptionElms.filter(function(elm) {
+    return elm.getAttribute('value') == selectedUrlKey || elm.textContent.indexOf(ITEM_SAVED) < 0;
+  }).map(function(elm) {
+    return elm.getAttribute('value');
+  });
+
+  let nextUrlKey;
+  let hitSelected = false;
+  for (let i = 0; i < relevantUrlKeys.length; i++) {
+    let urlKey = relevantUrlKeys[i];
+    if (hitSelected == true) {
+      nextUrlKey = urlKey;
+      break;
+    }
+    else if (STR.hasLen(selectedUrlKey) && selectedUrlKey == urlKey) {
+      hitSelected = true;
+    }
+  }
+
+  if (!STR.hasLen(nextUrlKey) && relevantUrlKeys.length > 0) {
+    nextUrlKey = relevantUrlKeys[0];
+  }
+
+  if (STR.hasLen(nextUrlKey)) {
+    lstNavFinisher.value = nextUrlKey;
+    await onClickNavFinisher();
+  }
+  else {
+    if (_emptyThreadPage == true) {
+      // we've already loaded an empty page; consider us done
+      hideSpinners();
+    }
+    else {
+      // simulate clicking the next button
+      await navNextWorker();
+      // *and* clicking the first item
+      allOptionElms = Array.from(lstNavFinisher.querySelectorAll('option'));
+      if (allOptionElms.length == 0) {
+        hideSpinners();
+      }
+      else {
+        lstNavFinisher.value = allOptionElms[0].getAttribute('value');
+        await onClickNavFinisher();
+      }
+    }
+  }
+}
+
+const downloadVideo = async function(request) {
   ES6.downloadMediaFile(request.cdnUrl, request.fileName);
-  onSavedViaNav([request.urlKey]);
+  await onSavedViaNav([request.urlKey]);
 }
 
 const writeUrlFinisherLabel = function(urlKey, videoMode) {
-  const labelIfDone = (videoMode == true) ? 'downloaded' : 'saved';
+  const labelIfDone = (videoMode == true) ? ITEM_DOWNLOADED : ITEM_SAVED;
   const isDone = (videoMode == true) ? _downloadedVideoUrlKeys.has(urlKey) : _savedThreads.has(urlKey);
   let labelToUse = '';
   if (isDone) {
-    labelToUse = `(${labelIfDone}) `
+    labelToUse = labelIfDone;
   }
   return `${labelToUse}${urlKey}`;
 }
@@ -665,13 +801,17 @@ btnNavPrior.addEventListener('click', async () => {
 
 const btnNavNext = document.getElementById('btnNavNext');
 btnNavNext.addEventListener('click', async () => {
+  await navNextWorker();
+  return false;
+});
+
+const navNextWorker = async function() {
   const currentPageItemCnt = Array.from(lstNavFinisher.querySelectorAll('option')).length;
   if (currentPageItemCnt > 0) {
     _guidedNavPageNum++;
     await loadThreadList();
   }
-  return false;
-});
+}
 
 const btnClearSelNav = document.getElementById('btnClearSelNav');
 btnClearSelNav.addEventListener('click', async () => {

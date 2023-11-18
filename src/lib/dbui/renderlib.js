@@ -769,9 +769,15 @@ var RENDER = {
       `;
     },
     
-    renderPostAuthorImg: function(post, site, authorTip) {
+    renderPostAuthorImg: function(post, site, authorTip, isFavoriteAuthor) {
       let handle = DOMPurify.sanitize(post.AuthorHandle);
       handle = STR.ensurePrefix(handle, '@');
+      const authorSansAt = STR.stripPrefix(handle, '@');
+      
+      let starCls = RENDER.CLS.STAR_OFF_CLS;
+      if (isFavoriteAuthor == true) {
+        starCls = RENDER.CLS.STAR_ON_CLS;
+      }
 
       let imgCdnUrl = DOMPurify.sanitize(post.AuthorImgCdnUrl);
       let img64Url = DOMPurify.sanitize(post.AuthorImg64Url);
@@ -783,7 +789,8 @@ var RENDER = {
       }
 
       return `
-      <a class='postAuthorLink' href='${profileUrl}' target='_blank'>
+      <a href='#' data-toggle='tooltip' title='Toggle the favorited status of this post author' class='canstar position-absolute top-0 start-100 translate-middle-x' style='z-index:99' data-testid='${authorSansAt}'><i class='${starCls}'></i></a>
+      <a class='postAuthorLink position-relative' href='${profileUrl}' target='_blank'>
         <img class='postAuthorImg' alt='${handle}' src='${imgSrc}' ${authorTip}>
       </a>`;
     },
@@ -832,6 +839,8 @@ var RENDER = {
       const statsElm = RENDER.POST.renderStats(post);
       const tagggingElm = RENDER.POST.TAGGING.renderTagControls(post);
       
+      let isFavoriteAuthor = (post[POST_SEL.FavoritedAuthor] == 1);
+
       let bodyCls = 'container postBody';
       let authorTip = '';
       if (post[POST_SEL.ImportantAuthor] == true) {
@@ -858,8 +867,8 @@ var RENDER = {
             </div>
           </div>
           <div class='postHeadline row'>
-            <div class='col-sm-auto' style='padding-right:0px;'>
-              ${RENDER.POST.renderPostAuthorImg(post, site, authorTip)}
+            <div class='col-sm-auto position-relative' style='padding-right:0px;'>
+              ${RENDER.POST.renderPostAuthorImg(post, site, authorTip, isFavoriteAuthor)}
             </div>
             <div class='col'>
               <div class='row p-1'>

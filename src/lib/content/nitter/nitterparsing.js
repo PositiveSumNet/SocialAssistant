@@ -1,4 +1,14 @@
 var NPARSE = {
+  isErrorPage: function() {
+    const errorPanel = document.querySelector('.error-panel');
+    if (errorPanel && errorPanel.textContent == 'Tweet not found') {
+      return true;
+    }
+    else {
+      return false;
+    }
+  },
+  
   getMainColumn: function(warn) {
     // main timeline
     let elms = document.querySelectorAll('.timeline');
@@ -16,16 +26,5 @@ var NPARSE = {
     if (warn === true) {
       console.warn('Cannot find nitter main column; page structure may have changed.');
     }
-  },
-
-  getTweetElms: function(scopeElem) {
-    // all img elms with src that starts with the tell-tale prefix
-    return Array.from(scopeElem.querySelectorAll('.timeline-item')).filter(function(elm) {
-      // exclude the 'Load newest' button
-      return elm.classList.contains('show-more') == false && 
-              elm.classList.contains('more-replies') == false &&
-              elm.classList.contains('unavailable') == false;
-    });
   }
-
 };

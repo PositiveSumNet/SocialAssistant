@@ -1,5 +1,15 @@
 var NEETPARSE = {
 
+  getTweetElms: function(scopeElem) {
+    // all img elms with src that starts with the tell-tale prefix
+    return Array.from(scopeElem.querySelectorAll('.timeline-item')).filter(function(elm) {
+      // exclude the 'Load newest' button
+      return elm.classList.contains('show-more') == false && 
+              elm.classList.contains('more-replies') == false &&
+              elm.classList.contains('unavailable') == false;
+    });
+  },
+
   buildTweetFromElm: function(tweetElm, parsedUrl) {
     // see SAVABLE_TWEET_ATTR
     const tweet = { };
@@ -435,7 +445,7 @@ var NEETPARSE = {
     getPostPageThreadInfo: function(tweetUrlKey) {
       const response = {};
       if (!STR.hasLen(tweetUrlKey)) { return response; }
-      const tweetElms = NPARSE.getTweetElms(document);
+      const tweetElms = NEETPARSE.getTweetElms(document);
       if (tweetElms.length == 0) { return response; }
       const threadUrlKey = NEETPARSE.getTweetRelativeUrl(tweetElms[0]);
       let replyToUrlKey;

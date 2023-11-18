@@ -179,16 +179,11 @@ var DBORM = {
       postMessage({ type: MSGTYPE.FROMDB.LOG.DB_SCRIPT_VERSION, payload: {version: dbVersion} });
 
       // diagnostics: fyi, this is a good place to run arbitrary sql while debugging to understand the DB
-//       const debugRows = DBORM.QUERYING.fetch(`
-//       SELECT ptime.sPostUrlKey AS PostUrlKey,
-//       ptag.oValue AS SubtopicRating,
-//       ptag.NamedGraph
-// FROM SocialPostTime ptime
-// JOIN SocialPostSubtopicRating ptag ON ptag.sPostUrlKey = ptime.sPostUrlKey
-// ;
-//       `, []);
+      // const debugRows = DBORM.QUERYING.fetch(`
+      // SELECT * FROM SocialListMember;
+      // `, []);
 
-//       console.log(debugRows);
+      //  console.log(debugRows);
     },
     
     getMaxScriptNumber: function(scripts) {
@@ -719,15 +714,59 @@ var DBORM = {
       }
     },
 
+    buildSogKey: function(sog, entDefn) {
+      if (entDefn.OneToOne == true) {
+        return `${sog.s}-${sog.g}`;
+      }
+      else {
+        // some have large object values (binary), so we hash
+        return CRYPTO.hash(`${sog.s}-${sog.o}-${sog.g}`, CRYPTO.HASH_METHOD.SHA1);
+      }
+    },
+
+    // subject, object, graph, entityName
+    buildSogeSavableSet: function(soges, allEntDefns) {
+      const entNames = new Set(soges.map(function(x) { return x.e; }));
+      const relevantEntDefns = allEntDefns.filter(function(e) { return entNames.has(e.Name); });
+      
+      // we want to give precedence to later submissions (relevant for saving thread info, where we wait for more posts to load to get the best thread info)
+      soges.reverse();
+      
+      const set = APPSCHEMA.SAVING.newSavableSet(relevantEntDefns, false);
+      const keys = new Set();
+      for (let i = 0; i < relevantEntDefns.length; i++) {
+        let entDefn = relevantEntDefns[i];
+        let subsetArray = APPSCHEMA.SAVING.getSubset(set, entDefn.Name).sogs;
+        let sogs = soges.filter(function(x) { return STR.sameText(x.e, entDefn.Name); });
+        for (let j = 0; j < sogs.length; j++) {
+          let sog = sogs[j];
+          if (STR.hasLen(sog.s) && sog.o) {
+            let key = DBORM.SAVING.buildSogKey(sog, entDefn);
+            if (!keys.has(key)) {
+              subsetArray.push(sog);
+              keys.add(key);
+            }
+          }
+        }
+      }
+
+      return set;
+    },
+
     // returns records count
-    saveRecords: function(data) {
+    saveRecords: function(data, allEntDefns) {
       const pageType = data.pageType;
-
       const records = data.records;
-      const graph = APPGRAPHS.getGraphByPageType(pageType);
-      const mapper = SAVEMAPPERFACTORY.getSaveMapper(pageType);
-
-      const savableSet = mapper.mapSavableSet(records, pageType, graph);
+      
+      let savableSet;
+      if (pageType == PAGETYPE.SOGE) {
+        savableSet = DBORM.SAVING.buildSogeSavableSet(records, allEntDefns);
+      }
+      else {
+        const graph = APPGRAPHS.getGraphByPageType(pageType);
+        const mapper = SAVEMAPPERFACTORY.getSaveMapper(pageType);
+        savableSet = mapper.mapSavableSet(records, pageType, graph);
+      }
 
       if (records.length > 0) {
         DBORM.SAVING.execSaveSet(savableSet);
@@ -738,10 +777,10 @@ var DBORM = {
 
     // per ensureCopiedToDb, data.key is the storage key of the data we're transferring, and
     // within each batch, val is the request originally cached by background.js (made in content.js)
-    xferCacheToDb: function(data) {
+    xferCacheToDb: function(data, allEntDefns) {
       // we were passed 
-      var items = [];
-      var keys = [];  // we'll send a message indicating that these keys can be cleared from localStorage
+      let items = [];
+      let keys = [];  // we'll send a message indicating that these keys can be cleared from localStorage
       
       for (let i = 0; i < data.batches.length; i++) {
         let batch = data.batches[i];
@@ -755,7 +794,7 @@ var DBORM = {
       for (let i = 0; i < groups.length; i++) {
         let records = groups[i];
         let pageType = records[0].pageType;
-        DBORM.SAVING.saveRecords({ pageType, records });
+        DBORM.SAVING.saveRecords({ pageType, records }, allEntDefns);
       }
 
       // tell caller it can clear those cache keys and send over the next ones
@@ -784,10 +823,10 @@ var DBORM = {
       postMessage({ type: MSGTYPE.FROMDB.DELETED_BY_SUBJECT, request: request });
     },
 
-    // request: {list: 'list', member: '@scafaria', pageType: pageType, removal: false}
+    // request: {list: 'list', member: '@scafaria', site: site, removal: false}
     setListMember: function(request) {
-      const graph = APPGRAPHS.getGraphByPageType(request.pageType);
-      const listMemberEntDefn = PAGETYPE.getListMemberEntDefn(request.pageType);
+      const graph = APPGRAPHS.getGraphBySite(request.site);
+      const listMemberEntDefn = PAGETYPE.getListMemberEntDefn(request.site);
       
       const nowTime = DBORM.getNowTime(request.removal);   // will be semantically negated if removal is true
       

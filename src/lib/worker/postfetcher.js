@@ -222,6 +222,8 @@ var POSTFETCHER = {
     const entProfileName = APPSCHEMA.SocialProfileDisplayName;
     const entProfileImgCdnUrl = APPSCHEMA.SocialProfileImgSourceUrl;
     const entProfileImg64Url = APPSCHEMA.SocialProfileImgBinary;
+    // list member (for author-favorite status)
+    const entListMember = APPSCHEMA.SocialListMember;
     // post
     const entPostTime = APPSCHEMA.SocialPostTime;
     const entPostText = APPSCHEMA.SocialPostText;
@@ -248,6 +250,7 @@ var POSTFETCHER = {
     const aname = 'aname';
     const acdnurl = 'acdnurl';
     const a64url = 'a64url';
+    const alist = 'alist';
     const ptime = 'ptime';
     const ptext = 'ptext';
     const preplykey = 'preplykey';
@@ -351,18 +354,31 @@ var POSTFETCHER = {
       }
 
       if (STR.hasLen(request.networkOwner)) {
-        if (request.withRetweets == true) {
+        const sansPrefixOwner = STR.stripPrefix(request.networkOwner, '@');
+        let bindAuthorParm = false;
+        if (STR.sameText(sansPrefixOwner, SPECIAL_OWNER.ALL_FOLLOWING)) {
+          authorCondition = POSTFETCHER.writeFollowingAuthorCondition('AND', ahandle, entAuthorHandle);
+        }
+        else if (STR.sameText(sansPrefixOwner, SPECIAL_OWNER.ALL_FAVORITES)) {
+          authorCondition = POSTFETCHER.writeFavoriteAuthorCondition('AND', ahandle, entAuthorHandle);
+        }
+        else if (request.withRetweets == true) {
           authorCondition = `  AND CASE
                                   WHEN ${ahandle}.${entAuthorHandle.ObjectCol} = $author THEN 1
                                   WHEN ${preposter}.${entReposter.ObjectCol} = $author THEN 1
                                   ELSE 0
                                 END = 1
                             `;
+
+          bindAuthorParm = true;
         }
         else {
           authorCondition = `  AND ${ahandle}.${entAuthorHandle.ObjectCol} = $author`;
+          bindAuthorParm = true;
         }
-        bind.push({key: '$author', value: request.networkOwner});
+        if (bindAuthorParm == true) {
+          bind.push({key: '$author', value: request.networkOwner});
+        }
       }
     }
 
@@ -411,11 +427,16 @@ var POSTFETCHER = {
       `;
     }
 
+    // re FavoritedAuthor status, note the check for not marked as deleted
     const sql = `${cteSql}
     SELECT  ${ptime}.${entPostTime.SubjectCol} AS ${POST_SEL.PostUrlKey},
             ${ptime}.${entPostTime.ObjectCol} AS ${POST_SEL.PostTime},
             ${ahandle}.${entAuthorHandle.ObjectCol} AS ${POST_SEL.AuthorHandle},
             ${aname}.${entProfileName.ObjectCol} AS ${POST_SEL.AuthorName},
+            CASE 
+              WHEN ${alist}.${SCHEMA_CONSTANTS.COLUMNS.Timestamp} LIKE '202%' THEN 1
+              ELSE 0
+              END AS ${POST_SEL.FavoritedAuthor},
             ${ptext}.${entPostText.ObjectCol} AS ${POST_SEL.PostText},
             ${preplykey}.${entReplyToUrlKey.ObjectCol} AS ${POST_SEL.ReplyToUrlKey},
             ${preposter}.${entReposter.ObjectCol} AS ${POST_SEL.ReposterHandle},
@@ -434,6 +455,9 @@ var POSTFETCHER = {
       AND ${psrch}.${graphMatchRhs}
     JOIN ${entAuthorHandle.Name} ${ahandle} ON ${ahandle}.${entAuthorHandle.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
       AND ${ahandle}.${graphMatchRhs}
+    LEFT JOIN ${entListMember.Name} ${alist} ON ${alist}.${entListMember.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+      AND ${alist}.${graphMatchRhs}
+      AND ${alist}.${entListMember.SubjectCol} = '${LIST_FAVORITES}'
     ${replyToJoinWord} ${entReplyToUrlKey.Name} ${preplykey} ON ${preplykey}.${entReplyToUrlKey.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
       AND ${preplykey}.${graphMatchRhs}
     ${threadUrlKeyJoinWord} ${entThreadUrlKey.Name} ${pthread} ON ${pthread}.${entThreadUrlKey.SubjectCol} = ${ptime}.${entPostTime.SubjectCol}
@@ -489,6 +513,35 @@ var POSTFETCHER = {
     POSTFETCHER.infuseAuthorIsTargeted(rows);
     
     return rows;
+  },
+
+  writeFollowingAuthorCondition: function(conjunction, ahandle, entAuthorHandle) {
+    const entFollowing = APPSCHEMA.SocialConnIsFollowing;
+    
+    // the OR for SubjectCol is so that we also capture the person whose following list was imported
+    // (usually that's the active user); we don't want to miss them
+    const sql = `${conjunction} EXISTS (
+      SELECT 1
+      FROM ${entFollowing.Name} x
+      WHERE x.${entFollowing.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+         OR x.${entFollowing.SubjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+    )`;
+
+    return sql;
+  },
+
+  writeFavoriteAuthorCondition: function(conjunction, ahandle, entAuthorHandle) {
+    const entList = APPSCHEMA.SocialListMember;
+
+    const sql = `${conjunction} EXISTS (
+      SELECT 1
+      FROM ${entList.Name} x
+      WHERE x.${entList.ObjectCol} = ${ahandle}.${entAuthorHandle.ObjectCol}
+        AND x.${entList.SubjectCol} = '${LIST_FAVORITES}'
+        AND x.${SCHEMA_CONSTANTS.COLUMNS.Timestamp} LIKE '202%'
+    )`;
+
+    return sql;
   },
 
   writeOrderByRating: function(topic, orderByTopicParm) {
