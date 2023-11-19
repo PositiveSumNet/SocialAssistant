@@ -427,24 +427,28 @@ var GITHUB = {
         if (syncable[SYNCFLOW.SYNCABLE.dontSync] != true) {
           
           const relPath = syncable[SYNCFLOW.SYNCABLE.filePath];
-          let pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo, asUpsert);
-          pushResult.rateLimit = rateLimit;
-          if (pushResult.success != true) {
+          let pushResult;
+          for (let i = 0; i < 10; i++) {
+            pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo, asUpsert);
+            pushResult.rateLimit = rateLimit;
+            if (pushResult.success == true) {
+              break;
+            }
             // clear blob sha cache and try once more
             console.log('clearing sha cache and retrying...');
             GITHUB.TREES.clearInMemoryCache();
-            // sleep a couple seconds before retrying
-            await ES6.sleep(2000);
-            pushResult = await GITHUB.SYNC.BACKUP.pushWorker(syncable, relPath, repoConnInfo, asUpsert);
-            pushResult.rateLimit = rateLimit;
-            if (pushResult.success != true) {
-              if (onFailure) {
-                console.log('push failed on retry');
-                onFailure(pushResult);
-              }
-              return;
-            }
+            // sleep a couple seconds before retrying; sleep more time for each successive failure
+            await ES6.sleep(2000 * (i + 1));
           }
+          
+          if (pushResult.success != true) {
+            if (onFailure) {
+              console.log('push failed after retry attempts');
+              onFailure(pushResult);
+            }
+            return;
+          }
+
           if (pushResult.canSkip == true) {
             syncable.dontSync = true;
           }
@@ -501,7 +505,15 @@ var GITHUB = {
         }
         
         const encodedContent = STR.hasLen(plainTextContent) ? STR.toBase64(plainTextContent, true) : '';
-        const putResultOk = await GITHUB.putUpsertFile(fileUrl, encodedContent, relPath, existingSha, repoConnInfo);
+        
+        let putResultOk;
+        try {
+          putResultOk = await GITHUB.putUpsertFile(fileUrl, encodedContent, relPath, existingSha, repoConnInfo);
+        }
+        catch(err) {
+          console.log(err);
+        }
+
         if (!putResultOk) {
           console.log('file upload error');
           return { success: false, reason: GITHUB.SYNC.ERROR_CODE.pushBackupFileFailed, syncable: syncable };

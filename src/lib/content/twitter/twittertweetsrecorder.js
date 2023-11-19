@@ -265,7 +265,6 @@ var TWEETSREC = {
   checkForDeadThread: function() {
     if (TPARSE.isDeadThread() == true) {
       if (!_isDeadThread) {
-        console.log('report');
         // not yet reported
         chrome.runtime.sendMessage({
           actionType: MSGTYPE.TO_POPUP.DEAD_THREAD,
