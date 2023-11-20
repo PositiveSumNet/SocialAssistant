@@ -516,6 +516,9 @@ var SYNCFLOW = {
       if (ok != true) {
         GHCONFIG_UI.onGithubFailure({msg: 'Backup failed; try a page refresh and resume.'});
       }
+      else {
+        GHCONFIG_UI.setGithubConnFailureMsg('');
+      }
     },
   
     buildPushable: function(step) {
