@@ -493,10 +493,29 @@ var SYNCFLOW = {
     
     // called back by _worker with content needed for backup
     onFetchedForBackup: async function(syncable) {
-      
       const asUpsert = SYNCFLOW.PUSH_EXEC.shouldUpsert(syncable);
       // now actually push it!
-      await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
+      let ok = false;
+      for (let i = 0; i < 5; i++) {
+        try {
+          ok = await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
+        }
+        catch(err) {
+          console.log(err);
+        }
+
+        if (ok == true) { 
+          break;
+        }
+        else {
+          GHCONFIG_UI.onGithubFailure({msg: 'Retrying in ' + (2 * (i+1) + ' seconds')});
+          await ES6.sleep(2000 * (i+1));
+        }
+      }
+
+      if (ok != true) {
+        GHCONFIG_UI.onGithubFailure({msg: 'Backup failed; try a page refresh and resume.'});
+      }
     },
   
     buildPushable: function(step) {
@@ -651,9 +670,23 @@ var SYNCFLOW = {
       });
     },
 
+    continueRestore: async function(request, rows) {
+      for (let i = 0; i < 5; i++) {
+        try {
+          await SYNCFLOW.PULL_EXEC.continueRestoreWorker(request, rows);
+        }
+        catch(err) {
+          console.log(err);
+          GHCONFIG_UI.onGithubFailure({msg: 'Retrying in ' + (2 * (i+1) + ' seconds')});
+          await ES6.sleep(2000 * (i+1));
+        }
+      }
+      GHCONFIG_UI.setGithubConnFailureMsg('');
+    },
+    
     // wakes up when called back from worker
     // (here we're again on the main UI thread)
-    continueRestore: async function(request, rows) {
+    continueRestoreWorker: async function(request, rows) {
       const pullStep = request.pullStep;
       const content = SYNCFLOW.PUSH_WRITER.asJson(rows, pullStep[SYNCFLOW.STEP.type]);
       // and compare its sha vs the file we're asked to pull.
