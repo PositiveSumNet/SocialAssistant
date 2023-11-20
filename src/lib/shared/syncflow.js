@@ -493,10 +493,32 @@ var SYNCFLOW = {
     
     // called back by _worker with content needed for backup
     onFetchedForBackup: async function(syncable) {
-      
       const asUpsert = SYNCFLOW.PUSH_EXEC.shouldUpsert(syncable);
       // now actually push it!
-      await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
+      let ok = false;
+      for (let i = 0; i < 5; i++) {
+        try {
+          ok = await GITHUB.SYNC.BACKUP.upsertPushable(syncable, SYNCFLOW.onGithubSyncStepOk, GHCONFIG_UI.onGithubFailure, asUpsert);
+        }
+        catch(err) {
+          console.log(err);
+        }
+
+        if (ok == true) { 
+          break;
+        }
+        else {
+          GHCONFIG_UI.onGithubFailure({msg: 'Retrying in ' + (2 * (i+1) + ' seconds')});
+          await ES6.sleep(2000 * (i+1));
+        }
+      }
+
+      if (ok != true) {
+        GHCONFIG_UI.onGithubFailure({msg: 'Backup failed; try a page refresh and resume.'});
+      }
+      else {
+        GHCONFIG_UI.setGithubConnFailureMsg('');
+      }
     },
   
     buildPushable: function(step) {

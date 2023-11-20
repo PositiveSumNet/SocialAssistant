@@ -416,12 +416,12 @@ var GITHUB = {
         const repoType = syncable[SYNCFLOW.SYNCABLE.repoType] || GITHUB.REPO_TYPE.DATA;
         const repoConnInfo = await GITHUB.SYNC.getRepoConnInfo(onFailure, repoType);
 
-        if (!repoConnInfo) { return; }
+        if (!repoConnInfo) { return false; }
 
         // check accessibility
         const rateLimit = await GITHUB.getRateLimit(repoConnInfo.token, repoType);
         if (GITHUB.SYNC.checkIfRateLimited(rateLimit, onFailure) == true) {
-          return;
+          return false;
         }
 
         if (syncable[SYNCFLOW.SYNCABLE.dontSync] != true) {
@@ -442,7 +442,7 @@ var GITHUB = {
                 console.log('push failed on retry');
                 onFailure(pushResult);
               }
-              return;
+              return false;
             }
           }
           if (pushResult.canSkip == true) {
@@ -452,6 +452,7 @@ var GITHUB = {
         
         // looks like a success
         onSuccess({ rateLimit: rateLimit, syncable: syncable }, SYNCFLOW.DIRECTION.BACKUP);
+        return true;
       },
 
       // return merged content
