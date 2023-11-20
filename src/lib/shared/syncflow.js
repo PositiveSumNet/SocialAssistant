@@ -670,23 +670,9 @@ var SYNCFLOW = {
       });
     },
 
-    continueRestore: async function(request, rows) {
-      for (let i = 0; i < 5; i++) {
-        try {
-          await SYNCFLOW.PULL_EXEC.continueRestoreWorker(request, rows);
-        }
-        catch(err) {
-          console.log(err);
-          GHCONFIG_UI.onGithubFailure({msg: 'Retrying in ' + (2 * (i+1) + ' seconds')});
-          await ES6.sleep(2000 * (i+1));
-        }
-      }
-      GHCONFIG_UI.setGithubConnFailureMsg('');
-    },
-    
     // wakes up when called back from worker
     // (here we're again on the main UI thread)
-    continueRestoreWorker: async function(request, rows) {
+    continueRestore: async function(request, rows) {
       const pullStep = request.pullStep;
       const content = SYNCFLOW.PUSH_WRITER.asJson(rows, pullStep[SYNCFLOW.STEP.type]);
       // and compare its sha vs the file we're asked to pull.
