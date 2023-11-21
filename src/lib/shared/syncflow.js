@@ -693,16 +693,22 @@ var SYNCFLOW = {
         // pull the file from github
         const repoType = GITHUB.REPO_TYPE.DATA;
         const repoConnInfo = await GITHUB.SYNC.getRepoConnInfo(GHCONFIG_UI.onGithubFailure, repoType);
-        const json = await GITHUB.getFileJson(request.remoteDir, request.remoteFileName, repoConnInfo);
-        const parsed = STR.hasLen(json) ? JSON.parse(json) : null;
+        const jsonResult = await GITHUB.getFileJson(request.remoteDir, request.remoteFileName, repoConnInfo);
+        if (jsonResult.success != true) {
+          GHCONFIG_UI.onGithubFailure({msg: `Could not access ${request.remoteFileName}`});
+        }
+        else {
+          const json = jsonResult.json;
+          const parsed = STR.hasLen(json) ? JSON.parse(json) : null;
 
-        _worker.postMessage({
-          actionType: MSGTYPE.TODB.SAVE_FOR_RESTORE,
-          step: request.pullStep,
-          rateLimit: request.rateLimit,
-          data: parsed,
-          fileMarker: fileMarker
-        });
+          _worker.postMessage({
+            actionType: MSGTYPE.TODB.SAVE_FOR_RESTORE,
+            step: request.pullStep,
+            rateLimit: request.rateLimit,
+            data: parsed,
+            fileMarker: fileMarker
+          });
+        }
       }
     },
 

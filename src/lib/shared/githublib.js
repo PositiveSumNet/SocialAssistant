@@ -39,12 +39,14 @@ var GITHUB = {
     }
   },
 
+  // { success: bool, json: json }
   getFileJson: async function(remoteDir, remoteFileName, repoConnInfo, onErrorFn) {
     remoteDir = STR.hasLen(remoteDir) ? STR.ensureSuffix(remoteDir, '/') : '';
     const fullName = `${remoteDir}${remoteFileName}`;
     return await GITHUB.getFileJsonWorker(fullName, repoConnInfo, onErrorFn);
   },
 
+  // { success: bool, json: json }
   // hackernoon.com/how-to-fetch-large-data-files-through-github-api
   getLargeFileJson: async function(repoConnInfo, onErrorFn, fileSha) {
     const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/git/blobs/${fileSha}`;
@@ -52,13 +54,14 @@ var GITHUB = {
     if (response && STR.isTruthy(response.ok)) {
       const data = await response.json();
       const json = STR.fromBase64(data.content, true);
-      return json;
+      return {success: true, json: json};
     }
     else {
-      return '';
+      return {success: false, json: ''};
     }
   },
 
+  // { success: bool, json: json }
   getFileJsonWorker: async function(remoteFullName, repoConnInfo, onErrorFn) {
     const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/contents/${remoteFullName}`;
     const response = await GITHUB.tryGetFileResponse(fileUrl, repoConnInfo.headers);
@@ -71,15 +74,20 @@ var GITHUB = {
           return await GITHUB.getLargeFileJson(repoConnInfo, onErrorFn, data.sha);
         }
         else {
-          return '';
+          // the response.ok suggests it was successful, just empty
+          return {success: true, json: ''};
         }
       }
 
       const json = STR.fromBase64(data.content, true);
-      return json;
+      return {success: true, json: json};
     }
-    else if (onErrorFn) {
-      onErrorFn({ msg: `Cannot access ${remoteFullName}` });
+    else  {
+      if (onErrorFn) {
+        onErrorFn({ msg: `Cannot access ${remoteFullName}` });
+      }
+
+      return {success: false, json: ''};
     }
   },
 
@@ -479,13 +487,13 @@ var GITHUB = {
       mergeAsNeeded: async function(syncable, relPath, repoConnInfo, plainTextContent) {
         const step = syncable[SYNCFLOW.SYNCABLE.step];
         const stepType = step[SYNCFLOW.STEP.type];
-        const remoteJson = await GITHUB.getFileJsonWorker(relPath, repoConnInfo);
-        if (!STR.hasLen(remoteJson)) {
+        const remoteJsonResult = await GITHUB.getFileJsonWorker(relPath, repoConnInfo);
+        if (remoteJsonResult.success != true || !STR.hasLen(remoteJsonResult.json)) {
           return plainTextContent;
         }
         // ok, merge scenario
         const pushMerger = PUSH_MERGER_FACTORY.getPushMerger(stepType);
-        plainTextContent = pushMerger.mergeForPush(plainTextContent, remoteJson);
+        plainTextContent = pushMerger.mergeForPush(plainTextContent, remoteJsonResult.json);
         return plainTextContent;
       },
 
