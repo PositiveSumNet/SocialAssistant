@@ -45,6 +45,20 @@ var GITHUB = {
     return await GITHUB.getFileJsonWorker(fullName, repoConnInfo, onErrorFn);
   },
 
+  // hackernoon.com/how-to-fetch-large-data-files-through-github-api
+  getLargeFileJson: async function(repoConnInfo, onErrorFn, fileSha) {
+    const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/git/blobs/${fileSha}`;
+    const response = await GITHUB.tryGetFileResponse(fileUrl, repoConnInfo.headers);
+    if (response && STR.isTruthy(response.ok)) {
+      const data = await response.json();
+      const json = STR.fromBase64(data.content, true);
+      return json;
+    }
+    else {
+      return '';
+    }
+  },
+
   getFileJsonWorker: async function(remoteFullName, repoConnInfo, onErrorFn) {
     const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/contents/${remoteFullName}`;
     const response = await GITHUB.tryGetFileResponse(fileUrl, repoConnInfo.headers);
@@ -52,7 +66,13 @@ var GITHUB = {
       // this returns the entire file object; what we want out of it is the 'content' node, which is base 64 encoded
       const data = await response.json();
       if (!data || !data.content) {
-        return '';
+        const size = parseInt(data.size);
+        if (STR.hasLen(data.sha) && !isNaN(size) && size >= 1000000) {
+          return await GITHUB.getLargeFileJson(repoConnInfo, onErrorFn, data.sha);
+        }
+        else {
+          return '';
+        }
       }
 
       const json = STR.fromBase64(data.content, true);
