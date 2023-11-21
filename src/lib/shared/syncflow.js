@@ -645,7 +645,6 @@ var SYNCFLOW = {
       const cursorFileName = SYNCFLOW.FILE_NAMER.getFileName(step, marker);
       let cursorComparer = SYNCFLOW.PULL_EXEC.getCursorComparer(step);
       let nextRemoteFile = await GITHUB.TREES.getNextPullableFile(remoteDir, repoConnInfo, repoType, cursorFileName, cursorComparer);
-      
       if (!nextRemoteFile && cursorComparer == CURSOR_COMPARER.EXACT_MATCH) {
         // e.g. if the 'f' file is missing, we want to find any next file, e.g. 'h'
         cursorComparer = CURSOR_COMPARER.NEXT_AFTER;
@@ -660,6 +659,7 @@ var SYNCFLOW = {
 
       // Identify what we would have pushed for this file
       const pushStep = SYNCFLOW.PULL_EXEC.toPushStep(step, nextRemoteFile.path);
+
       // and then processing resumes using worker thread
       // then back to continueRestore below
       _worker.postMessage({
@@ -680,11 +680,12 @@ var SYNCFLOW = {
       const content = SYNCFLOW.PUSH_WRITER.asJson(rows, pullStep[SYNCFLOW.STEP.type]);
       // and compare its sha vs the file we're asked to pull.
       const dbSha = STR.hasLen(content) ? (await GITHUB.SHAS.calcTextContentSha(content)) : null;
+      const fileMarker = SYNCFLOW.FILE_NAMER.extractMarker(pullStep[SYNCFLOW.STEP.type], request.remoteFileName);
       
       // Only pull from github if needed
       if (dbSha && dbSha == request.remoteSha) {
         // console.log('skipping identical pull of ' + request.remoteFileName);
-        const pulledResult = SYNCFLOW.PULL_EXEC.buildPulledResult(pullStep, rows, request.rateLimit);
+        const pulledResult = SYNCFLOW.PULL_EXEC.buildPulledResult(pullStep, rows, request.rateLimit, fileMarker);
         pulledResult.syncable[SYNCFLOW.SYNCABLE.dontSync] = true;
         SYNCFLOW.onGithubSyncStepOk(pulledResult, SYNCFLOW.DIRECTION.RESTORE);
       }
@@ -699,16 +700,17 @@ var SYNCFLOW = {
           actionType: MSGTYPE.TODB.SAVE_FOR_RESTORE,
           step: request.pullStep,
           rateLimit: request.rateLimit,
-          data: parsed
+          data: parsed,
+          fileMarker: fileMarker
         });
       }
     },
 
-    buildPulledResult: function(pullStep, rows, rateLimit) {
+    buildPulledResult: function(pullStep, rows, rateLimit, fileMarker) {
       const syncable = {};
       syncable[SYNCFLOW.SYNCABLE.step] = pullStep;
       const markerCol = SYNCFLOW.END_MARKING.getMarkerColName(pullStep.type);
-      const endMarker = SYNCFLOW.END_MARKING.calcMarkerEnd(pullStep, rows, markerCol);
+      const endMarker = SYNCFLOW.END_MARKING.calcMarkerEnd(pullStep, rows, markerCol, fileMarker);
       syncable[SYNCFLOW.SYNCABLE.endMarker] = endMarker;
 
       return {
@@ -1096,7 +1098,7 @@ var SYNCFLOW = {
   },
 
   END_MARKING: {
-    calcMarkerEnd: function(step, rows, col) {
+    calcMarkerEnd: function(step, rows, col, fileMarker) {
       const stepType = step[SYNCFLOW.STEP.type];
       switch (stepType) {
         case SYNCFLOW.STEP_TYPE.profileFavorites:
@@ -1107,13 +1109,13 @@ var SYNCFLOW = {
           return SYNCFLOW.END_MARKING.calcNextAlpha(step, rows, col);
         case SYNCFLOW.STEP_TYPE.networkFollowings:
         case SYNCFLOW.STEP_TYPE.networkFollowers:
-          return SYNCFLOW.END_MARKING.calcViaLastRow(step, rows, col);
+          return SYNCFLOW.END_MARKING.calcViaLastRow(step, rows, col, fileMarker);
         case SYNCFLOW.STEP_TYPE.postTopicRatings:
           return SYNCFLOW.END_MARKING.calcPostRatingsEndMarker(step, rows, col);
         case SYNCFLOW.STEP_TYPE.posts:
-          return SYNCFLOW.END_MARKING.calcViaLastRow(step, rows, col);
+          return SYNCFLOW.END_MARKING.calcViaLastRow(step, rows, col, fileMarker);
         case SYNCFLOW.STEP_TYPE.postImgs:
-          return SYNCFLOW.END_MARKING.calcViaLastRow(step, rows, col);
+          return SYNCFLOW.END_MARKING.calcViaLastRow(step, rows, col, fileMarker);
         default:
           console.log('Unhandled restore type');
           return null;
@@ -1151,9 +1153,13 @@ var SYNCFLOW = {
       return STR.nextAlphaMarker(step.marker).toLowerCase();
     },
 
-    calcViaLastRow: function(step, rows, col) {
+    calcViaLastRow: function(step, rows, col, fileMarker) {
       if (!rows || rows.length === 0) {
-        return LAST_TEXT;
+        // When there's no data returned, the next step is trying to advance...
+        // Advance beyond what? If there's no data, we wouldn't know.
+        // But in a "pull" scenario, we at least know the name of the empty remote file
+        // (and if we passed in a marker generated from it, can use it)
+        return fileMarker || LAST_TEXT;
       }
       else {
         const lastRow = rows[rows.length - 1];

@@ -4,6 +4,7 @@ var DBSYNCSAVER = {
   saveForRestore: function(request) {
     const step = request.step;
     const rateLimit = request.rateLimit;
+    const fileMarker = request.fileMarker;
     const data = request.data;
     const rows = (data && data.data) ? data.data : [];  // data node holds the records
     
@@ -13,8 +14,7 @@ var DBSYNCSAVER = {
       DBORM.SAVING.execSaveSet(savableSet);
     }
 
-    const result = SYNCFLOW.PULL_EXEC.buildPulledResult(step, rows, rateLimit);
-    
+    const result = SYNCFLOW.PULL_EXEC.buildPulledResult(step, rows, rateLimit, fileMarker);
     postMessage({ 
       type: MSGTYPE.FROMDB.SAVED_FOR_RESTORE, 
       result: result
