@@ -50,6 +50,7 @@ var GITHUB = {
   // hackernoon.com/how-to-fetch-large-data-files-through-github-api
   getLargeFileJson: async function(repoConnInfo, onErrorFn, fileSha) {
     const fileUrl = `https://api.github.com/repos/${repoConnInfo.userName}/${repoConnInfo.repoName}/git/blobs/${fileSha}`;
+    console.log('Fetching large json file: ' + fileUrl);
     const response = await GITHUB.tryGetFileResponse(fileUrl, repoConnInfo.headers);
     if (response && STR.isTruthy(response.ok)) {
       const data = await response.json();
