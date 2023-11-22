@@ -81,6 +81,7 @@ var GHRESTORE_UI = {
     }
     else {
       GHRESTORE_UI.reflectRestoreSettings();
+      QUERYWORK_UI.hideDbProcessingMsg();
       btnGhRestorePause.classList.add('d-none');
       btnGhRestoreStart.classList.remove('d-none');
       if (status.ok === true || status.msg == SYNCFLOW.START_MSG) {
